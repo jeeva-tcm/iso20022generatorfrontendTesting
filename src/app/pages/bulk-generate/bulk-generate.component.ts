@@ -1,5 +1,5 @@
 import JSZip from 'jszip';
-import { Component, OnInit, ElementRef, HostListener } from '@angular/core';
+import { Component, OnInit, ElementRef, HostListener, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -17,6 +17,7 @@ interface MessageBlock {
 
 interface MessageTypeConfig {
   id: string;
+  bulkId: string;
   label: string;
   description: string;
   family: string;
@@ -39,6 +40,14 @@ interface GeneratedMessage {
   validation_report?: any;
 }
 
+interface GroupedMessage {
+  message_type: string;
+  messages: GeneratedMessage[];
+  status: string;
+  expanded: boolean;
+  activeMessageIndex: number;
+}
+
 interface DependencyWarning {
   blockId: string;
   blockLabel: string;
@@ -59,28 +68,28 @@ const MANUAL_ENTRY_MESSAGES: {
   bulkId: string;          // key used by the backend bulk generator
 }[] = [
   // ── PACS Messages ──
-  { id: 'pacs.008.001.08', name: 'Customer Credit Transfer',     type: 'pacs', bulkId: 'pacs.008' },
-  { id: 'pacs.003.001.08', name: 'Customer Direct Debit',        type: 'pacs', bulkId: 'pacs.003' },
-  { id: 'pacs.009.001.08', name: 'FI Credit Transfer',           type: 'pacs', bulkId: 'pacs.009' },
-  { id: 'pacs.009.001.08_ADV', name: 'FI Credit Transfer (Adv)', type: 'pacs', bulkId: 'pacs.009' },
-  { id: 'pacs.009.001.08 COV', name: 'FI Credit Transfer (Cov)', type: 'pacs', bulkId: 'pacs.009.cov' },
-  { id: 'pacs.004.001.09', name: 'Payment Return',               type: 'pacs', bulkId: 'pacs.004' },
-  { id: 'pacs.002.001.10', name: 'Payment Status Report',        type: 'pacs', bulkId: 'pacs.002' },
-  { id: 'pacs.010.001.10', name: 'Interbank Direct Debit',       type: 'pacs', bulkId: 'pacs.010' },
+  { id: 'pacs.008.001.13', name: 'Customer Credit Transfer',     type: 'pacs', bulkId: 'pacs.008' },
+  { id: 'pacs.003.001.11', name: 'Customer Direct Debit',        type: 'pacs', bulkId: 'pacs.003' },
+  { id: 'pacs.009.001.12', name: 'FI Credit Transfer',           type: 'pacs', bulkId: 'pacs.009' },
+  { id: 'pacs.009.001.12_ADV', name: 'FI Credit Transfer (Adv)', type: 'pacs', bulkId: 'pacs.009.adv' },
+  { id: 'pacs.009.001.12 COV', name: 'FI Credit Transfer (Cov)', type: 'pacs', bulkId: 'pacs.009.cov' },
+  { id: 'pacs.004.001.14', name: 'Payment Return',               type: 'pacs', bulkId: 'pacs.004' },
+  { id: 'pacs.002.001.15', name: 'Payment Status Report',        type: 'pacs', bulkId: 'pacs.002' },
+  { id: 'pacs.010.001.06', name: 'Interbank Direct Debit',       type: 'pacs', bulkId: 'pacs.010' },
   { id: 'pacs.010.001.03', name: 'Margin Collection',            type: 'pacs', bulkId: 'pacs.010.v3' },
 
   // ── CAMT Messages ──
   { id: 'camt.057.001.08', name: 'Notification to Receive',              type: 'camt', bulkId: 'camt.057' },
-  { id: 'camt.052.001.08', name: 'Account Report',                       type: 'camt', bulkId: 'camt.052' },
-  { id: 'camt.053.001.08', name: 'Bank To Customer Statement',           type: 'camt', bulkId: 'camt.053' },
-  { id: 'camt.054.001.08', name: 'Debit Credit Notification',            type: 'camt', bulkId: 'camt.054' },
-  { id: 'camt.055.001.08', name: 'Customer Payment Cancellation Request',type: 'camt', bulkId: 'camt.055' },
+  { id: 'camt.052.001.13', name: 'Account Report',                       type: 'camt', bulkId: 'camt.052' },
+  { id: 'camt.053.001.13', name: 'Bank To Customer Statement',           type: 'camt', bulkId: 'camt.053' },
+  { id: 'camt.054.001.13', name: 'Debit Credit Notification',            type: 'camt', bulkId: 'camt.054' },
+  { id: 'camt.055.001.12', name: 'Customer Payment Cancellation Request',type: 'camt', bulkId: 'camt.055' },
   { id: 'camt.056.001.11', name: 'FI To FI Payment Cancellation',        type: 'camt', bulkId: 'camt.056' },
 
   // ── PAIN Messages ──
-  { id: 'pain.001.001.09', name: 'Credit Transfer Initiation',   type: 'pain', bulkId: 'pain.001' },
-  { id: 'pain.002.001.10', name: 'Payment Status Report',        type: 'pain', bulkId: 'pain.002' },
-  { id: 'pain.008.001.08', name: 'Direct Debit Initiation',      type: 'pain', bulkId: 'pain.008' },
+  { id: 'pain.001.001.12', name: 'Credit Transfer Initiation',   type: 'pain', bulkId: 'pain.001' },
+  { id: 'pain.002.001.14', name: 'Payment Status Report',        type: 'pain', bulkId: 'pain.002' },
+  { id: 'pain.008.001.11', name: 'Direct Debit Initiation',      type: 'pain', bulkId: 'pain.008' },
 ];
 
 @Component({
@@ -98,20 +107,22 @@ export class BulkGenerateComponent implements OnInit {
   /** Grouped by family for category display */
   messageFamilies: MessageFamily[] = [];
 
-  selectedConfig: MessageTypeConfig | null = null;
+  selectedConfigs: MessageTypeConfig[] = [];
+  activeConfig: MessageTypeConfig | null = null;
 
   messageCount: number = 10;
   messageCountError: string = '';
 
-  // block selection: blockId -> boolean
-  blockChecked: Record<string, boolean> = {};
+  // block selection: configId -> blockId -> boolean
+  blockChecked: Record<string, Record<string, boolean>> = {};
 
-  // dependency warnings list
-  dependencyWarnings: DependencyWarning[] = [];
+  // dependency warnings list by configId
+  dependencyWarnings: Record<string, DependencyWarning[]> = {};
 
   // generation state
   isGenerating = false;
   generatedMessages: GeneratedMessage[] = [];
+  groupedMessages: GroupedMessage[] = [];
   expandedIndex: number | null = null;
 
   // generation stats from backend response
@@ -122,7 +133,10 @@ export class BulkGenerateComponent implements OnInit {
   } | null = null;
 
   // preview / results view
-  view: 'config' | 'results' = 'config';
+  view: 'select' | 'config' | 'results' = 'select';
+
+  @ViewChild('loadingSection') loadingSection?: ElementRef;
+  @ViewChild('resultsSection') resultsSection?: ElementRef;
 
   // loading state for blocks
   loadingBlocks = false;
@@ -172,7 +186,8 @@ export class BulkGenerateComponent implements OnInit {
 
     for (const msg of MANUAL_ENTRY_MESSAGES) {
       const cfg: MessageTypeConfig = {
-        id: msg.bulkId,
+        id: msg.id,
+        bulkId: msg.bulkId,
         label: msg.id,
         description: msg.name,
         family: msg.type.toUpperCase(),
@@ -319,7 +334,9 @@ export class BulkGenerateComponent implements OnInit {
     this.showDropdown = false;
     this.highlightedSuggestionIndex = -1;
     this.searchQuery = cfg.label;
-    this.selectMessageType(cfg);
+    if (!this.isSelected(cfg)) {
+      this.toggleMessageType(cfg);
+    }
   }
 
   clearSearch() {
@@ -337,28 +354,90 @@ export class BulkGenerateComponent implements OnInit {
 
   // ── Message Type Selection ──────────────────────────────────────────────────
 
-  selectMessageType(cfg: MessageTypeConfig) {
-    this.selectedConfig = cfg;
-    this.blockChecked = {};
-    this.dependencyWarnings = [];
-    this.generatedMessages = [];
+  isSelected(cfg: MessageTypeConfig): boolean {
+    return this.selectedConfigs.some(c => c.id === cfg.id);
+  }
+
+  toggleMessageType(cfg: MessageTypeConfig) {
+    const idx = this.selectedConfigs.findIndex(c => c.id === cfg.id);
+    if (idx >= 0) {
+      this.selectedConfigs.splice(idx, 1);
+    } else {
+      this.selectedConfigs.push(cfg);
+    }
+  }
+
+  get allMessageTypesSelected(): boolean {
+    return this.messageConfigs.length > 0 && this.selectedConfigs.length === this.messageConfigs.length;
+  }
+
+  selectAllMessageTypes(): void {
+    if (this.allMessageTypesSelected) {
+      this.selectedConfigs = [];
+    } else {
+      this.selectedConfigs = [...this.messageConfigs];
+    }
+  }
+
+  isFamilyAllSelected(family: MessageFamily): boolean {
+    return family.messages.length > 0 && family.messages.every(m => this.isSelected(m));
+  }
+
+  toggleFamilySelectAll(family: MessageFamily): void {
+    if (this.isFamilyAllSelected(family)) {
+      // Deselect all in this family
+      const familyIds = new Set(family.messages.map(m => m.id));
+      this.selectedConfigs = this.selectedConfigs.filter(c => !familyIds.has(c.id));
+    } else {
+      // Select all in this family (add missing ones)
+      for (const msg of family.messages) {
+        if (!this.isSelected(msg)) {
+          this.selectedConfigs.push(msg);
+        }
+      }
+    }
+  }
+
+  goToConfig() {
+    if (this.selectedConfigs.length === 0) return;
     this.view = 'config';
+    this.activeConfig = this.selectedConfigs[0];
+    this.generatedMessages = [];
     this.expandedIndex = null;
 
-    // If blocks haven't been loaded yet, fetch from backend
-    if (cfg.blocks.length === 0) {
-      this.loadBlocksFromBackend(cfg);
-    } else {
-      // Pre-check mandatory blocks
-      cfg.blocks.forEach(b => {
-        this.blockChecked[b.id] = b.mandatory;
-      });
+    // Load blocks for each selected config
+    this.selectedConfigs.forEach(cfg => {
+      if (!this.blockChecked[cfg.id]) {
+        this.blockChecked[cfg.id] = {};
+        this.dependencyWarnings[cfg.id] = [];
+      }
+      if (cfg.blocks.length === 0) {
+        this.loadBlocksFromBackend(cfg);
+      } else {
+        this.initBlockChecked(cfg);
+      }
+    });
+  }
+
+  setActiveConfig(cfg: MessageTypeConfig) {
+    this.activeConfig = cfg;
+  }
+
+  private initBlockChecked(cfg: MessageTypeConfig) {
+    if (!this.blockChecked[cfg.id]) {
+      this.blockChecked[cfg.id] = {};
     }
+    cfg.blocks.forEach(b => {
+      if (this.blockChecked[cfg.id][b.id] === undefined) {
+        this.blockChecked[cfg.id][b.id] = b.mandatory;
+      }
+    });
+    this.updateDependencyWarnings(cfg);
   }
 
   private loadBlocksFromBackend(cfg: MessageTypeConfig) {
     this.loadingBlocks = true;
-    this.http.get<any>(this.config.getApiUrl(`/bulk-generate/blocks/${cfg.id}`)).subscribe({
+    this.http.get<any>(this.config.getApiUrl(`/bulk-generate/blocks/${cfg.bulkId}`)).subscribe({
       next: (res) => {
         const blocks: MessageBlock[] = (res.blocks || []).map((b: any) => ({
           id: b.id,
@@ -370,9 +449,7 @@ export class BulkGenerateComponent implements OnInit {
         this.loadingBlocks = false;
 
         // Pre-check mandatory blocks
-        cfg.blocks.forEach(b => {
-          this.blockChecked[b.id] = b.mandatory;
-        });
+        this.initBlockChecked(cfg);
       },
       error: () => {
         this.loadingBlocks = false;
@@ -385,56 +462,54 @@ export class BulkGenerateComponent implements OnInit {
 
   // ── Block Checkbox Logic ───────────────────────────────────────────────────
 
-  onBlockChange(blockId: string, checked: boolean) {
-    if (!this.selectedConfig) return;
+  onBlockChange(cfgId: string, blockId: string, checked: boolean) {
+    const cfg = this.selectedConfigs.find(c => c.id === cfgId);
+    if (!cfg) return;
 
-    const block = this.selectedConfig.blocks.find(b => b.id === blockId);
+    const block = cfg.blocks.find(b => b.id === blockId);
     if (!block || block.mandatory) return;  // mandatory blocks can't be toggled
 
-    this.blockChecked[blockId] = checked;
+    this.blockChecked[cfgId][blockId] = checked;
 
     if (checked) {
       // Auto-check required dependencies
-      this.autoCheckDependencies(blockId);
+      this.autoCheckDependencies(cfg, blockId);
     } else {
       // Uncheck blocks that depend on this one
-      this.autoClearDependents(blockId);
+      this.autoClearDependents(cfg, blockId);
     }
 
-    this.updateDependencyWarnings();
+    this.updateDependencyWarnings(cfg);
   }
 
-  private autoCheckDependencies(blockId: string) {
-    if (!this.selectedConfig) return;
-    const block = this.selectedConfig.blocks.find(b => b.id === blockId);
+  private autoCheckDependencies(cfg: MessageTypeConfig, blockId: string) {
+    const block = cfg.blocks.find(b => b.id === blockId);
     if (!block?.requires) return;
     block.requires.forEach(reqId => {
-      if (!this.blockChecked[reqId]) {
-        this.blockChecked[reqId] = true;
-        this.autoCheckDependencies(reqId);
+      if (!this.blockChecked[cfg.id][reqId]) {
+        this.blockChecked[cfg.id][reqId] = true;
+        this.autoCheckDependencies(cfg, reqId);
       }
     });
   }
 
-  private autoClearDependents(blockId: string) {
-    if (!this.selectedConfig) return;
-    this.selectedConfig.blocks
+  private autoClearDependents(cfg: MessageTypeConfig, blockId: string) {
+    cfg.blocks
       .filter(b => b.requires?.includes(blockId) && !b.mandatory)
       .forEach(dependent => {
-        this.blockChecked[dependent.id] = false;
-        this.autoClearDependents(dependent.id);
+        this.blockChecked[cfg.id][dependent.id] = false;
+        this.autoClearDependents(cfg, dependent.id);
       });
   }
 
-  private updateDependencyWarnings() {
-    if (!this.selectedConfig) return;
+  private updateDependencyWarnings(cfg: MessageTypeConfig) {
     const warnings: DependencyWarning[] = [];
 
-    this.selectedConfig.blocks.forEach(block => {
-      if (this.blockChecked[block.id] && block.requires) {
+    cfg.blocks.forEach(block => {
+      if (this.blockChecked[cfg.id][block.id] && block.requires) {
         block.requires.forEach(reqId => {
-          if (!this.blockChecked[reqId]) {
-            const reqBlock = this.selectedConfig!.blocks.find(b => b.id === reqId);
+          if (!this.blockChecked[cfg.id][reqId]) {
+            const reqBlock = cfg.blocks.find(b => b.id === reqId);
             if (reqBlock) {
               warnings.push({
                 blockId: block.id,
@@ -448,7 +523,7 @@ export class BulkGenerateComponent implements OnInit {
       }
     });
 
-    this.dependencyWarnings = warnings;
+    this.dependencyWarnings[cfg.id] = warnings;
   }
 
   // ── Count Validation ───────────────────────────────────────────────────────
@@ -468,80 +543,196 @@ export class BulkGenerateComponent implements OnInit {
 
   // ── Selected Blocks List ───────────────────────────────────────────────────
 
-  get selectedBlocks(): string[] {
-    return Object.entries(this.blockChecked)
+  getSelectedBlocks(cfgId: string): string[] {
+    if (!this.blockChecked[cfgId]) return [];
+    return Object.entries(this.blockChecked[cfgId])
       .filter(([, v]) => v)
       .map(([k]) => k);
   }
 
   get mandatoryBlocks(): MessageBlock[] {
-    return this.selectedConfig?.blocks.filter(b => b.mandatory) ?? [];
+    return this.activeConfig?.blocks.filter(b => b.mandatory) ?? [];
   }
 
   get optionalBlocks(): MessageBlock[] {
     const mandatoryIds = new Set(this.mandatoryBlocks.map(b => b.id));
-    return this.selectedConfig?.blocks.filter(b => !b.mandatory && !mandatoryIds.has(b.id)) ?? [];
+    return this.activeConfig?.blocks.filter(b => !b.mandatory && !mandatoryIds.has(b.id)) ?? [];
+  }
+
+  get allOptionalSelected(): boolean {
+    if (!this.activeConfig || this.optionalBlocks.length === 0) return false;
+    return this.optionalBlocks.every(b => this.blockChecked[this.activeConfig!.id]?.[b.id]);
+  }
+
+  toggleSelectAllOptional(): void {
+    if (!this.activeConfig) return;
+    const cfgId = this.activeConfig.id;
+    const newState = !this.allOptionalSelected;
+
+    for (const block of this.optionalBlocks) {
+      this.blockChecked[cfgId][block.id] = newState;
+      if (newState) {
+        this.autoCheckDependencies(this.activeConfig, block.id);
+      }
+    }
+
+    // If deselecting all, clear dependents too
+    if (!newState) {
+      for (const block of this.optionalBlocks) {
+        this.autoClearDependents(this.activeConfig, block.id);
+      }
+    }
+
+    this.updateDependencyWarnings(this.activeConfig);
+  }
+
+  get allOptionalSelectedGlobally(): boolean {
+    if (this.selectedConfigs.length === 0) return false;
+    for (const cfg of this.selectedConfigs) {
+      const mandatoryIds = new Set(cfg.blocks.filter(b => b.mandatory).map(b => b.id));
+      const optBlocks = cfg.blocks.filter(b => !b.mandatory && !mandatoryIds.has(b.id));
+      if (optBlocks.length === 0) continue;
+      const allCheckedForCfg = optBlocks.every(b => this.blockChecked[cfg.id]?.[b.id]);
+      if (!allCheckedForCfg) return false;
+    }
+    return true;
+  }
+
+  toggleSelectAllGlobally(): void {
+    if (this.selectedConfigs.length === 0) return;
+    const newState = !this.allOptionalSelectedGlobally;
+
+    for (const cfg of this.selectedConfigs) {
+      const cfgId = cfg.id;
+      const mandatoryIds = new Set(cfg.blocks.filter(b => b.mandatory).map(b => b.id));
+      const optBlocks = cfg.blocks.filter(b => !b.mandatory && !mandatoryIds.has(b.id));
+
+      for (const block of optBlocks) {
+        this.blockChecked[cfgId][block.id] = newState;
+        if (newState) {
+          this.autoCheckDependencies(cfg, block.id);
+        } else {
+          this.autoClearDependents(cfg, block.id);
+        }
+      }
+      this.updateDependencyWarnings(cfg);
+    }
   }
 
   get canGenerate(): boolean {
-    return !!(
-      this.selectedConfig &&
-      !this.messageCountError &&
-      this.messageCount >= 1 &&
-      this.dependencyWarnings.length === 0 &&
-      this.selectedConfig.blocks.length > 0
-    );
+    if (this.selectedConfigs.length === 0) return false;
+    if (this.messageCountError || this.messageCount < 1) return false;
+
+    for (const cfg of this.selectedConfigs) {
+      if ((this.dependencyWarnings[cfg.id]?.length || 0) > 0) return false;
+      if (this.getSelectedBlocks(cfg.id).length === 0) return false;
+    }
+
+    return true;
   }
 
   // ── Generation ─────────────────────────────────────────────────────────────
 
-  generate() {
-    if (!this.canGenerate || !this.selectedConfig) return;
+  scrollToLoading() {
+    this.loadingSection?.nativeElement?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  scrollToResults() {
+    this.resultsSection?.nativeElement?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  async generate() {
+    if (!this.canGenerate) return;
 
     this.isGenerating = true;
     this.generatedMessages = [];
-    this.generationStats = null;
+    this.generationStats = { requested: 0, produced: 0, totalAttempts: 0 };
 
-    const payload = {
-      message_type: this.selectedConfig.id,
-      count: this.messageCount,
-      selected_blocks: this.selectedBlocks
-    };
+    const totalRequested = this.messageCount * this.selectedConfigs.length;
+    this.generationStats.requested = totalRequested;
 
-    this.http.post<any>(this.config.getApiUrl('/bulk-generate'), payload).subscribe({
-      next: (res) => {
-        this.generatedMessages = res.messages || [];
-        this.isGenerating = false;
-        this.expandedIndex = null;
+    // Scroll to loading section
+    setTimeout(() => this.scrollToLoading(), 50);
 
-        // Store generation stats for display
-        this.generationStats = {
-          requested: res.requested || this.messageCount,
-          produced: res.count || 0,
-          totalAttempts: res.total_attempts || 0
-        };
+    let globalIndex = 1;
+    let hasError = false;
 
-        // Backend guarantees exactly N valid messages — always show success
-        this.view = 'results';
-        this.snackBar.open(
-          `✅ Generated ${res.count} valid messages successfully.`,
-          'Close',
-          { duration: 4000, horizontalPosition: 'center', verticalPosition: 'bottom' }
-        );
-      },
-      error: (err) => {
-        this.isGenerating = false;
-        // Handle both string detail and object detail from HTTP 500 catastrophic errors
+    for (const cfg of this.selectedConfigs) {
+      const payload = {
+        message_type: cfg.bulkId,
+        count: this.messageCount,
+        selected_blocks: this.getSelectedBlocks(cfg.id)
+      };
+
+      try {
+        const res = await this.http.post<any>(this.config.getApiUrl('/bulk-generate'), payload).toPromise();
+        
+        const msgs = res.messages || [];
+        msgs.forEach((m: any) => {
+          m.index = globalIndex++;
+          this.generatedMessages.push(m);
+        });
+
+        this.generationStats.produced += (res.count || 0);
+        this.generationStats.totalAttempts += (res.total_attempts || 0);
+
+      } catch (err: any) {
+        hasError = true;
         const detail = typeof err?.error?.detail === 'string'
           ? err.error.detail
-          : err?.error?.detail?.message || err?.message || 'Generation failed. Please try again.';
-        this.snackBar.open(`❌ ${detail}`, 'Close', {
-          duration: 8000,
+          : err?.error?.detail?.message || err?.message || `Generation failed for ${cfg.label}.`;
+        
+        // Add a visible error entry so the user can see which type failed
+        this.generatedMessages.push({
+          index: globalIndex++,
+          xml: `<!-- Generation failed: ${detail} -->`,
+          message_type: cfg.bulkId,
+          status: 'error',
+          error: detail
+        });
+
+        this.snackBar.open(`⚠️ ${cfg.label}: ${detail}`, 'Close', {
+          duration: 6000,
           horizontalPosition: 'center',
           verticalPosition: 'bottom'
         });
+        continue; // Continue with next message type instead of stopping
       }
-    });
+    }
+
+    // Group the messages by message type
+    const groupMap = new Map<string, GroupedMessage>();
+    for (const msg of this.generatedMessages) {
+      if (!groupMap.has(msg.message_type)) {
+        groupMap.set(msg.message_type, {
+          message_type: msg.message_type,
+          messages: [],
+          status: 'VALIDATED',
+          expanded: false,
+          activeMessageIndex: 0
+        });
+      }
+      const group = groupMap.get(msg.message_type)!;
+      group.messages.push(msg);
+      if (msg.status === 'error') {
+        group.status = 'ERROR';
+      }
+    }
+    this.groupedMessages = Array.from(groupMap.values());
+
+    this.isGenerating = false;
+    this.expandedIndex = null;
+
+    if (!hasError || this.generatedMessages.length > 0) {
+      this.view = 'results';
+      // Scroll to results
+      setTimeout(() => this.scrollToResults(), 100);
+      this.snackBar.open(
+        `✅ Generated ${this.generatedMessages.length} valid messages successfully.`,
+        'Close',
+        { duration: 4000, horizontalPosition: 'center', verticalPosition: 'bottom' }
+      );
+    }
   }
 
   // ── Results Actions ────────────────────────────────────────────────────────
@@ -560,17 +751,39 @@ export class BulkGenerateComponent implements OnInit {
     const blob = new Blob([msg.xml], { type: 'application/xml' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = `${this.selectedConfig?.id || 'message'}-${String(msg.index).padStart(4, '0')}.xml`;
+    const cfg = this.getConfigForMessage(msg.message_type);
+    a.download = `${cfg?.id || 'message'}-${String(msg.index).padStart(4, '0')}.xml`;
     a.click();
     URL.revokeObjectURL(a.href);
   }
 
   async downloadAll() {
-    if (!this.generatedMessages.length) return;
+    const combined = this.generatedMessages
+      .map(m => {
+        // Remove XML declaration and trim
+        let xml = m.xml.replace(/<\?xml.*\?>/g, '').trim();
+        // Indent each line for better readability in the bulk file
+        return xml.split('\n').map(line => '  ' + line).join('\n');
+      })
+      .join('\n\n');
+    
+    const finalXml = `<?xml version="1.0" encoding="UTF-8"?>\n<BulkMessages>\n${combined}\n</BulkMessages>`;
+    
+    const blob = new Blob([finalXml], { type: 'application/xml' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    const msgId = this.selectedConfigs.length === 1 ? this.selectedConfigs[0].id : 'bulk';
+    a.download = `${msgId}-${this.generatedMessages.length}-combined.xml`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
+
+  async downloadZip() {
     const zip = new JSZip();
-    const msgId = this.selectedConfig?.id || 'bulk';
+    const msgId = this.selectedConfigs.length === 1 ? this.selectedConfigs[0].id : 'bulk';
     this.generatedMessages.forEach(m => {
-      const filename = `${msgId}-${String(m.index).padStart(4, '0')}.xml`;
+      const cfg = this.selectedConfigs.find(c => c.bulkId === m.message_type) || this.selectedConfigs[0];
+      const filename = `${cfg.id}-${String(m.index).padStart(4, '0')}.xml`;
       zip.file(filename, m.xml);
     });
     const blob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } });
@@ -581,15 +794,47 @@ export class BulkGenerateComponent implements OnInit {
     URL.revokeObjectURL(a.href);
   }
 
-  downloadZip() {
-    // Download each XML as individual file by triggering multiple downloads
-    this.generatedMessages.forEach((msg, i) => {
-      setTimeout(() => this.downloadXml(msg), i * 80);
+  async downloadGroupZip(group: GroupedMessage) {
+    const zip = new JSZip();
+    const cfg = this.selectedConfigs.find(c => c.bulkId === group.message_type) || { id: group.message_type };
+    
+    group.messages.forEach((m, idx) => {
+      const filename = `${cfg.id}-${String(idx + 1).padStart(4, '0')}.xml`;
+      zip.file(filename, m.xml);
     });
+
+    const blob = await zip.generateAsync({ type: 'blob' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `${cfg.id}-${group.messages.length}-messages.zip`;
+    a.click();
+    URL.revokeObjectURL(a.href);
   }
+
+  downloadGroupCombined(group: GroupedMessage) {
+    const combined = group.messages
+      .map(m => m.xml.replace(/<\?xml[^>]*\?>/gi, '').trim())
+      .join('\n\n');
+    
+    const finalXml = `<?xml version="1.0" encoding="UTF-8"?>\n<BulkMessages>\n${combined}\n</BulkMessages>`;
+    
+    const cfg = this.selectedConfigs.find(c => c.bulkId === group.message_type) || { id: group.message_type };
+    const blob = new Blob([finalXml], { type: 'application/xml' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `${cfg.id}-${group.messages.length}-combined.xml`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
+
 
   backToConfig() {
     this.view = 'config';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  isMsgValid(m: any): boolean {
+    return m.status === 'VALID' || m.status === 'success';
   }
 
   regenerate() {
@@ -597,6 +842,16 @@ export class BulkGenerateComponent implements OnInit {
   }
 
   // ── Helpers ────────────────────────────────────────────────────────────────
+  
+  getConfigForMessage(msgType: string): MessageTypeConfig | undefined {
+    let match = this.selectedConfigs.find(c => c.bulkId === msgType || c.id === msgType);
+    if (match) return match;
+
+    // Handle case where backend returns e.g., 'pacs.008.001.08' but config has bulkId 'pacs.008'
+    // Sort to ensure more specific bulkIds (like pacs.009.adv) are checked before pacs.009
+    const sortedConfigs = [...this.selectedConfigs].sort((a, b) => b.bulkId.length - a.bulkId.length);
+    return sortedConfigs.find(c => msgType.startsWith(c.bulkId));
+  }
 
   getFamilyClass(family: string): string {
     return family.toLowerCase();

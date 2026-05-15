@@ -20,12 +20,12 @@
 
   <!-- ══════════════════ STEP PROGRESS BAR ══════════════════ -->
   <div class="steps-bar">
-    <div class="step" [class.active]="!selectedConfig" [class.done]="!!selectedConfig">
+    <div class="step" [class.active]="view === 'select'" [class.done]="view !== 'select'">
       <div class="step-num">1</div>
-      <span>Select Message Type</span>
+      <span>Select Message Type(s)</span>
     </div>
     <div class="step-sep"></div>
-    <div class="step" [class.active]="!!selectedConfig && view === 'config'" [class.done]="view === 'results'">
+    <div class="step" [class.active]="view === 'config'" [class.done]="view === 'results'">
       <div class="step-num">2</div>
       <span>Configure &amp; Select Blocks</span>
     </div>
@@ -37,12 +37,16 @@
   </div>
 
   <!-- ══════════════════ MESSAGE TYPE SELECTOR ══════════════════ -->
-  <div class="section" *ngIf="view === 'config'">
+  <div class="section" *ngIf="view === 'select'">
     <div class="section-header">
       <mat-icon class="section-icon">grid_view</mat-icon>
-      <span>Select Message Type</span>
+      <span>Select Message Type(s)</span>
       <span class="msg-total-count" *ngIf="!searchQuery.trim()">{{ messageConfigs.length }} message types available</span>
       <span class="msg-total-count search-result-count" *ngIf="searchQuery.trim()">{{ filteredMessageCount }} of {{ messageConfigs.length }} matching</span>
+      <button class="select-all-msg-btn" (click)="selectAllMessageTypes()">
+        <mat-icon>{{ allMessageTypesSelected ? 'deselect' : 'select_all' }}</mat-icon>
+        {{ allMessageTypesSelected ? 'Deselect All' : 'Select All' }}
+      </button>
     </div>
 
     <!-- Search Bar -->
@@ -106,20 +110,24 @@
     <div class="msg-families" *ngIf="!hasNoResults">
       <div class="msg-family-group" *ngFor="let family of filteredFamilies">
         <div class="family-header">
-          <span class="family-tag" [class]="'family-tag ' + family.name">{{ family.messages[0]?.family }}</span>
+          <span class="family-tag" [class]="'family-tag ' + family.name">{{ family.messages.length > 0 ? family.messages[0].family : '' }}</span>
           <span class="family-label">{{ family.label }}</span>
           <span class="family-count">{{ family.messages.length }}</span>
+          <button class="family-select-all-btn" (click)="toggleFamilySelectAll(family); $event.stopPropagation()">
+            <mat-icon>{{ isFamilyAllSelected(family) ? 'deselect' : 'select_all' }}</mat-icon>
+            {{ isFamilyAllSelected(family) ? 'Deselect All' : 'Select All' }}
+          </button>
         </div>
         <div class="msg-type-grid">
           <div
             *ngFor="let cfg of family.messages"
             class="msg-card"
-            [class.selected]="selectedConfig?.id === cfg.id && selectedConfig?.label === cfg.label"
-            (click)="selectMessageType(cfg)"
+            [class.selected]="isSelected(cfg)"
+            (click)="toggleMessageType(cfg)"
           >
             <div class="msg-card-top">
               <span class="msg-tag" [class]="'msg-tag ' + cfg.badge">{{ cfg.family }}</span>
-              <mat-icon class="msg-card-check" *ngIf="selectedConfig?.id === cfg.id && selectedConfig?.label === cfg.label">check_circle</mat-icon>
+              <mat-icon class="msg-card-check" *ngIf="isSelected(cfg)">check_circle</mat-icon>
             </div>
             <div class="msg-card-label">{{ cfg.label }}</div>
             <div class="msg-card-desc">{{ cfg.description }}</div>
@@ -128,10 +136,26 @@
         </div>
       </div>
     </div>
+
+    <!-- Multi-select Footer -->
+    <div class="selection-footer" *ngIf="selectedConfigs.length > 0" style="margin-top: 2rem; display: flex; align-items: center; justify-content: space-between; padding: 1.5rem; background: var(--bg-card); border-radius: 12px; border: 1px solid var(--border-color);">
+      <div class="selection-summary" style="font-size: 1.1rem; color: var(--text-primary);">
+        <strong>{{ selectedConfigs.length }}</strong> message type(s) selected
+      </div>
+      <button class="btn-primary" (click)="goToConfig()" style="display: flex; align-items: center; gap: 8px;">
+        Continue to Configuration <mat-icon style="font-size: 20px; width: 20px; height: 20px;">arrow_forward</mat-icon>
+      </button>
+    </div>
   </div>
 
   <!-- ══════════════════ CONFIGURATION PANEL ══════════════════ -->
-  <ng-container *ngIf="selectedConfig && view === 'config'">
+  <ng-container *ngIf="view === 'config'">
+
+    <div class="config-header-actions" style="margin-bottom: 1.5rem;">
+      <button class="btn-secondary" (click)="view = 'select'" style="display: flex; align-items: center; gap: 8px;">
+        <mat-icon style="font-size: 18px; width: 18px; height: 18px;">arrow_back</mat-icon> Back to Selection
+      </button>
+    </div>
 
     <!-- Loading Blocks -->
     <div class="section" *ngIf="loadingBlocks">
@@ -142,10 +166,10 @@
     </div>
 
     <!-- Message Count -->
-    <div class="section" *ngIf="!loadingBlocks && selectedConfig.blocks.length > 0">
+    <div class="section" *ngIf="!loadingBlocks && selectedConfigs.length > 0">
       <div class="section-header">
         <mat-icon class="section-icon">tag</mat-icon>
-        <span>Number of Messages to Generate</span>
+        <span>Number of Messages to Generate (per type)</span>
       </div>
       <div class="count-row">
         <div class="count-input-wrap" [class.invalid]="!!messageCountError">
@@ -169,21 +193,55 @@
       </div>
     </div>
 
+    <!-- Config Tabs -->
+    <div class="config-tabs-header" *ngIf="selectedConfigs.length > 0" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; margin-top: 24px;">
+      <span style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Message Configurations</span>
+      
+      <label class="select-all-toggle" (click)="toggleSelectAllGlobally(); $event.stopPropagation()">
+        <div class="block-checkbox" [class.checked]="allOptionalSelectedGlobally">
+          <mat-icon *ngIf="allOptionalSelectedGlobally">check</mat-icon>
+        </div>
+        <span class="select-all-label">{{ allOptionalSelectedGlobally ? 'Deselect All Globally' : 'Select All Optional Globally' }}</span>
+      </label>
+    </div>
+
+    <div class="config-tabs" *ngIf="selectedConfigs.length > 1" style="display: flex; gap: 10px; margin-bottom: 1rem; overflow-x: auto; padding-bottom: 8px;">
+      <div *ngFor="let cfg of selectedConfigs"
+           class="config-tab"
+           [class.active]="activeConfig?.id === cfg.id"
+           (click)="setActiveConfig(cfg)"
+           style="padding: 10px 16px; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-weight: 500; white-space: nowrap; transition: all 0.2s;">
+        {{ cfg.label }}
+        <mat-icon *ngIf="(dependencyWarnings[cfg.id]?.length || 0) > 0" style="color: #f59e0b; font-size: 18px; width: 18px; height: 18px;">warning</mat-icon>
+      </div>
+    </div>
+    
+    <style>
+      .config-tab.active {
+        background: var(--primary-light) !important;
+        border-color: var(--primary-color) !important;
+        color: var(--primary-color);
+      }
+      .config-tab:hover:not(.active) {
+        background: var(--bg-hover) !important;
+      }
+    </style>
+
     <!-- Block Selection -->
-    <div class="section" *ngIf="!loadingBlocks && selectedConfig.blocks.length > 0">
+    <div class="section" *ngIf="!loadingBlocks && activeConfig && activeConfig.blocks.length > 0">
       <div class="section-header">
         <mat-icon class="section-icon">checklist</mat-icon>
-        <span>Select Message Blocks — <span class="msg-label-inline">{{ selectedConfig.label }}</span></span>
-        <span class="block-summary">{{ selectedBlocks.length }} / {{ selectedConfig.blocks.length }} selected</span>
+        <span>Select Message Blocks — <span class="msg-label-inline">{{ activeConfig.id }} ({{ activeConfig.description }})</span></span>
+        <span class="block-summary">{{ getSelectedBlocks(activeConfig.id).length }} / {{ activeConfig.blocks.length }} selected</span>
       </div>
 
       <!-- Dependency Warnings -->
-      <div class="dep-warnings" *ngIf="dependencyWarnings.length > 0">
+      <div class="dep-warnings" *ngIf="(dependencyWarnings[activeConfig.id]?.length || 0) > 0">
         <div class="dep-warn-header">
           <mat-icon>warning</mat-icon>
           Dependency Requirements
         </div>
-        <div class="dep-warn-item" *ngFor="let w of dependencyWarnings">
+        <div class="dep-warn-item" *ngFor="let w of dependencyWarnings[activeConfig.id]">
           <mat-icon>subdirectory_arrow_right</mat-icon>
           <strong>{{ w.blockLabel }}</strong> requires <strong>{{ w.requiredLabel }}</strong> — please include it.
         </div>
@@ -218,22 +276,31 @@
           <div class="block-group-label">
             <mat-icon>tune</mat-icon> Optional Blocks
             <span class="block-group-count">{{ optionalBlocks.length }}</span>
+            <label class="select-all-toggle" (click)="toggleSelectAllOptional(); $event.stopPropagation()">
+              <div
+                class="block-checkbox"
+                [class.checked]="allOptionalSelected"
+              >
+                <mat-icon *ngIf="allOptionalSelected">check</mat-icon>
+              </div>
+              <span class="select-all-label">{{ allOptionalSelected ? 'Deselect All' : 'Select All' }}</span>
+            </label>
           </div>
           <div class="block-list">
             <label
               *ngFor="let block of optionalBlocks"
               class="block-item"
-              [class.checked]="blockChecked[block.id]"
+              [class.checked]="blockChecked[activeConfig.id][block.id]"
               [class.has-dep]="block.requires && block.requires.length > 0"
             >
               <div
                 class="block-checkbox"
-                [class.checked]="blockChecked[block.id]"
-                (click)="onBlockChange(block.id, !blockChecked[block.id])"
+                [class.checked]="blockChecked[activeConfig.id][block.id]"
+                (click)="onBlockChange(activeConfig.id, block.id, !blockChecked[activeConfig.id][block.id])"
               >
-                <mat-icon *ngIf="blockChecked[block.id]">check</mat-icon>
+                <mat-icon *ngIf="blockChecked[activeConfig.id][block.id]">check</mat-icon>
               </div>
-              <div class="block-info" (click)="onBlockChange(block.id, !blockChecked[block.id])">
+              <div class="block-info" (click)="onBlockChange(activeConfig.id, block.id, !blockChecked[activeConfig.id][block.id])">
                 <span class="block-label">{{ block.label }}</span>
                 <span
                   class="block-dep-hint"
@@ -252,11 +319,10 @@
     </div><!-- /section -->
 
     <!-- Generate Button -->
-    <div class="generate-bar" *ngIf="!loadingBlocks && selectedConfig.blocks.length > 0">
-      <div class="gen-summary" *ngIf="selectedConfig">
-        Generating <strong>{{ messageCount || 0 }}</strong> &times;
-        <strong>{{ selectedConfig.label }}</strong>
-        with <strong>{{ selectedBlocks.length }}</strong> blocks
+    <div class="generate-bar" *ngIf="!loadingBlocks && selectedConfigs.length > 0">
+      <div class="gen-summary">
+        Generating <strong>{{ messageCount * selectedConfigs.length || 0 }}</strong> total messages across
+        <strong>{{ selectedConfigs.length }}</strong> type(s).
       </div>
       <button
         class="btn-generate"
@@ -271,7 +337,7 @@
   </ng-container>
 
   <!-- ══════════════════════ LOADING OVERLAY ══════════════════════ -->
-  <div class="generating-overlay" *ngIf="isGenerating">
+  <div #loadingSection class="generating-overlay" *ngIf="isGenerating">
     <div class="generating-card">
       <div class="generating-spinner">
         <div class="spinner-ring"></div>
@@ -279,9 +345,12 @@
       </div>
       <div class="generating-title">Generating &amp; Validating…</div>
       <div class="generating-subtitle">
-        Creating <strong>{{ messageCount }}</strong> {{ selectedConfig?.label }} messages. 
+        Creating <strong>{{ messageCount * selectedConfigs.length }}</strong> total messages. 
         Running mandatory XSD and business rule validation for each sample.
-        Please wait.
+        Please wait while we finalize the ISO 20022 compliance.
+      </div>
+      <div class="generating-progress-bar">
+        <div class="progress-fill"></div>
       </div>
     </div>
   </div>
@@ -290,26 +359,27 @@
   <ng-container *ngIf="view === 'results'">
 
     <!-- Results Toolbar -->
-    <div class="results-toolbar">
+    <div #resultsSection class="results-toolbar">
       <div class="results-info">
         <mat-icon style="color: #4caf50">check_circle</mat-icon>
         <span>
-          <strong>{{ generatedMessages.length }}</strong> valid messages generated
-          <span class="results-type">— {{ selectedConfig?.label }}</span>
+          <strong>{{ generatedMessages.filter(isMsgValid).length }}</strong> valid messages generated
+          <span class="results-type" *ngIf="selectedConfigs.length === 1">— {{ selectedConfigs[0].label }}</span>
+          <span class="results-type" *ngIf="selectedConfigs.length > 1">— Multiple Types</span>
         </span>
       </div>
       <div class="results-actions">
         <button class="btn-secondary" (click)="backToConfig()">
           <mat-icon>arrow_back</mat-icon> Back
         </button>
-        <button class="btn-secondary" (click)="regenerate()" [disabled]="isGenerating">
+        <button class="btn-secondary" (click)="generate()" [disabled]="isGenerating">
           <mat-icon>refresh</mat-icon> Regenerate
         </button>
-        <button class="btn-download" (click)="downloadAll()">
-          <mat-icon>download</mat-icon> Download All (Combined)
+        <button class="btn-download" (click)="downloadAll()" matTooltip="Download all messages in a single XML file">
+          <mat-icon>description</mat-icon> Combined XML
         </button>
-        <button class="btn-download-zip" (click)="downloadZip()">
-          <mat-icon>folder_zip</mat-icon> Download Individually
+        <button class="btn-download-zip" (click)="downloadZip()" matTooltip="Download each message as a separate XML file in a ZIP">
+          <mat-icon>folder_zip</mat-icon> Individual XMLs (ZIP)
         </button>
       </div>
     </div>
@@ -320,59 +390,85 @@
       <div class="results-header-row">
         <span class="col-idx">#</span>
         <span class="col-type">Message Type</span>
-        <span class="col-lines">Lines</span>
+        <span class="col-lines">Count</span>
         <span class="col-status">Status</span>
         <span class="col-actions">Actions</span>
       </div>
 
       <div
-        *ngFor="let msg of generatedMessages; trackBy: trackByIndex"
+        *ngFor="let group of groupedMessages; let gIndex = index"
         class="result-row"
-        [class.expanded]="expandedIndex === msg.index"
-        [class.error-row]="msg.status === 'error'"
+        [class.expanded]="group.expanded"
+        [class.error-row]="group.status === 'ERROR'"
       >
-        <div class="result-row-main" (click)="toggleExpand(msg.index)">
-          <span class="col-idx">{{ msg.index }}</span>
+        <div class="result-row-main" (click)="group.expanded = !group.expanded">
+          <span class="col-idx">{{ gIndex + 1 }}</span>
           <span class="col-type">
-            <span class="msg-tag" [class]="'msg-tag ' + (selectedConfig?.badge || 'pacs')">
-              {{ selectedConfig?.family }}
+            <span class="msg-tag" [class]="'msg-tag ' + (getConfigForMessage(group.message_type)?.badge || 'pacs')">
+              {{ getConfigForMessage(group.message_type)?.family }}
             </span>
-            {{ selectedConfig?.label }}
+            <span style="font-family: 'JetBrains Mono', monospace; font-weight: 600; letter-spacing: -0.5px;">{{ getConfigForMessage(group.message_type)?.label || group.message_type }}</span>
           </span>
-          <span class="col-lines">{{ getLineCount(msg.xml) }}</span>
+          <span class="col-lines" style="display: flex; align-items: center; gap: 6px;">
+            <span style="background: var(--bg-card-hover); padding: 4px 10px; border-radius: 6px; font-weight: 700; color: var(--text-main);">{{ group.messages.length }}</span> 
+            <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">{{ group.messages.length === 1 ? 'msg' : 'msgs' }}</span>
+          </span>
           <span class="col-status">
-            <span class="status-badge" [class.status-valid]="msg.status === 'VALID'" [class.status-error]="msg.status === 'error'">
-              <mat-icon>{{ msg.status === 'error' ? 'error' : 'verified_user' }}</mat-icon>
-              {{ msg.status === 'error' ? 'Error' : 'Validated' }}
+            <span class="status-badge" [class.status-valid]="group.status !== 'ERROR'" [class.status-error]="group.status === 'ERROR'">
+              <mat-icon>{{ group.status === 'ERROR' ? 'error' : 'verified_user' }}</mat-icon>
+              {{ group.status === 'ERROR' ? 'Error' : 'Validated' }}
             </span>
           </span>
           <span class="col-actions" (click)="$event.stopPropagation()">
-            <button class="icon-btn" (click)="copyXml(msg)" matTooltip="Copy XML">
-              <mat-icon>content_copy</mat-icon>
+            <button class="icon-btn action-btn" (click)="downloadGroupZip(group)" matTooltip="Download ZIP (Individual Files)" style="margin-right: 8px;">
+              <mat-icon>folder_zip</mat-icon>
             </button>
-            <button class="icon-btn" (click)="downloadXml(msg)" matTooltip="Download XML">
+            <button class="icon-btn action-btn" (click)="downloadGroupCombined(group)" matTooltip="Download Combined XML" style="margin-right: 16px;">
               <mat-icon>download</mat-icon>
             </button>
-            <button class="icon-btn expand-btn" (click)="toggleExpand(msg.index)" [matTooltip]="expandedIndex === msg.index ? 'Collapse' : 'Preview'">
-              <mat-icon>{{ expandedIndex === msg.index ? 'expand_less' : 'expand_more' }}</mat-icon>
+            <button class="icon-btn expand-btn" (click)="group.expanded = !group.expanded" [matTooltip]="group.expanded ? 'Collapse' : 'Expand'">
+              <mat-icon>{{ group.expanded ? 'expand_less' : 'expand_more' }}</mat-icon>
             </button>
           </span>
         </div>
 
-        <!-- Expanded XML Preview -->
-        <div class="result-xml" *ngIf="expandedIndex === msg.index">
-          <div class="xml-toolbar">
-            <span class="xml-label">XML Preview — Message {{ msg.index }}</span>
-            <div class="xml-actions">
-              <button class="icon-btn" (click)="copyXml(msg)" matTooltip="Copy">
-                <mat-icon>content_copy</mat-icon>
+        <!-- Expanded XML Preview with Tabs -->
+        <div class="result-xml" *ngIf="group.expanded" style="margin: 16px; border-radius: 12px; overflow: hidden; border: 1px solid var(--border-color); box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+          
+          <!-- Tab Bar & Toolbar -->
+          <div class="editor-header" style="display: flex; justify-content: space-between; align-items: flex-end; background: var(--bg-card); padding: 8px 16px 0; border-bottom: 1px solid var(--border-color);">
+            <div class="msg-tabs" style="display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none;">
+              <div 
+                *ngFor="let m of group.messages; let i = index"
+                class="msg-tab"
+                (click)="group.activeMessageIndex = i"
+                style="padding: 10px 20px; cursor: pointer; font-size: 13px; font-weight: 600; border-radius: 8px 8px 0 0; display: flex; align-items: center; gap: 8px; white-space: nowrap; transition: all 0.2s;"
+                [style.background]="group.activeMessageIndex === i ? 'var(--bg-body)' : 'transparent'"
+                [style.color]="group.activeMessageIndex === i ? 'var(--primary-color)' : 'var(--text-muted)'"
+                [style.border]="group.activeMessageIndex === i ? '1px solid var(--border-color)' : '1px solid transparent'"
+                [style.border-bottom-color]="group.activeMessageIndex === i ? 'var(--bg-body)' : 'transparent'"
+                [style.margin-bottom]="group.activeMessageIndex === i ? '-1px' : '0'"
+              >
+                <mat-icon style="font-size: 16px; width: 16px; height: 16px;">{{ m.status === 'error' ? 'error' : 'code' }}</mat-icon>
+                Message_{{ i + 1 }}.xml
+                <span *ngIf="m.status === 'error'" style="width: 6px; height: 6px; border-radius: 50%; background: var(--error-color); margin-left: 4px;"></span>
+              </div>
+            </div>
+            
+            <div *ngIf="group.messages[group.activeMessageIndex] as activeMsg" class="xml-actions" style="display: flex; gap: 8px; padding-bottom: 8px; align-items: center;">
+              <button class="icon-btn" (click)="copyXml(activeMsg)" matTooltip="Copy XML" style="background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-main); width: 32px; height: 32px; border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s;">
+                <mat-icon style="font-size: 18px; width: 18px; height: 18px;">content_copy</mat-icon>
               </button>
-              <button class="icon-btn" (click)="downloadXml(msg)" matTooltip="Download">
-                <mat-icon>download</mat-icon>
+              <button class="icon-btn" (click)="downloadXml(activeMsg)" matTooltip="Download XML" style="background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-main); width: 32px; height: 32px; border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s;">
+                <mat-icon style="font-size: 18px; width: 18px; height: 18px;">download</mat-icon>
               </button>
             </div>
           </div>
-          <pre class="xml-content">{{ msg.xml }}</pre>
+
+          <!-- Code Content -->
+          <div *ngIf="group.messages[group.activeMessageIndex] as activeMsg" style="background: var(--bg-body); position: relative;">
+            <pre class="xml-content" style="margin: 0; max-height: 400px; overflow-y: auto; overflow-x: auto; font-family: 'Consolas', 'JetBrains Mono', 'Fira Code', monospace; font-size: 13px; line-height: 1.6; padding: 20px; color: var(--text-main); tab-size: 2;">{{ activeMsg.xml }}</pre>
+          </div>
         </div>
       </div>
 
