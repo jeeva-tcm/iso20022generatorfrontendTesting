@@ -11,8 +11,9 @@
                     <div class="draft-banner" *ngIf="showDraftBanner">
                         <mat-icon>restore</mat-icon>
                         <span>Draft restored from your last session.</span>
-                        <button type="button" class="draft-clear-btn" (click)="clearDraft()">
-                            <mat-icon>close</mat-icon> Clear
+                        <button type="button" class="draft-clear-btn" [class.clearing]="isClearingDraft" (click)="clearDraft(true)" [disabled]="isClearingDraft">
+                            <ng-container *ngIf="!isClearingDraft"><mat-icon>close</mat-icon> Clear</ng-container>
+                            <ng-container *ngIf="isClearingDraft"><span class="draft-clear-spinner"></span> Clearing...</ng-container>
                         </button>
                     </div>
 
@@ -372,7 +373,7 @@
                         </div>
                         <div class="form-group">
                             <label>Creation Date (AppHdr) <span class="req">*</span></label>
-                            <input formControlName="creDtTm">
+                            <input formControlName="creDtTm" placeholder="YYYY-MM-DDThh:mm:ss±hh:mm">
                             <div class="validation-msg" *ngIf="err('creDtTm') as e">{{e}}</div>
                         </div>
                     </div>
@@ -477,12 +478,12 @@
                     </div>
                     <div class="form-group">
                         <label>From Date</label>
-                        <input type="datetime-local" formControlName="frDtTm" step="1">
+                        <input type="datetime-local" formControlName="frDtTm" step="1" placeholder="YYYY-MM-DDTHH:mm:ss">
                         <div class="validation-msg" *ngIf="err('frDtTm') as e">{{e}}</div>
                     </div>
                     <div class="form-group">
                         <label>To Date</label>
-                        <input type="datetime-local" formControlName="toDtTm" step="1">
+                        <input type="datetime-local" formControlName="toDtTm" step="1" placeholder="YYYY-MM-DDTHH:mm:ss">
                         <div class="validation-msg" *ngIf="err('toDtTm') as e">{{e}}</div>
                     </div>
                     <div class="form-group">
@@ -631,7 +632,7 @@
                     </div>
                     <div class="form-group">
                         <label>Balance Date <span class="req">*</span></label>
-                        <input type="date" formControlName="balDt">
+                        <input type="date" formControlName="balDt" min="0001-01-01" max="9999-12-31">
                         <div class="validation-msg" *ngIf="err('balDt') as e">{{e}}</div>
                     </div>
 
@@ -671,7 +672,7 @@
                         </div>
                         <div class="form-group">
                             <label>Date</label>
-                            <input type="date" formControlName="bal2Dt">
+                            <input type="date" formControlName="bal2Dt" min="0001-01-01" max="9999-12-31">
                             <div class="validation-msg" *ngIf="err('bal2Dt') as e">{{e}}</div>
                         </div>
                     </ng-container>
@@ -717,12 +718,12 @@
                     </div>
                     <div class="form-group">
                         <label>Booking Date</label>
-                        <input type="date" formControlName="ntryBookgDt">
+                        <input type="date" formControlName="ntryBookgDt" min="0001-01-01" max="9999-12-31">
                         <div class="validation-msg" *ngIf="err('ntryBookgDt') as e">{{e}}</div>
                     </div>
                     <div class="form-group">
                         <label>Value Date</label>
-                        <input type="date" formControlName="ntryValDt">
+                        <input type="date" formControlName="ntryValDt" min="0001-01-01" max="9999-12-31">
                         <div class="validation-msg" *ngIf="err('ntryValDt') as e">{{e}}</div>
                     </div>
                     <div class="form-group">
@@ -738,7 +739,7 @@
                     </div>
                     <div class="form-group">
                         <label>Availability Date (ActlDt)</label>
-                        <input type="date" formControlName="ntryAvlbtyDt">
+                        <input type="date" formControlName="ntryAvlbtyDt" min="0001-01-01" max="9999-12-31">
                         <div class="validation-msg" *ngIf="err('ntryAvlbtyDt') as e">{{e}}</div>
                     </div>
                     <div class="form-group">
@@ -1032,21 +1033,21 @@
         <div class="right-panel">
             <div class="bottom-actions" style="margin-top: 0; margin-bottom: 1rem;">
                 <div class="down">
-                    <button class="action-btn copy-btn" (click)="copyToClipboard()"><mat-icon>content_copy</mat-icon>
+                    <button type="button" class="action-btn copy-btn" (click)="copyToClipboard()"><mat-icon>content_copy</mat-icon>
                         Copy XML</button>
-                    <button class="action-btn" (click)="downloadXml()"><mat-icon>download</mat-icon> Download
+                    <button type="button" class="action-btn" (click)="downloadXml()"><mat-icon>download</mat-icon> Download
                         XML</button>
-                    <button class="action-btn validate-btn" (click)="validateMessage()"
+                    <button type="button" class="action-btn validate-btn" (click)="validateMessage()"
                         [disabled]="form.invalid"><mat-icon>verified</mat-icon> Validate Message</button>
                 </div>
             </div>
             <div class="content-box preview-box">
                 <div class="up">
-                    <button class="action-btn-small" (click)="undoXml()"
+                    <button type="button" class="action-btn-small" (click)="undoXml()"
                         [disabled]="!canUndoXml()"><mat-icon>undo</mat-icon></button>
-                    <button class="action-btn-small" (click)="redoXml()"
+                    <button type="button" class="action-btn-small" (click)="redoXml()"
                         [disabled]="!canRedoXml()"><mat-icon>redo</mat-icon></button>
-                    <button class="action-btn-small"
+                    <button type="button" class="action-btn-small"
                         (click)="formatXml()"><mat-icon>format_align_left</mat-icon></button>
                     <!-- <button class="action-btn-small"
                         (click)="toggleCommentXml()"><mat-icon>mode_comment</mat-icon></button> -->

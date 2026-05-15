@@ -11,8 +11,9 @@
                     <div class="draft-banner" *ngIf="showDraftBanner">
                         <mat-icon>restore</mat-icon>
                         <span>Draft restored from your last session.</span>
-                        <button type="button" class="draft-clear-btn" (click)="clearDraft()">
-                            <mat-icon>close</mat-icon> Clear
+                        <button type="button" class="draft-clear-btn" [class.clearing]="isClearingDraft" (click)="clearDraft(true)" [disabled]="isClearingDraft">
+                            <ng-container *ngIf="!isClearingDraft"><mat-icon>close</mat-icon> Clear</ng-container>
+                            <ng-container *ngIf="isClearingDraft"><span class="draft-clear-spinner"></span> Clearing...</ng-container>
                         </button>
                     </div>
 
@@ -47,7 +48,7 @@
                         <div class="validation-msg" *ngIf="err('msgId') as e">{{e}}</div>
                         <div class="field-hint at-limit" *ngIf="hint('msgId', 35) as h">{{h}}</div>
                     </div>
-                    <div class="form-group intermediary-field"><label>Creation DateTime <span class="req">*</span></label><input formControlName="creDtTm" [attr.formControlName]="'creDtTm'">
+                    <div class="form-group intermediary-field"><label>Creation DateTime <span class="req">*</span></label><input formControlName="creDtTm" [attr.formControlName]="'creDtTm'" placeholder="YYYY-MM-DDThh:mm:ss±hh:mm">
                         <div class="validation-msg" *ngIf="err('creDtTm') as e">{{e}}</div>
                     </div>
                     <div class="form-group"><label>Number of Txns <span class="req">*</span></label><input formControlName="nbOfTxs" [attr.formControlName]="'nbOfTxs'" maxlength="15" pattern="^[1-9]\d{0,14}$" required>
@@ -63,6 +64,7 @@
                             <option value="INGD">INGD (Individual with Gvt)</option>
                             <option value="CLRG">CLRG (Clearing System)</option>
                         </select>
+                        <div class="validation-msg" *ngIf="err('sttlmMtd') as e">{{e}}</div>
                     </div>
 
                     <div class="section-title">Transaction Details</div>
@@ -369,6 +371,7 @@
                                     <option value="PHOB">PHOB</option>
                                     <option value="TELB">TELB</option>
                                 </select>
+                                <div class="validation-msg" *ngIf="err('covInstrForCdtrAgt1Cd') as e">{{e}}</div>
                             </div>
                             <div class="form-group">
                                 <label>Information</label>
@@ -390,6 +393,7 @@
                                     <option value="PHOB">PHOB</option>
                                     <option value="TELB">TELB</option>
                                 </select>
+                                <div class="validation-msg" *ngIf="err('covInstrForCdtrAgt2Cd') as e">{{e}}</div>
                             </div>
                             <div class="form-group">
                                 <label>Information</label>
@@ -412,6 +416,7 @@
                                     <option value="PHOA">PHOA</option>
                                     <option value="TELA">TELA</option>
                                 </select>
+                                <div class="validation-msg" *ngIf="err('covInstrForNxtAgt' + i + 'Cd') as e">{{e}}</div>
                             </div>
                             <div class="form-group">
                                 <label>Information</label>
@@ -433,6 +438,7 @@
                                     <option value="ustrd">Unstructured Remittance</option>
                                     <option value="strd">Structured Remittance</option>
                                 </select>
+                                <div class="validation-msg" *ngIf="err('rmtInfType') as e">{{e}}</div>
                             </div>
 
                             <ng-container *ngIf="form.get('rmtInfType')?.value === 'ustrd'">
@@ -453,6 +459,7 @@
                                         <option value="SCOR">SCOR (Structured Creditor Ref)</option>
                                         <option value="CUST">CUST (Customer Ref)</option>
                                     </select>
+                                    <div class="validation-msg" *ngIf="err('rmtInfStrdCdtrRefType') as e">{{e}}</div>
                                 </div>
                                 <div class="form-group">
                                     <label>Creditor Reference</label>
@@ -502,18 +509,18 @@
         <div class="right-panel">
             <div class="bottom-actions" style="margin-top: 0; margin-bottom: 1rem;">
                 <div class="down">
-                    <button class="action-btn copy-btn" (click)="copyToClipboard()"><mat-icon>content_copy</mat-icon> Copy XML</button>
-                    <button class="action-btn" (click)="downloadXml()"><mat-icon>download</mat-icon> Download XML</button>
-                    <button class="action-btn validate-btn" (click)="validateMessage()" [disabled]="form.invalid"><mat-icon>verified</mat-icon> Validate Message</button>
+                    <button type="button" class="action-btn copy-btn" (click)="copyToClipboard()"><mat-icon>content_copy</mat-icon> Copy XML</button>
+                    <button type="button" class="action-btn" (click)="downloadXml()"><mat-icon>download</mat-icon> Download XML</button>
+                    <button type="button" class="action-btn validate-btn" (click)="validateMessage()" [disabled]="form.invalid"><mat-icon>verified</mat-icon> Validate Message</button>
                 </div>
             </div>
             <div class="content-box preview-box">
                 <div class="up">
-                    <button class="action-btn-small" (click)="undoXml()"
+                    <button type="button" class="action-btn-small" (click)="undoXml()"
                         [disabled]="!canUndoXml()"><mat-icon>undo</mat-icon></button>
-                    <button class="action-btn-small" (click)="redoXml()"
+                    <button type="button" class="action-btn-small" (click)="redoXml()"
                         [disabled]="!canRedoXml()"><mat-icon>redo</mat-icon></button>
-                    <button class="action-btn-small"
+                    <button type="button" class="action-btn-small"
                         (click)="formatXml()"><mat-icon>format_align_left</mat-icon></button>
                     <!-- <button class="action-btn-small"
                         (click)="toggleCommentXml()"><mat-icon>mode_comment</mat-icon></button> -->
@@ -565,6 +572,7 @@
                 <option value="unstructured">Unstructured</option>
                 <option value="hybrid">Hybrid</option>
             </select>
+            <div class="validation-msg" *ngIf="err(prefix+'AddrType') as e">{{e}}</div>
         </div>
 
         <!-- Dynamic Address Fields -->
@@ -606,6 +614,7 @@
                         <option value="">Select Country</option>
                         <option *ngFor="let c of countries" [value]="c">{{c}}</option>
                     </select>
+                    <div class="validation-msg" *ngIf="err(prefix + 'Ctry') as e">{{e}}</div>
                     <div class="validation-msg" *ngIf="err(prefix+'Ctry') as e">{{e}}</div>
                 </div>
                 <ng-container *ngIf="['unstructured','hybrid'].includes(form.get(prefix+'AddrType')?.value)">

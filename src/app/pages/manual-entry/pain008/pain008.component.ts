@@ -9,6 +9,7 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { ConfigService } from '../../../services/config.service';
 import { FormattingService } from '../../../services/formatting.service';
+import { debounceTime } from 'rxjs/operators';
 
 @Component({
   selector: 'app-pain008',
@@ -57,6 +58,7 @@ export class Pain008Component implements OnInit, OnDestroy {
   private readonly DRAFT_KEY = 'draft_pain008';
   private draftSaveTimer: ReturnType<typeof setTimeout> | null = null;
   showDraftBanner = false;
+  isClearingDraft = false;
 
   constructor(
     private dialog: MatDialog,
@@ -76,7 +78,7 @@ export class Pain008Component implements OnInit, OnDestroy {
     }
     this.generateXml();
     this.pushHistory();
-    this.form.valueChanges.subscribe(() => { this.updateConditionalValidators(); this.generateXml(); this.scheduleDraftSave(); });
+    this.form.valueChanges.pipe(debounceTime(300)).subscribe(() => { this.updateConditionalValidators(); this.generateXml(); this.scheduleDraftSave(); });
     this.updateConditionalValidators();
   }
 
@@ -1114,10 +1116,11 @@ ${grpHdr}${pmtInf}\t\t</CstmrDrctDbtInitn>
     } catch (e) { console.warn('Draft load failed:', e); return false; }
   }
 
-  clearDraft(): void {
+  clearDraft(reload = false): void {
+    this.isClearingDraft = reload;
     try { localStorage.removeItem(this.DRAFT_KEY); } catch (e) {}
     this.showDraftBanner = false;
-    window.location.reload();
+    if (reload) { setTimeout(() => window.location.reload(), 500); }
   }
 
   private scheduleDraftSave(): void {

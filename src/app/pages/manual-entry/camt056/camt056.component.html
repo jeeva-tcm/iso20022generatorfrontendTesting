@@ -1,7 +1,7 @@
-﻿<div class="container" (click)="$event.stopPropagation()">
+<div class="container" (click)="$event.stopPropagation()">
     <header>
         <h1>FI to FI Payment Cancellation Request (camt.056 SR2025) <mat-icon class="title-icon">cancel_schedule_send</mat-icon></h1>
-        <p>CBPR+ Usage Guideline • camt.056.001.08</p>
+        <p>CBPR+ Usage Guideline � camt.056.001.08</p>
     </header>
 
     <div class="split-view">
@@ -12,8 +12,9 @@
                     <div class="draft-banner" *ngIf="showDraftBanner">
                         <mat-icon>restore</mat-icon>
                         <span>Draft restored from your last session.</span>
-                        <button type="button" class="draft-clear-btn" (click)="clearDraft()">
-                            <mat-icon>close</mat-icon> Clear
+                        <button type="button" class="draft-clear-btn" [class.clearing]="isClearingDraft" (click)="clearDraft(true)" [disabled]="isClearingDraft">
+                            <ng-container *ngIf="!isClearingDraft"><mat-icon>close</mat-icon> Clear</ng-container>
+                            <ng-container *ngIf="isClearingDraft"><span class="draft-clear-spinner"></span> Clearing...</ng-container>
                         </button>
                     </div>
 
@@ -823,13 +824,13 @@
         <div class="right-panel">
             <div class="bottom-actions" style="margin-top: 0; margin-bottom: 1rem;">
                 <div class="down" style="display: flex; gap: 0.5rem; justify-content: flex-end; width: 100%;">
-                    <button class="action-btn copy-btn" (click)="copyToClipboard()">
+                    <button type="button" class="action-btn copy-btn" (click)="copyToClipboard()">
                         <mat-icon>content_copy</mat-icon> Copy XML
                     </button>
-                    <button class="action-btn" (click)="downloadXml()">
+                    <button type="button" class="action-btn" (click)="downloadXml()">
                         <mat-icon>download</mat-icon> Download XML
                     </button>
-                    <button class="action-btn validate-btn" (click)="validateMessage()">
+                    <button type="button" class="action-btn validate-btn" (click)="validateMessage()">
                          <mat-icon>verified</mat-icon> Validate Message
                     </button>
                 </div>
@@ -837,13 +838,13 @@
 
             <div class="content-box preview-box">
                 <div class="up" style="border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom: 0.5rem; margin-bottom: 0.5rem; display: flex; gap: 0.5rem;">
-                    <button class="action-btn-small" (click)="undoXml()" matTooltip="Undo">
+                    <button type="button" class="action-btn-small" (click)="undoXml()" matTooltip="Undo">
                         <mat-icon>undo</mat-icon>
                     </button>
-                    <button class="action-btn-small" (click)="redoXml()" matTooltip="Redo">
+                    <button type="button" class="action-btn-small" (click)="redoXml()" matTooltip="Redo">
                         <mat-icon>redo</mat-icon>
                     </button>
-                    <button class="action-btn-small" (click)="formatXml()" matTooltip="Format">
+                    <button type="button" class="action-btn-small" (click)="formatXml()" matTooltip="Format">
                         <mat-icon>format_align_left</mat-icon>
                     </button>
                 </div>

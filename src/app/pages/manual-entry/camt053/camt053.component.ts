@@ -11,6 +11,7 @@ import { BicSearchDialogComponent } from '../bic-search-dialog/bic-search-dialog
 import { ConfigService } from '../../../services/config.service';
 import { FormattingService } from '../../../services/formatting.service';
 import { UetrService } from '../../../services/uetr.service';
+import { debounceTime } from 'rxjs/operators';
 
 @Component({
     selector: 'app-camt053',
@@ -44,6 +45,7 @@ export class Camt053Component implements OnInit, OnDestroy {
     private readonly DRAFT_KEY = 'draft_camt053';
     private draftSaveTimer: ReturnType<typeof setTimeout> | null = null;
     showDraftBanner = false;
+    isClearingDraft = false;
 
     constructor(
         private fb: FormBuilder,
@@ -188,7 +190,7 @@ export class Camt053Component implements OnInit, OnDestroy {
           this.generateXml();
         }
 
-        this.form.valueChanges.subscribe(() => {
+        this.form.valueChanges.pipe(debounceTime(300)).subscribe(() => {
             this.scheduleDraftSave();
             this.generateXml();
         });
@@ -1422,10 +1424,11 @@ export class Camt053Component implements OnInit, OnDestroy {
         } catch (e) { console.warn('Draft load failed:', e); return false; }
     }
 
-    clearDraft(): void {
+    clearDraft(reload = false): void {
+        this.isClearingDraft = reload;
         try { localStorage.removeItem(this.DRAFT_KEY); } catch (e) {}
         this.showDraftBanner = false;
-        window.location.reload();
+        if (reload) { setTimeout(() => window.location.reload(), 500); }
     }
 
     private scheduleDraftSave(): void {

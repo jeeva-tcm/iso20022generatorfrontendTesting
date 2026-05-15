@@ -1403,3 +1403,11 @@ textarea.code-editor::-webkit-scrollbar-thumb {
 textarea.code-editor::-webkit-scrollbar-thumb:hover {
     background-color: #9ca3af; /* Darker Grey */
 }
+
+.validation-msg {
+    color: #ef4444;
+    font-size: 0.72rem;
+    font-weight: 600;
+    margin-top: 4px;
+    display: block;
+}

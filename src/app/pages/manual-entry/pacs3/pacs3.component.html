@@ -11,8 +11,9 @@
                                         <div class="draft-banner" *ngIf="showDraftBanner">
                                                 <mat-icon>restore</mat-icon>
                                                 <span>Draft restored from your last session.</span>
-                                                <button type="button" class="draft-clear-btn" (click)="clearDraft()">
-                                                        <mat-icon>close</mat-icon> Clear
+                                                <button type="button" class="draft-clear-btn" [class.clearing]="isClearingDraft" (click)="clearDraft(true)" [disabled]="isClearingDraft">
+                                                        <ng-container *ngIf="!isClearingDraft"><mat-icon>close</mat-icon> Clear</ng-container>
+                                                        <ng-container *ngIf="isClearingDraft"><span class="draft-clear-spinner"></span> Clearing...</ng-container>
                                                 </button>
                                         </div>
 
@@ -960,12 +961,12 @@
                         <div class="bottom-actions" style="margin-top: 0; margin-bottom: 1rem;">
                                 <!-- Simple History Actions -->
                                 <div class="down">
-                                        <button class="action-btn copy-btn"
+                                        <button type="button" class="action-btn copy-btn"
                                                 (click)="copyToClipboard()"><mat-icon>content_copy</mat-icon> Copy
                                                 XML</button>
-                                        <button class="action-btn" (click)="downloadXml()"><mat-icon>download</mat-icon>
+                                        <button type="button" class="action-btn" (click)="downloadXml()"><mat-icon>download</mat-icon>
                                                 Download XML</button>
-                                        <button class="action-btn validate-btn" (click)="validateMessage()" [disabled]="form.invalid">
+                                        <button type="button" class="action-btn validate-btn" (click)="validateMessage()" [disabled]="form.invalid">
                                                 <mat-icon>verified</mat-icon> Validate Message
                                         </button>
                                 </div>
@@ -977,15 +978,15 @@
                         <!-- XML Preview & Actions -->
                         <div class="content-box preview-box">
                                 <div class="up">
-                                        <button class="action-btn-small" (click)="undoXml()" [disabled]="!canUndoXml()"
+                                        <button type="button" class="action-btn-small" (click)="undoXml()" [disabled]="!canUndoXml()"
                                                 matTooltip="Undo (Ctrl+Z)">
                                                 <mat-icon>undo</mat-icon>
                                         </button>
-                                        <button class="action-btn-small" (click)="redoXml()" [disabled]="!canRedoXml()"
+                                        <button type="button" class="action-btn-small" (click)="redoXml()" [disabled]="!canRedoXml()"
                                                 matTooltip="Redo (Ctrl+Y)">
                                                 <mat-icon>redo</mat-icon>
                                         </button>
-                                        <button class="action-btn-small" (click)="formatXml()"
+                                        <button type="button" class="action-btn-small" (click)="formatXml()"
                                                 [disabled]="!generatedXml" matTooltip="Format XML (Ctrl+S)">
                                                 <mat-icon>format_align_left</mat-icon>
                                         </button>
@@ -1064,7 +1065,7 @@
                                                 <option value="">Select Country</option>
                                                 <option *ngFor="let c of countries" [value]="c">{{c}}</option>
                                         </select>
-                                        <div class="validation-msg" *ngIf="err(prefix+'Ctry') as e">{{e}}</div>
+                                        <div class="validation-msg" *ngIf="err(prefix + 'Ctry') as e">{{e}}</div>
                                 </div>
                                 <ng-container
                                         *ngIf="['unstructured','hybrid'].includes(form.get(prefix+'AddrType')?.value)">
@@ -1121,7 +1122,7 @@
                                 <option value="">Select Country</option>
                                 <option *ngFor="let c of countries" [value]="c">{{c}}</option>
                         </select>
-                        <div class="validation-msg" *ngIf="err(prefix+'CtryOfRes') as e">{{e}}</div>
+                        <div class="validation-msg" *ngIf="err(prefix + 'CtryOfRes') as e">{{e}}</div>
                 </div>
                 <!-- Name -->
                 <div class="form-group">

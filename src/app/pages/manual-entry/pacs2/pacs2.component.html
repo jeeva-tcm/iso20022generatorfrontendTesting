@@ -13,8 +13,9 @@
                     <div class="draft-banner" *ngIf="showDraftBanner">
                         <mat-icon>restore</mat-icon>
                         <span>Draft restored from your last session.</span>
-                        <button type="button" class="draft-clear-btn" (click)="clearDraft()">
-                            <mat-icon>close</mat-icon> Clear
+                        <button type="button" class="draft-clear-btn" [class.clearing]="isClearingDraft" (click)="clearDraft(true)" [disabled]="isClearingDraft">
+                            <ng-container *ngIf="!isClearingDraft"><mat-icon>close</mat-icon> Clear</ng-container>
+                            <ng-container *ngIf="isClearingDraft"><span class="draft-clear-spinner"></span> Clearing...</ng-container>
                         </button>
                     </div>
 
@@ -335,25 +336,25 @@
             <div class="bottom-actions" style="margin-top: 0; margin-bottom: 1rem;">
                                 <!-- Simple History Actions -->
                                 <div class="down">
-                                        <button class="action-btn copy-btn"
+                                        <button type="button" class="action-btn copy-btn"
                                                 (click)="copyToClipboard()"><mat-icon>content_copy</mat-icon> Copy
                                                 XML</button>
-                                        <button class="action-btn" (click)="downloadXml()"><mat-icon>download</mat-icon>
+                                        <button type="button" class="action-btn" (click)="downloadXml()"><mat-icon>download</mat-icon>
                                                 Download XML</button>
-                                        <button class="action-btn validate-btn" (click)="validateMessage()" [disabled]="form.invalid">
+                                        <button type="button" class="action-btn validate-btn" (click)="validateMessage()" [disabled]="form.invalid">
                                                 <mat-icon>verified</mat-icon> Validate Message
                                         </button>
                                 </div>
 </div>
             <div class="content-box preview-box">
                 <div class="up">
-                    <button class="action-btn-small" (click)="undoXml()" [disabled]="!canUndoXml()" matTooltip="Undo">
+                    <button type="button" class="action-btn-small" (click)="undoXml()" [disabled]="!canUndoXml()" matTooltip="Undo">
                         <mat-icon>undo</mat-icon>
                     </button>
-                    <button class="action-btn-small" (click)="redoXml()" [disabled]="!canRedoXml()" matTooltip="Redo">
+                    <button type="button" class="action-btn-small" (click)="redoXml()" [disabled]="!canRedoXml()" matTooltip="Redo">
                         <mat-icon>redo</mat-icon>
                     </button>
-                    <button class="action-btn-small" (click)="formatXml()" matTooltip="Format XML">
+                    <button type="button" class="action-btn-small" (click)="formatXml()" matTooltip="Format XML">
                         <mat-icon>format_align_left</mat-icon>
                     </button>
                 </div>

@@ -11,8 +11,9 @@
                     <div class="draft-banner" *ngIf="showDraftBanner">
                         <mat-icon>restore</mat-icon>
                         <span>Draft restored from your last session.</span>
-                        <button type="button" class="draft-clear-btn" (click)="clearDraft()">
-                            <mat-icon>close</mat-icon> Clear
+                        <button type="button" class="draft-clear-btn" [class.clearing]="isClearingDraft" (click)="clearDraft(true)" [disabled]="isClearingDraft">
+                            <ng-container *ngIf="!isClearingDraft"><mat-icon>close</mat-icon> Clear</ng-container>
+                            <ng-container *ngIf="isClearingDraft"><span class="draft-clear-spinner"></span> Clearing...</ng-container>
                         </button>
                     </div>
 
@@ -54,7 +55,7 @@
                     <div class="section-title">Original Transaction Reference</div>
                     <div class="form-group"><label>Original Message ID <span class="req">*</span></label><input formControlName="orgnlMsgId" maxlength="35" required><div class="validation-msg" *ngIf="err('orgnlMsgId') as e">{{e}}</div><div class="field-hint at-limit" *ngIf="hint('orgnlMsgId', 35) as h">{{h}}</div></div>
                     <div class="form-group"><label>Original Msg Name ID <span class="req">*</span></label><input formControlName="orgnlMsgNmId" maxlength="35" placeholder="e.g. pacs.008.001.08" required><div class="validation-msg" *ngIf="err('orgnlMsgNmId') as e">{{e}}</div><div class="field-hint at-limit" *ngIf="hint('orgnlMsgNmId', 35) as h">{{h}}</div></div>
-                    <div class="form-group"><label>Original UETR <span class="req">*</span></label><div class="uetr-control-row"><input formControlName="orgnlUETR" maxlength="36" required><button type="button" class="uetr-refresh-btn" (click)="refreshUetr()" title="Refresh UETR"><mat-icon>refresh</mat-icon></button></div></div>
+                    <div class="form-group"><label>Original UETR <span class="req">*</span></label><div class="uetr-control-row"><input formControlName="orgnlUETR" maxlength="36" required><button type="button" class="uetr-refresh-btn" (click)="refreshUetr()" title="Refresh UETR"><mat-icon>refresh</mat-icon></button></div><div class="validation-msg" *ngIf="err('orgnlUETR') as e">{{e}}</div></div>
                     <div class="form-group"><label>Original Instruction ID <span class="req">*</span></label><input formControlName="orgnlInstrId" maxlength="35" required><div class="validation-msg" *ngIf="err('orgnlInstrId') as e">{{e}}</div><div class="field-hint at-limit" *ngIf="hint('orgnlInstrId', 35) as h">{{h}}</div></div>
                     <div class="form-group"><label>Original EndToEnd ID <span class="req">*</span></label><input formControlName="orgnlEndToEndId" maxlength="35" required><div class="validation-msg" *ngIf="err('orgnlEndToEndId') as e">{{e}}</div><div class="field-hint at-limit" *ngIf="hint('orgnlEndToEndId', 35) as h">{{h}}</div></div>
                     <div class="form-group"><label>Original Transaction ID <span class="req">*</span></label><input formControlName="orgnlTxId" maxlength="35" required><div class="validation-msg" *ngIf="err('orgnlTxId') as e">{{e}}</div><div class="field-hint at-limit" *ngIf="hint('orgnlTxId', 35) as h">{{h}}</div></div>
@@ -119,13 +120,13 @@
         <div class="right-panel">
             <div class="bottom-actions" style="margin-top: 0; margin-bottom: 1rem;">
                 <div class="down">
-                    <button class="action-btn copy-btn" (click)="copyToClipboard()">
+                    <button type="button" class="action-btn copy-btn" (click)="copyToClipboard()">
                         <mat-icon>content_copy</mat-icon> Copy XML
                     </button>
-                    <button class="action-btn" (click)="downloadXml()">
+                    <button type="button" class="action-btn" (click)="downloadXml()">
                         <mat-icon>download</mat-icon> Download XML
                     </button>
-                    <button class="action-btn validate-btn" (click)="validateMessage()" [disabled]="form.invalid">
+                    <button type="button" class="action-btn validate-btn" (click)="validateMessage()" [disabled]="form.invalid">
                         <mat-icon>verified</mat-icon> Validate Message
                     </button>
                 </div>
@@ -133,13 +134,13 @@
 
             <div class="content-box preview-box">
                 <div class="up" style="display: flex; gap: 0.6rem; justify-content: flex-end; margin-bottom: 0.5rem; margin-top: -1rem;">
-                    <button class="action-btn-small" (click)="undoXml()" [disabled]="!canUndoXml()" matTooltip="Undo">
+                    <button type="button" class="action-btn-small" (click)="undoXml()" [disabled]="!canUndoXml()" matTooltip="Undo">
                         <mat-icon>undo</mat-icon>
                     </button>
-                    <button class="action-btn-small" (click)="redoXml()" [disabled]="!canRedoXml()" matTooltip="Redo">
+                    <button type="button" class="action-btn-small" (click)="redoXml()" [disabled]="!canRedoXml()" matTooltip="Redo">
                         <mat-icon>redo</mat-icon>
                     </button>
-                    <button class="action-btn-small" (click)="formatXml()" matTooltip="Format XML">
+                    <button type="button" class="action-btn-small" (click)="formatXml()" matTooltip="Format XML">
                         <mat-icon>format_align_left</mat-icon>
                     </button>
                     <!-- <button class="action-btn-small" (click)="toggleCommentXml()" matTooltip="Comment XML">
@@ -179,12 +180,16 @@
                 <option value="none">None (BIC/ID Only)</option>
                 <option value="structured">Structured</option>
             </select>
+            <div class="validation-msg" *ngIf="err(prefix+'AddrType') as e">{{e}}</div>
         </div>
 
         <ng-container *ngIf="form.get(prefix+'AddrType')?.value === 'structured'">
             <div class="form-group"><label>Building Number</label><input [formControlName]="prefix+'BldgNb'"></div>
+            <div class="validation-msg" *ngIf="err(prefix+'BldgNb') as e">{{e}}</div>
             <div class="form-group"><label>Street Name</label><input [formControlName]="prefix+'StrtNm'"></div>
+            <div class="validation-msg" *ngIf="err(prefix+'StrtNm') as e">{{e}}</div>
             <div class="form-group"><label>Post Code</label><input [formControlName]="prefix+'PstCd'"></div>
+            <div class="validation-msg" *ngIf="err(prefix+'PstCd') as e">{{e}}</div>
             <div class="form-group"><label>Town Name <span class="req">*</span></label><input [formControlName]="prefix+'TwnNm'">
               <div class="validation-msg" *ngIf="err(prefix+'TwnNm') as e">{{e}}</div>
             </div>
@@ -194,34 +199,40 @@
                     <option value="">Select Country</option>
                     <option *ngFor="let c of countries" [value]="c">{{c}}</option>
                 </select>
+                <div class="validation-msg" *ngIf="err(prefix+'Ctry') as e">{{e}}</div>
             </div>
         </ng-container>
 
         <div class="form-group" *ngIf="!isAgent">
             <label>{{title}} Name <span class="req" *ngIf="required">*</span></label>
             <input [formControlName]="prefix+'Name'" maxlength="140">
+            <div class="validation-msg" *ngIf="err(prefix+'Name') as e">{{e}}</div>
             <div class="field-hint at-limit" *ngIf="hint(prefix+'Name', 140) as h">{{h}}</div>
         </div>
 
         <div class="form-group">
             <label>{{isAgent ? title : title + ' FI'}} Member ID</label>
             <input [formControlName]="prefix+'MmbId'" maxlength="35" placeholder="Clearing Member ID">
+            <div class="validation-msg" *ngIf="err(prefix+'MmbId') as e">{{e}}</div>
             <div class="field-hint at-limit" *ngIf="hint(prefix+'MmbId', 35) as h">{{h}}</div>
         </div>
         <div class="form-group">
             <label>{{isAgent ? title : title + ' FI'}} Clearing System Code</label>
             <input [formControlName]="prefix+'ClrSysCd'" maxlength="4" placeholder="e.g. USABA">
+            <div class="validation-msg" *ngIf="err(prefix+'ClrSysCd') as e">{{e}}</div>
             <div class="field-hint at-limit" *ngIf="hint(prefix+'ClrSysCd', 4) as h">{{h}}</div>
         </div>
         <div class="form-group">
             <label>{{isAgent ? title : title + ' FI'}} LEI</label>
             <input [formControlName]="prefix+'Lei'" maxlength="20" placeholder="20-char LEI">
+            <div class="validation-msg" *ngIf="err(prefix+'Lei') as e">{{e}}</div>
             <div class="field-hint at-limit" *ngIf="hint(prefix+'Lei', 20) as h">{{h}}</div>
         </div>
 
         <div class="form-group" *ngIf="!isAgent">
             <label>{{title}} Account Number</label>
             <input [formControlName]="prefix+'Acct'" maxlength="34">
+            <div class="validation-msg" *ngIf="err(prefix+'Acct') as e">{{e}}</div>
             <div class="field-hint at-limit" *ngIf="hint(prefix+'Acct', 34) as h">{{h}}</div>
         </div>
     </div>

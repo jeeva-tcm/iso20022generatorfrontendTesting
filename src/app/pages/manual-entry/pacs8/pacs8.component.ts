@@ -13,6 +13,7 @@ import { UetrService } from '../../../services/uetr.service';
 import { ISO_PURPOSE_CODES } from '../../../constants/purpose-codes';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { BicSearchDialogComponent } from '../bic-search-dialog/bic-search-dialog.component';
+import { debounceTime } from 'rxjs/operators';
 
 @Component({
   selector: 'app-pacs8',
@@ -54,6 +55,7 @@ export class Pacs8Component implements OnInit, OnDestroy {
   private readonly DRAFT_KEY = 'draft_pacs008';
   private draftSaveTimer: ReturnType<typeof setTimeout> | null = null;
   showDraftBanner = false;
+  isClearingDraft = false;
 
   agentPrefixes = ['instgAgt', 'instdAgt', 'dbtrAgt', 'cdtrAgt',
     'prvsInstgAgt1', 'prvsInstgAgt2', 'prvsInstgAgt3',
@@ -103,7 +105,7 @@ export class Pacs8Component implements OnInit, OnDestroy {
       this.generateXml();
     }
 
-    this.form.valueChanges.subscribe(() => {
+    this.form.valueChanges.pipe(debounceTime(300)).subscribe(() => {
       this.updateConditionalValidators();
       this.generateXml();
       this.scheduleDraftSave();
@@ -901,10 +903,11 @@ export class Pacs8Component implements OnInit, OnDestroy {
     } catch (e) { console.warn('Draft load failed:', e); return false; }
   }
 
-  clearDraft(): void {
+  clearDraft(reload = false): void {
+    this.isClearingDraft = reload;
     try { localStorage.removeItem(this.DRAFT_KEY); } catch (e) {}
     this.showDraftBanner = false;
-    window.location.reload();
+    if (reload) { setTimeout(() => window.location.reload(), 500); }
   }
 
   private scheduleDraftSave(): void {
@@ -1019,16 +1022,16 @@ export class Pacs8Component implements OnInit, OnDestroy {
         tx += this.tag('SttlmTmIndctn', stind, 4);
     }
 
-    // UltmtDbtr, DbtrAgt, DbtrAgtAcct, Dbtr, DbtrAcct (ISO 20022 pacs.008 schema order)
+    // ISO 20022 pacs.008.001.08 CdtTrfTxInf schema order:
+    // UltmtDbtr → InitgPty → Dbtr → DbtrAcct → DbtrAgt → DbtrAgtAcct → CdtrAgt → CdtrAgtAcct → Cdtr → CdtrAcct → UltmtCdtr
     if (v.ultmtDbtrName?.trim() || (v.ultmtDbtrAddrType && v.ultmtDbtrAddrType !== 'none') || (v.ultmtDbtrIdType && v.ultmtDbtrIdType !== 'none')) {
       tx += this.tag('UltmtDbtr', this.el('Nm', v.ultmtDbtrName, 5) + this.addrXml(v, 'ultmtDbtr', 5) + this.partyIdXml(v, 'ultmtDbtr', 5), 4);
     }
-    tx += this.agt('DbtrAgt', 'dbtrAgt', v, 4);
-    if (v.dbtrAgtAcct?.trim()) tx += this.tag('DbtrAgtAcct', this.tag('Id', formatAcct(v.dbtrAgtAcct, 5), 5), 4);
     tx += this.partyAgentXml('Dbtr', 'dbtr', v, 4);
     if (v.dbtrAcct?.trim()) tx += this.tag('DbtrAcct', this.tag('Id', formatAcct(v.dbtrAcct, 5), 5), 4);
+    tx += this.agt('DbtrAgt', 'dbtrAgt', v, 4);
+    if (v.dbtrAgtAcct?.trim()) tx += this.tag('DbtrAgtAcct', this.tag('Id', formatAcct(v.dbtrAgtAcct, 5), 5), 4);
 
-    // CdtrAgt, CdtrAgtAcct, Cdtr, CdtrAcct, UltmtCdtr
     tx += this.agt('CdtrAgt', 'cdtrAgt', v, 4);
     if (v.cdtrAgtAcct?.trim()) tx += this.tag('CdtrAgtAcct', this.tag('Id', formatAcct(v.cdtrAgtAcct, 5), 5), 4);
     tx += this.partyAgentXml('Cdtr', 'cdtr', v, 4);

@@ -578,11 +578,9 @@ body.light-theme textarea:focus {
 
 /* Global Validation Messages */
 .validation-msg {
-    color: #dc2626;
-    /* Vibrant red */
-    font-size: 11px;
-    padding-top: 2px;
-    padding-bottom: 2px;
+    color: #ef4444;
+    font-size: 0.72rem;
+    margin-top: 4px;
     font-weight: 600;
     display: block;
     width: 100%;
@@ -612,14 +610,40 @@ body.light-theme .hint-msg {
 }
 
 body.light-theme .validation-msg {
-    color: red;
+    color: #ef4444;
 }
 
 body.light-theme .validation-msg.success {
     color: #059669; /* Emerald 600 */
 }
 
-/* Validation highlights removed at user request */
+/* Invalid field — red border on blur */
+input.ng-invalid.ng-touched,
+select.ng-invalid.ng-touched,
+textarea.ng-invalid.ng-touched {
+    border-color: #ef4444 !important;
+    box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.1) !important;
+}
+
+/* Valid + dirty field — green border on blur */
+input.ng-valid.ng-dirty.ng-touched,
+select.ng-valid.ng-dirty.ng-touched,
+textarea.ng-valid.ng-dirty.ng-touched {
+    border-color: #10b981 !important;
+}
+
+/* Base field-hint (non-party-grid) */
+.field-hint {
+    display: block;
+    font-size: 0.69rem;
+    color: var(--text-muted);
+    margin-top: 3px;
+    line-height: 1.4;
+}
+.field-hint.at-limit {
+    color: #f44336;
+    font-weight: 600;
+}
 
 /* BIC Same-Value Warning Banner */
 .bic-same-warning {
@@ -694,6 +718,26 @@ body.light-theme .validation-msg.success {
 .draft-clear-btn:hover {
     opacity: 1;
     background: transparent;
+}
+.draft-clear-btn:disabled {
+    cursor: not-allowed;
+    pointer-events: none;
+}
+.draft-clear-btn.clearing {
+    opacity: 0.55;
+}
+.draft-clear-spinner {
+    width: 10px;
+    height: 10px;
+    border: 1.5px solid currentColor;
+    border-top-color: transparent;
+    border-radius: 50%;
+    display: inline-block;
+    flex-shrink: 0;
+    animation: draftSpin 0.55s linear infinite;
+}
+@keyframes draftSpin {
+    to { transform: rotate(360deg); }
 }
 body.light-theme .draft-banner {
     color: #94a3b8;

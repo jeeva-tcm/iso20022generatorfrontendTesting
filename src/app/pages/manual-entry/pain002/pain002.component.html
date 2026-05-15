@@ -12,8 +12,9 @@
                     <div class="draft-banner" *ngIf="showDraftBanner">
                         <mat-icon>restore</mat-icon>
                         <span>Draft restored from your last session.</span>
-                        <button type="button" class="draft-clear-btn" (click)="clearDraft()">
-                            <mat-icon>close</mat-icon> Clear
+                        <button type="button" class="draft-clear-btn" [class.clearing]="isClearingDraft" (click)="clearDraft(true)" [disabled]="isClearingDraft">
+                            <ng-container *ngIf="!isClearingDraft"><mat-icon>close</mat-icon> Clear</ng-container>
+                            <ng-container *ngIf="isClearingDraft"><span class="draft-clear-spinner"></span> Clearing...</ng-container>
                         </button>
                     </div>
 
@@ -42,6 +43,7 @@
                                     <option value="">None</option>
                                     <option *ngFor="let c of copyDplctCodes" [value]="c">{{c}}</option>
                                 </select>
+                                <div class="validation-msg" *ngIf="err('head_cpyDplct') as e">{{e}}</div>
                                 <div class="validation-msg" *ngIf="form.errors?.['rltdHeaderMissing']" style="color: #ef4444; font-size: 0.65rem; margin-top: 4px; display: flex; align-items: center; gap: 4px;">
                                     <mat-icon style="font-size: 14px; width: 14px; height: 14px;">warning</mat-icon>
                                     Related Header must be enabled for Copy/Duplicate.
@@ -200,6 +202,7 @@
                                             <div class="form-group">
                                                 <label>Clearing Sys Code (Cd)</label>
                                                 <input formControlName="head_rltd_fromClrSysCd" maxlength="5" class="auto-uppercase" placeholder="e.g. T2, FED" (input)="handleInput($event, 'head_rltd_fromClrSysCd', 'ClrSys')">
+                                                <div class="validation-msg" *ngIf="err('head_rltd_fromClrSysCd') as e">{{e}}</div>
                                                 <div class="validation-msg" *ngIf="form.errors?.['head_rltd_from_clrSysCdMissing']">Cd required if MmbId present</div>
                                                 <div class="field-hint at-limit" *ngIf="hint('head_rltd_fromClrSysCd', 5) as h">{{h}}</div>
                                             </div>
@@ -234,6 +237,7 @@
                                             <div class="form-group">
                                                 <label>Clearing Sys Code (Cd)</label>
                                                 <input formControlName="head_rltd_toClrSysCd" maxlength="5" class="auto-uppercase" placeholder="e.g. T2, FED" (input)="handleInput($event, 'head_rltd_toClrSysCd', 'ClrSys')">
+                                                <div class="validation-msg" *ngIf="err('head_rltd_toClrSysCd') as e">{{e}}</div>
                                                 <div class="validation-msg" *ngIf="form.errors?.['head_rltd_to_clrSysCdMissing']">Cd required if MmbId present</div>
                                                 <div class="field-hint at-limit" *ngIf="hint('head_rltd_toClrSysCd', 5) as h">{{h}}</div>
                                             </div>
@@ -440,13 +444,13 @@
             <!-- Top Actions -->
             <div class="bottom-actions" style="margin-top: 0; margin-bottom: 1rem;">
                 <div class="down">
-                    <button class="action-btn copy-btn" (click)="copyToClipboard()">
+                    <button type="button" class="action-btn copy-btn" (click)="copyToClipboard()">
                         <mat-icon>content_copy</mat-icon> Copy XML
                     </button>
-                    <button class="action-btn" (click)="downloadXml()">
+                    <button type="button" class="action-btn" (click)="downloadXml()">
                         <mat-icon>download</mat-icon> Download XML
                     </button>
-                    <button class="action-btn validate-btn" (click)="validateMessage()" [disabled]="form.invalid">
+                    <button type="button" class="action-btn validate-btn" (click)="validateMessage()" [disabled]="form.invalid">
                         <mat-icon>verified</mat-icon> Validate Message
                     </button>
                 </div>
@@ -455,13 +459,13 @@
             <!-- XML Preview & Actions -->
             <div class="content-box preview-box">
                 <div class="up">
-                    <button class="action-btn-small" (click)="undoXml()" [disabled]="!canUndoXml()" title="Undo">
+                    <button type="button" class="action-btn-small" (click)="undoXml()" [disabled]="!canUndoXml()" title="Undo">
                         <mat-icon>undo</mat-icon>
                     </button>
-                    <button class="action-btn-small" (click)="redoXml()" [disabled]="!canRedoXml()" title="Redo">
+                    <button type="button" class="action-btn-small" (click)="redoXml()" [disabled]="!canRedoXml()" title="Redo">
                         <mat-icon>redo</mat-icon>
                     </button>
-                    <button class="action-btn-small" (click)="formatXml()" [disabled]="!generatedXml" title="Format XML">
+                    <button type="button" class="action-btn-small" (click)="formatXml()" [disabled]="!generatedXml" title="Format XML">
                         <mat-icon>format_align_left</mat-icon>
                     </button>
                 </div>
@@ -491,6 +495,7 @@
                     <option value="org">Organisation</option>
                     <option value="prvt">Private Individual</option>
                 </select>
+                <div class="validation-msg" *ngIf="err('idType') as e">{{e}}</div>
             </div>
             
             <ng-container *ngIf="group.get('idType')?.value === 'org'">
@@ -528,6 +533,7 @@
                                 <option value="">Select Code...</option>
                                 <option *ngFor="let c of orgSchemeCodes" [value]="c">{{c}}</option>
                             </select>
+                            <div class="validation-msg" *ngIf="err('orgScheme') as e">{{e}}</div>
                         </div>
                         <div class="form-group">
                             <label>Proprietary (Prtry)</label>
@@ -547,6 +553,7 @@
 
             <ng-container *ngIf="group.get('idType')?.value === 'prvt'">
                 <div class="form-group"><label>Birth Date</label><input type="date" formControlName="prvtBirthDt"></div>
+                <div class="validation-msg" *ngIf="err('prvtBirthDt') as e">{{e}}</div>
                 <div class="form-group">
                     <label>City of Birth</label>
                     <input formControlName="prvtCity" maxlength="35" (input)="handleInput($event, prefix + '.prvtCity', 'City')">
@@ -564,6 +571,7 @@
                         <option value="">Select Country...</option>
                         <option *ngFor="let c of countries" [value]="c">{{c}}</option>
                     </select>
+                    <div class="validation-msg" *ngIf="err('prvtCtry') as e">{{e}}</div>
                 </div>
                 
                 <div class="party-group full-width" style="margin-top: 10px; border: 1px dashed var(--border-light); padding: 10px; border-radius: 8px;">
@@ -584,6 +592,7 @@
                                 <option value="">Select Code...</option>
                                 <option *ngFor="let c of prvtSchemeCodes" [value]="c">{{c}}</option>
                             </select>
+                            <div class="validation-msg" *ngIf="err('prvtScheme') as e">{{e}}</div>
                         </div>
                         <div class="form-group">
                             <label>Proprietary (Prtry)</label>
@@ -607,6 +616,7 @@
                     <option value="">Select Country...</option>
                     <option *ngFor="let c of countries" [value]="c">{{c}}</option>
                 </select>
+                <div class="validation-msg" *ngIf="err('ctryOfRes') as e">{{e}}</div>
             </div>
 
             <div class="party-group full-width" style="margin-top: 15px; border: 1px solid var(--border-light); padding: 15px; border-radius: 10px; background: rgba(0,0,0,0.01);" *ngIf="!hidePostal">
@@ -620,6 +630,7 @@
                             <option value="unstructured">Unstructured</option>
                             <option value="hybrid">Hybrid</option>
                         </select>
+                        <div class="validation-msg" *ngIf="err('addrType') as e">{{e}}</div>
                     </div>
 
                     <div class="party-grid" *ngIf="group.get('postal.addrType')?.value !== 'none'">
@@ -685,6 +696,7 @@
                                 <option value="">Select Country...</option>
                                 <option *ngFor="let c of countries" [value]="c">{{c}}</option>
                             </select>
+                            <div class="validation-msg" *ngIf="err('ctry') as e">{{e}}</div>
                         </div>
                         
                         <!-- Unstructured Section -->
@@ -737,6 +749,7 @@
                             <option value="">None</option>
                             <option *ngFor="let c of clrSysCodes" [value]="c">{{c}}</option>
                         </select>
+                        <div class="validation-msg" *ngIf="err('clrSys') as e">{{e}}</div>
                         <div class="validation-msg" *ngIf="group.errors?.['clrSysDependency']">Member ID requires Code</div>
                     </div>
                     <div class="form-group">

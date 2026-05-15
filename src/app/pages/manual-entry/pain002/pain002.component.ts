@@ -9,6 +9,7 @@ import { ConfigService } from '../../../services/config.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Router } from '@angular/router';
 import { UetrService } from '../../../services/uetr.service';
+import { debounceTime } from 'rxjs/operators';
 
 @Component({
   selector: 'app-pain002',
@@ -74,6 +75,7 @@ export class Pain002Component implements OnInit, OnDestroy {
   private readonly DRAFT_KEY = 'draft_pain002';
   private draftSaveTimer: ReturnType<typeof setTimeout> | null = null;
   showDraftBanner = false;
+  isClearingDraft = false;
 
   // Codelists
   charSetOptions = ['UTF-8', 'US-ASCII', 'ISO-8859-1'];
@@ -296,7 +298,7 @@ export class Pain002Component implements OnInit, OnDestroy {
       transactions: this.fb.array([this.initTransaction()])
     }, { validators: [this.bahValidator] });
 
-    this.form.valueChanges.subscribe(() => {
+    this.form.valueChanges.pipe(debounceTime(300)).subscribe(() => {
       if (!this.isParsingXml && !this.isInternalChange) {
         this.generateXml();
         this.pushHistory();
@@ -305,7 +307,7 @@ export class Pain002Component implements OnInit, OnDestroy {
     });
 
     // Auto-uppercase all BIC, LEI, and ID fields across the entire form (main, parties, transactions)
-    this.form.valueChanges.subscribe(() => {
+    this.form.valueChanges.pipe(debounceTime(300)).subscribe(() => {
         this.applyAutoUppercase(this.form);
     });
 
@@ -794,10 +796,11 @@ ${doc.trimEnd()}
     } catch (e) { console.warn('Draft load failed:', e); return false; }
   }
 
-  clearDraft(): void {
+  clearDraft(reload = false): void {
+    this.isClearingDraft = reload;
     try { localStorage.removeItem(this.DRAFT_KEY); } catch (e) {}
     this.showDraftBanner = false;
-    window.location.reload();
+    if (reload) { setTimeout(() => window.location.reload(), 500); }
   }
 
   private scheduleDraftSave(): void {

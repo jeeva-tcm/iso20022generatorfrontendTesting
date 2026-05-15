@@ -11,6 +11,7 @@ import { FormattingService } from '../../../services/formatting.service';
 import { UetrService } from '../../../services/uetr.service';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { BicSearchDialogComponent } from '../bic-search-dialog/bic-search-dialog.component';
+import { debounceTime } from 'rxjs/operators';
 
 @Component({
     selector: 'app-pacs4',
@@ -55,6 +56,7 @@ export class Pacs4Component implements OnInit, OnDestroy {
     private readonly DRAFT_KEY = 'draft_pacs004';
     private draftSaveTimer: ReturnType<typeof setTimeout> | null = null;
     showDraftBanner = false;
+    isClearingDraft = false;
 
     // Validation Modal State
     showValidationModal = false;
@@ -95,7 +97,7 @@ export class Pacs4Component implements OnInit, OnDestroy {
           this.generateXml();
         }
 
-        this.form.valueChanges.subscribe(() => {
+        this.form.valueChanges.pipe(debounceTime(300)).subscribe(() => {
             this.updateConditionalValidators();
             this.generateXml();
             this.scheduleDraftSave();
@@ -817,10 +819,11 @@ ${tx}\t\t\t</TxInf>
         } catch (e) { console.warn('Draft load failed:', e); return false; }
     }
 
-    clearDraft(): void {
+    clearDraft(reload = false): void {
+        this.isClearingDraft = reload;
         try { localStorage.removeItem(this.DRAFT_KEY); } catch (e) {}
         this.showDraftBanner = false;
-        window.location.reload();
+        if (reload) { setTimeout(() => window.location.reload(), 500); }
     }
 
     private scheduleDraftSave(): void {

@@ -11,8 +11,9 @@
                     <div class="draft-banner" *ngIf="showDraftBanner">
                         <mat-icon>restore</mat-icon>
                         <span>Draft restored from your last session.</span>
-                        <button type="button" class="draft-clear-btn" (click)="clearDraft()">
-                            <mat-icon>close</mat-icon> Clear
+                        <button type="button" class="draft-clear-btn" [class.clearing]="isClearingDraft" (click)="clearDraft(true)" [disabled]="isClearingDraft">
+                            <ng-container *ngIf="!isClearingDraft"><mat-icon>close</mat-icon> Clear</ng-container>
+                            <ng-container *ngIf="isClearingDraft"><span class="draft-clear-spinner"></span> Clearing...</ng-container>
                         </button>
                     </div>
 
@@ -72,6 +73,7 @@
                             <option value=""></option>
                             <option *ngFor="let c of copyDuplicateEnums" [value]="c">{{c}}</option>
                         </select>
+                        <div class="validation-msg" *ngIf="err('copyDplct') as e">{{e}}</div>
                     </div>
                     <div class="form-group">
                         <label>Possible Duplicate</label>
@@ -80,6 +82,7 @@
                             <option value="true">Yes</option>
                             <option value="false">No</option>
                         </select>
+                        <div class="validation-msg" *ngIf="err('pssblDplct') as e">{{e}}</div>
                     </div>
                     <div class="form-group">
                         <label>Priority</label>
@@ -87,6 +90,7 @@
                             <option value=""></option>
                             <option *ngFor="let p of priorityEnums" [value]="p">{{p}}</option>
                         </select>
+                        <div class="validation-msg" *ngIf="err('prty') as e">{{e}}</div>
                     </div>
 
                     <div class="section-title">Transaction Details</div>
@@ -183,6 +187,7 @@
                             <option value="HIGH">High [HIGH]</option>
                             <option value="NORM">Normal [NORM]</option>
                         </select>
+                        <div class="validation-msg" *ngIf="err('instrPrty') as e">{{e}}</div>
                     </div>
                     <div class="form-group intermediary-field">
                         <label>Service Level Code <span class="opt">Optional</span></label>
@@ -314,9 +319,9 @@
         <div class="right-panel">
             <div class="bottom-actions" style="margin-top: 0; margin-bottom: 1rem;">
                 <div class="down">
-                    <button class="action-btn copy-btn" (click)="copyToClipboard()"><mat-icon>content_copy</mat-icon> Copy XML</button>
-                    <button class="action-btn" (click)="downloadXml()"><mat-icon>download</mat-icon> Download XML</button>
-                    <button class="action-btn validate-btn" (click)="validateMessage()">
+                    <button type="button" class="action-btn copy-btn" (click)="copyToClipboard()"><mat-icon>content_copy</mat-icon> Copy XML</button>
+                    <button type="button" class="action-btn" (click)="downloadXml()"><mat-icon>download</mat-icon> Download XML</button>
+                    <button type="button" class="action-btn validate-btn" (click)="validateMessage()">
                         <mat-icon>verified</mat-icon> Validate Message
                     </button>
                 </div>
@@ -324,13 +329,13 @@
 
             <div class="content-box preview-box">
                 <div class="up">
-                    <button class="action-btn-small" (click)="undoXml()" [disabled]="!canUndoXml" matTooltip="Undo (Ctrl+Z)">
+                    <button type="button" class="action-btn-small" (click)="undoXml()" [disabled]="!canUndoXml" matTooltip="Undo (Ctrl+Z)">
                         <mat-icon>undo</mat-icon>
                     </button>
-                    <button class="action-btn-small" (click)="redoXml()" [disabled]="!canRedoXml" matTooltip="Redo (Ctrl+Y)">
+                    <button type="button" class="action-btn-small" (click)="redoXml()" [disabled]="!canRedoXml" matTooltip="Redo (Ctrl+Y)">
                         <mat-icon>redo</mat-icon>
                     </button>
-                    <button class="action-btn-small" (click)="formatXml()" [disabled]="!generatedXml" matTooltip="Format XML (Ctrl+S)">
+                    <button type="button" class="action-btn-small" (click)="formatXml()" [disabled]="!generatedXml" matTooltip="Format XML (Ctrl+S)">
                         <mat-icon>format_align_left</mat-icon>
                     </button>
                 </div>
@@ -371,6 +376,7 @@
                 <option value="unstructured">Unstructured</option>
                 <option value="hybrid">Hybrid</option>
             </select>
+            <div class="validation-msg" *ngIf="err(prefix+'AddrType') as e">{{e}}</div>
         </div>
 
         <!-- Dynamic Address Fields -->
@@ -516,11 +522,13 @@
                     <option value="">Select Currency</option>
                     <option *ngFor="let c of currencies" [value]="c">{{c}}</option>
                 </select>
+                <div class="validation-msg" *ngIf="err(prefix+'AcctCcy') as e">{{e}}</div>
             </div>
 
             <div class="form-group">
                 <label>Account Name</label>
                 <input [formControlName]="prefix+'AcctNm'" maxlength="70">
+                <div class="validation-msg" *ngIf="err(prefix+'AcctNm') as e">{{e}}</div>
             </div>
         </div>
     </div>

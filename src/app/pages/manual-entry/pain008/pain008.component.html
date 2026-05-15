@@ -11,8 +11,9 @@
                     <div class="draft-banner" *ngIf="showDraftBanner">
                         <mat-icon>restore</mat-icon>
                         <span>Draft restored from your last session.</span>
-                        <button type="button" class="draft-clear-btn" (click)="clearDraft()">
-                            <mat-icon>close</mat-icon> Clear
+                        <button type="button" class="draft-clear-btn" [class.clearing]="isClearingDraft" (click)="clearDraft(true)" [disabled]="isClearingDraft">
+                            <ng-container *ngIf="!isClearingDraft"><mat-icon>close</mat-icon> Clear</ng-container>
+                            <ng-container *ngIf="isClearingDraft"><span class="draft-clear-spinner"></span> Clearing...</ng-container>
                         </button>
                     </div>
 
@@ -77,6 +78,7 @@
                         <div class="field-hint at-limit" *ngIf="hint('bizMsgId', 35) as h">{{h}}</div>
                     </div>
                     <div class="form-group"><label>Message Definition ID</label><input formControlName="msgDefIdr" readonly style="background: var(--bg-card-hover);"></div>
+                    <div class="validation-msg" *ngIf="err('msgDefIdr') as e">{{e}}</div>
                     <div class="form-group"><label>Business Service</label><input formControlName="bizSvc" maxlength="35">
                         <div class="validation-msg" *ngIf="err('bizSvc') as e">{{e}}</div>
                         <div class="field-hint at-limit" *ngIf="hint('bizSvc', 35) as h">{{h}}</div>
@@ -94,12 +96,15 @@
                     </div>
                     <div class="form-group"><label>Copy/Duplicate</label>
                         <select formControlName="cpyDplct"><option value="">None</option><option *ngFor="let c of copyDuplicates" [value]="c">{{c}}</option></select>
+                        <div class="validation-msg" *ngIf="err('cpyDplct') as e">{{e}}</div>
                     </div>
                     <div class="form-group"><label>Possible Duplicate</label>
                         <select formControlName="pssblDplct"><option value="">None</option><option value="true">true</option><option value="false">false</option></select>
+                        <div class="validation-msg" *ngIf="err('pssblDplct') as e">{{e}}</div>
                     </div>
                     <div class="form-group"><label>Priority</label>
                         <select formControlName="prty"><option value="">None</option><option *ngFor="let p of priorities" [value]="p">{{p}}</option></select>
+                        <div class="validation-msg" *ngIf="err('prty') as e">{{e}}</div>
                     </div>
 
                     <!-- ═══ Rltd (Related Header) ═══ -->
@@ -165,8 +170,10 @@
                             </div>
                             <div class="form-group"><label>Copy/Duplicate</label>
                                 <select formControlName="rltdCpyDplct"><option value="">None</option><option *ngFor="let c of copyDuplicates" [value]="c">{{c}}</option></select></div>
+                                <div class="validation-msg" *ngIf="err('rltdCpyDplct') as e">{{e}}</div>
                             <div class="form-group"><label>Priority</label>
                                 <select formControlName="rltdPrty"><option value="">None</option><option *ngFor="let p of priorities" [value]="p">{{p}}</option></select></div>
+                                <div class="validation-msg" *ngIf="err('rltdPrty') as e">{{e}}</div>
                         </div>
                     </div>
 
@@ -181,12 +188,14 @@
                     </div>
                     <div class="form-group"><label>Authorisation Code</label>
                         <select formControlName="authsnCd"><option value="">None</option><option *ngFor="let a of authCodes" [value]="a">{{a}}</option></select>
+                        <div class="validation-msg" *ngIf="err('authsnCd') as e">{{e}}</div>
                     </div>
                     <div class="form-group"><label>Authorisation Proprietary</label><input formControlName="authsnPrtry" maxlength="128" placeholder="Optional">
                         <div class="validation-msg" *ngIf="err('authsnPrtry') as e">{{e}}</div>
                         <div class="field-hint at-limit" *ngIf="hint('authsnPrtry', 128) as h">{{h}}</div>
                     </div>
                     <div class="form-group"><label>Number of Txns</label><input formControlName="nbOfTxs" readonly style="background: var(--bg-card-hover);"></div>
+                    <div class="validation-msg" *ngIf="err('nbOfTxs') as e">{{e}}</div>
 
                     <div class="party-group">
                         <div class="party-group-title mandatory">Initiating Party</div>
@@ -210,6 +219,7 @@
                                     <option value="structured">Structured</option>
                                     <option value="hybrid">Hybrid</option>
                                 </select>
+                                <div class="validation-msg" *ngIf="err('initgPtyAddrType') as e">{{e}}</div>
                             </div>
                             <ng-container *ngIf="['structured', 'hybrid'].includes(form.value.initgPtyAddrType)">
                                 <div class="form-group"><label>Department</label><input formControlName="initgPtyDept" maxlength="70">
@@ -316,8 +326,10 @@
                         <div class="field-hint at-limit" *ngIf="hint('pmtInfId', 35) as h">{{h}}</div>
                     </div>
                     <div class="form-group"><label>Payment Method</label><input formControlName="pmtMtd" readonly value="DD" style="background: var(--bg-card-hover);"></div>
+                    <div class="validation-msg" *ngIf="err('pmtMtd') as e">{{e}}</div>
                     <div class="form-group"><label>Batch Booking</label>
                         <select formControlName="btchBookg"><option value="">None</option><option value="true">True</option><option value="false">False</option></select>
+                        <div class="validation-msg" *ngIf="err('btchBookg') as e">{{e}}</div>
                     </div>
                     <div class="form-group"><label>Requested Collection Date <span class="req">*</span></label><input type="date" formControlName="reqdColltnDt">
                         <div class="validation-msg" *ngIf="err('reqdColltnDt') as e">{{e}}</div>
@@ -342,6 +354,7 @@
                                     <option value="structured">Structured</option>
                                     <option value="hybrid">Hybrid</option>
                                 </select>
+                                <div class="validation-msg" *ngIf="err('cdtrAddrType') as e">{{e}}</div>
                             </div>
                             <ng-container *ngIf="['structured', 'hybrid'].includes(form.value.cdtrAddrType)">
                                 <div class="form-group"><label>Department</label><input formControlName="cdtrDept" maxlength="70">
@@ -566,6 +579,7 @@
                                 <!-- PmtTpInf -->
                                 <div class="form-group"><label>Instruction Priority</label>
                                     <select formControlName="instrPrty"><option value="">None</option><option *ngFor="let p of priorities" [value]="p">{{p}}</option></select></div>
+                                    <div class="validation-msg" *ngIf="err('instrPrty') as e">{{e}}</div>
                                 <div class="form-group"><label>Service Level Code</label><input formControlName="svcLvlCd" maxlength="4" placeholder="e.g. SEPA">
                                     <div class="validation-msg" *ngIf="err('svcLvlCd', tx) as e">{{e}}</div>
                                     <div class="field-hint at-limit" *ngIf="hint('svcLvlCd', 4) as h">{{h}}</div>
@@ -584,6 +598,7 @@
                                 </div>
                                 <div class="form-group"><label>Sequence Type <span class="req">*</span></label>
                                     <select formControlName="seqTp"><option *ngFor="let s of sequenceTypes" [value]="s">{{s}}</option></select></div>
+                                    <div class="validation-msg" *ngIf="err('seqTp') as e">{{e}}</div>
                                 <div class="form-group"><label>Category Purpose Code</label><input formControlName="ctgyPurpCd" maxlength="4" placeholder="e.g. CASH">
                                     <div class="validation-msg" *ngIf="err('ctgyPurpCd', tx) as e">{{e}}</div>
                                     <div class="field-hint at-limit" *ngIf="hint('ctgyPurpCd', 4) as h">{{h}}</div>
@@ -599,8 +614,10 @@
                                 </div>
                                 <div class="form-group"><label>Currency <span class="req">*</span></label>
                                     <select formControlName="currency"><option *ngFor="let c of currencies" [value]="c">{{c}}</option></select></div>
+                                    <div class="validation-msg" *ngIf="err('currency') as e">{{e}}</div>
                                 <div class="form-group"><label>Charge Bearer</label>
                                     <select formControlName="chrgBr"><option *ngFor="let cb of chargeBearers" [value]="cb">{{cb}}</option></select></div>
+                                    <div class="validation-msg" *ngIf="err('chrgBr') as e">{{e}}</div>
 
                                 <!-- ── Mandate Related Info ── -->
                                 <div class="mandate-section">
@@ -611,8 +628,10 @@
                                             <div class="field-hint at-limit" *ngIf="hint('mndtId', 35) as h">{{h}}</div>
                                         </div>
                                         <div class="form-group"><label>Date of Signature</label><input type="date" formControlName="dtOfSgntr"></div>
+                                        <div class="validation-msg" *ngIf="err('dtOfSgntr') as e">{{e}}</div>
                                         <div class="form-group"><label>Amendment Indicator</label>
                                             <select formControlName="amdmntInd"><option value="false">false</option><option value="true">true</option></select></div>
+                                            <div class="validation-msg" *ngIf="err('amdmntInd') as e">{{e}}</div>
                                         <div class="form-group"><label>Original Mandate ID</label><input formControlName="orgnlMndtId" maxlength="35" placeholder="If amended">
                                             <div class="validation-msg" *ngIf="err('orgnlMndtId', tx) as e">{{e}}</div>
                                             <div class="field-hint at-limit" *ngIf="hint('orgnlMndtId', 35) as h">{{h}}</div>
@@ -651,8 +670,10 @@
                                             <div class="field-hint at-limit" *ngIf="hint('orgnlDbtrAgtBic', 11) as h">{{h}}</div>
                                         </div>
                                         <div class="form-group"><label>Orgnl Final Colltn Date</label><input type="date" formControlName="orgnlFnlColltnDt"></div>
+                                        <div class="validation-msg" *ngIf="err('orgnlFnlColltnDt') as e">{{e}}</div>
                                         <div class="form-group"><label>Orgnl Frequency Type</label>
                                             <select formControlName="orgnlFrqcyTp"><option value="">None</option><option *ngFor="let f of frequencyTypes" [value]="f">{{f}}</option></select></div>
+                                            <div class="validation-msg" *ngIf="err('orgnlFrqcyTp') as e">{{e}}</div>
                                         <div class="form-group"><label>Orgnl Reason Code</label><input formControlName="orgnlRsnCd" maxlength="4" placeholder="Optional">
                                             <div class="validation-msg" *ngIf="err('orgnlRsnCd', tx) as e">{{e}}</div>
                                             <div class="field-hint at-limit" *ngIf="hint('orgnlRsnCd', 4) as h">{{h}}</div>
@@ -670,11 +691,15 @@
                                             <div class="field-hint at-limit" *ngIf="hint('elctrncSgntr', 1025) as h">{{h}}</div>
                                         </div>
                                         <div class="form-group"><label>First Collection Date</label><input type="date" formControlName="frstColltnDt"></div>
+                                        <div class="validation-msg" *ngIf="err('frstColltnDt') as e">{{e}}</div>
                                         <div class="form-group"><label>Final Collection Date</label><input type="date" formControlName="fnlColltnDt"></div>
+                                        <div class="validation-msg" *ngIf="err('fnlColltnDt') as e">{{e}}</div>
                                         <div class="form-group"><label>Frequency Type</label>
                                             <select formControlName="frqcyTp"><option value="">None</option><option *ngFor="let f of frequencyTypes" [value]="f">{{f}}</option></select></div>
+                                            <div class="validation-msg" *ngIf="err('frqcyTp') as e">{{e}}</div>
                                         <div class="form-group"><label>Frequency Period Type</label>
                                             <select formControlName="frqcyPrdTp"><option value="">None</option><option *ngFor="let f of frequencyTypes" [value]="f">{{f}}</option></select></div>
+                                            <div class="validation-msg" *ngIf="err('frqcyPrdTp') as e">{{e}}</div>
                                         <div class="form-group"><label>Count Per Period</label><input formControlName="frqcyPrdCntPerPrd" maxlength="4" placeholder="Optional">
                                             <div class="validation-msg" *ngIf="err('frqcyPrdCntPerPrd', tx) as e">{{e}}</div>
                                             <div class="field-hint at-limit" *ngIf="hint('frqcyPrdCntPerPrd', 4) as h">{{h}}</div>
@@ -727,6 +752,7 @@
                                     <div class="field-hint at-limit" *ngIf="hint('preNtfctnId', 35) as h">{{h}}</div>
                                 </div>
                                 <div class="form-group"><label>Pre-Notification Date</label><input type="date" formControlName="preNtfctnDt"></div>
+                                <div class="validation-msg" *ngIf="err('preNtfctnDt') as e">{{e}}</div>
 
                                 <!-- UltmtCdtr -->
                                 <div class="form-group"><label>Ultimate Creditor Name</label><input formControlName="ultmtCdtrName" maxlength="140" placeholder="Optional">
@@ -780,6 +806,7 @@
                                         <option value="structured">Structured</option>
                                         <option value="hybrid">Hybrid</option>
                                     </select>
+                                    <div class="validation-msg" *ngIf="err('dbtrAddrType') as e">{{e}}</div>
                                 </div>
                                 <ng-container *ngIf="['structured', 'hybrid'].includes(tx.get('dbtrAddrType')?.value)">
                                     <div class="form-group"><label>Department</label><input formControlName="dbtrDept" maxlength="70">
@@ -875,6 +902,7 @@
                                     <div class="field-hint at-limit" *ngIf="hint('dbtrOrgIdOthrIssr', 35) as h">{{h}}</div>
                                 </div>
                                 <div class="form-group"><label>PrvtId Birth Date</label><input type="date" formControlName="dbtrPrvtIdBirthDt"></div>
+                                <div class="validation-msg" *ngIf="err('dbtrPrvtIdBirthDt') as e">{{e}}</div>
                                 <div class="form-group"><label>PrvtId City of Birth</label><input formControlName="dbtrPrvtIdCityOfBirth" maxlength="35" placeholder="Optional">
                                     <div class="validation-msg" *ngIf="err('dbtrPrvtIdCityOfBirth', tx) as e">{{e}}</div>
                                     <div class="field-hint at-limit" *ngIf="hint('dbtrPrvtIdCityOfBirth', 35) as h">{{h}}</div>
@@ -947,6 +975,7 @@
                                     <div class="mandate-grid">
                                         <div class="form-group"><label>Debit/Credit Indicator</label>
                                             <select formControlName="rgltryRptgInd"><option value="">None</option><option *ngFor="let r of dbtCdtRptgInd" [value]="r">{{r}}</option></select></div>
+                                            <div class="validation-msg" *ngIf="err('rgltryRptgInd') as e">{{e}}</div>
                                         <div class="form-group"><label>Authority Name</label><input formControlName="rgltryRptgAuthrtyNm" maxlength="140" placeholder="Optional">
                                             <div class="validation-msg" *ngIf="err('rgltryRptgAuthrtyNm', tx) as e">{{e}}</div>
                                             <div class="field-hint at-limit" *ngIf="hint('rgltryRptgAuthrtyNm', 140) as h">{{h}}</div>
@@ -960,6 +989,7 @@
                                             <div class="field-hint at-limit" *ngIf="hint('rgltryRptgDtlsTp', 35) as h">{{h}}</div>
                                         </div>
                                         <div class="form-group"><label>Details Date</label><input type="date" formControlName="rgltryRptgDtlsDt"></div>
+                                        <div class="validation-msg" *ngIf="err('rgltryRptgDtlsDt') as e">{{e}}</div>
                                         <div class="form-group"><label>Details Code</label><input formControlName="rgltryRptgDtlsCd" maxlength="10" placeholder="Optional">
                                             <div class="validation-msg" *ngIf="err('rgltryRptgDtlsCd', tx) as e">{{e}}</div>
                                             <div class="field-hint at-limit" *ngIf="hint('rgltryRptgDtlsCd', 10) as h">{{h}}</div>
@@ -1045,6 +1075,7 @@
                                             <div class="field-hint at-limit" *ngIf="hint('taxTtlTaxAmtCcy', 3) as h">{{h}}</div>
                                         </div>
                                         <div class="form-group"><label>Date</label><input type="date" formControlName="taxDt"></div>
+                                        <div class="validation-msg" *ngIf="err('taxDt') as e">{{e}}</div>
                                         <div class="form-group"><label>Sequence Number</label><input formControlName="taxSeqNb" maxlength="18" placeholder="Optional">
                                             <div class="validation-msg" *ngIf="err('taxSeqNb', tx) as e">{{e}}</div>
                                             <div class="field-hint at-limit" *ngIf="hint('taxSeqNb', 18) as h">{{h}}</div>
@@ -1062,6 +1093,7 @@
                                         </div>
                                         <div class="form-group"><label>Method</label>
                                             <select formControlName="rltdRmtInfMtd"><option value="">None</option><option *ngFor="let m of rmtMethods" [value]="m">{{m}}</option></select></div>
+                                            <div class="validation-msg" *ngIf="err('rltdRmtInfMtd') as e">{{e}}</div>
                                         <div class="form-group"><label>Electronic Address</label><input formControlName="rltdRmtInfElctrncAdr" maxlength="2048" placeholder="Optional">
                                             <div class="validation-msg" *ngIf="err('rltdRmtInfElctrncAdr', tx) as e">{{e}}</div>
                                             <div class="field-hint at-limit" *ngIf="hint('rltdRmtInfElctrncAdr', 2048) as h">{{h}}</div>
@@ -1085,6 +1117,7 @@
                                     <div class="mandate-grid">
                                         <div class="form-group"><label>Doc Type Code</label>
                                             <select formControlName="rmtInfStrdRfrdDocCd"><option value="">None</option><option *ngFor="let d of rfrdDocCodes" [value]="d">{{d}}</option></select></div>
+                                            <div class="validation-msg" *ngIf="err('rmtInfStrdRfrdDocCd') as e">{{e}}</div>
                                         <div class="form-group"><label>Doc Type Proprietary</label><input formControlName="rmtInfStrdRfrdDocPrtry" maxlength="35" placeholder="Optional">
                                             <div class="validation-msg" *ngIf="err('rmtInfStrdRfrdDocPrtry', tx) as e">{{e}}</div>
                                             <div class="field-hint at-limit" *ngIf="hint('rmtInfStrdRfrdDocPrtry', 35) as h">{{h}}</div>
@@ -1098,6 +1131,7 @@
                                             <div class="field-hint at-limit" *ngIf="hint('rmtInfStrdRfrdDocNb', 35) as h">{{h}}</div>
                                         </div>
                                         <div class="form-group"><label>Related Date</label><input type="date" formControlName="rmtInfStrdRfrdDocRltdDt"></div>
+                                        <div class="validation-msg" *ngIf="err('rmtInfStrdRfrdDocRltdDt') as e">{{e}}</div>
                                         <div class="form-group"><label>Line Details Desc</label><input formControlName="rmtInfStrdRfrdDocLineDtlsDesc" maxlength="140" placeholder="Optional">
                                             <div class="validation-msg" *ngIf="err('rmtInfStrdRfrdDocLineDtlsDesc', tx) as e">{{e}}</div>
                                             <div class="field-hint at-limit" *ngIf="hint('rmtInfStrdRfrdDocLineDtlsDesc', 140) as h">{{h}}</div>
@@ -1174,6 +1208,7 @@
                                         </div>
                                         <div class="form-group"><label>Adj Cdt/Dbt Ind</label>
                                             <select formControlName="rmtInfStrdRfrdDocAmtAdjCdtDbtInd"><option value="">None</option><option *ngFor="let c of cdtDbtInds" [value]="c">{{c}}</option></select></div>
+                                            <div class="validation-msg" *ngIf="err('rmtInfStrdRfrdDocAmtAdjCdtDbtInd') as e">{{e}}</div>
                                         <div class="form-group"><label>Adj Reason</label><input formControlName="rmtInfStrdRfrdDocAmtAdjRsn" maxlength="35" placeholder="Optional">
                                             <div class="validation-msg" *ngIf="err('rmtInfStrdRfrdDocAmtAdjRsn', tx) as e">{{e}}</div>
                                             <div class="field-hint at-limit" *ngIf="hint('rmtInfStrdRfrdDocAmtAdjRsn', 35) as h">{{h}}</div>
@@ -1197,6 +1232,7 @@
                                     <div class="mandate-grid">
                                         <div class="form-group"><label>Ref Type Code</label>
                                             <select formControlName="rmtInfStrdCdtrRefCd"><option value="">None</option><option *ngFor="let c of cdtrRefCodes" [value]="c">{{c}}</option></select></div>
+                                            <div class="validation-msg" *ngIf="err('rmtInfStrdCdtrRefCd') as e">{{e}}</div>
                                         <div class="form-group"><label>Ref Type Prtry</label><input formControlName="rmtInfStrdCdtrRefPrtry" maxlength="35" placeholder="Optional">
                                             <div class="validation-msg" *ngIf="err('rmtInfStrdCdtrRefPrtry', tx) as e">{{e}}</div>
                                             <div class="field-hint at-limit" *ngIf="hint('rmtInfStrdCdtrRefPrtry', 35) as h">{{h}}</div>
@@ -1323,6 +1359,7 @@
                                             <div class="field-hint at-limit" *ngIf="hint('rmtInfStrdGrnshmtRefNb', 35) as h">{{h}}</div>
                                         </div>
                                         <div class="form-group"><label>Date</label><input type="date" formControlName="rmtInfStrdGrnshmtDt"></div>
+                                        <div class="validation-msg" *ngIf="err('rmtInfStrdGrnshmtDt') as e">{{e}}</div>
                                         <div class="form-group"><label>Remitted Amount</label><input formControlName="rmtInfStrdGrnshmtRmtdAmt" placeholder="0.00">
                                             <div class="validation-msg" *ngIf="err('rmtInfStrdGrnshmtRmtdAmt', tx) as e">{{e}}</div>
                                         </div>
@@ -1332,8 +1369,10 @@
                                         </div>
                                         <div class="form-group"><label>Family Medical Insurance</label>
                                             <select formControlName="rmtInfStrdGrnshmtFmlyMdclInsrncInd"><option value="">None</option><option value="true">true</option><option value="false">false</option></select></div>
+                                            <div class="validation-msg" *ngIf="err('rmtInfStrdGrnshmtFmlyMdclInsrncInd') as e">{{e}}</div>
                                         <div class="form-group"><label>Employee Termination</label>
                                             <select formControlName="rmtInfStrdGrnshmtMplyeeTermntnInd"><option value="">None</option><option value="true">true</option><option value="false">false</option></select></div>
+                                            <div class="validation-msg" *ngIf="err('rmtInfStrdGrnshmtMplyeeTermntnInd') as e">{{e}}</div>
                                     </div>
                                 </div>
                                 <!-- Strd > AddtlRmtInf -->
@@ -1352,17 +1391,17 @@
         <div class="right-panel">
             <div class="bottom-actions" style="margin-top: 0; margin-bottom: 1rem;">
                 <div class="down">
-                    <button class="action-btn copy-btn" (click)="copyToClipboard()"><mat-icon>content_copy</mat-icon> Copy XML</button>
-                    <button class="action-btn" (click)="downloadXml()"><mat-icon>download</mat-icon> Download XML</button>
-                    <button class="action-btn validate-btn" (click)="validateMessage()"><mat-icon>verified</mat-icon> Validate Message</button>
+                    <button type="button" class="action-btn copy-btn" (click)="copyToClipboard()"><mat-icon>content_copy</mat-icon> Copy XML</button>
+                    <button type="button" class="action-btn" (click)="downloadXml()"><mat-icon>download</mat-icon> Download XML</button>
+                    <button type="button" class="action-btn validate-btn" (click)="validateMessage()"><mat-icon>verified</mat-icon> Validate Message</button>
                 </div>
             </div>
             <div class="content-box preview-box">
                 <div class="editor-header">
                     <div class="up">
-                        <button class="action-btn-small" (click)="undoXml()" [disabled]="!canUndoXml()" matTooltip="Undo (Ctrl+Z)"><mat-icon>undo</mat-icon></button>
-                        <button class="action-btn-small" (click)="redoXml()" [disabled]="!canRedoXml()" matTooltip="Redo (Ctrl+Y)"><mat-icon>redo</mat-icon></button>
-                        <button class="action-btn-small" (click)="formatXml()" [disabled]="!generatedXml" matTooltip="Format XML (Ctrl+S)"><mat-icon>format_align_left</mat-icon></button>
+                        <button type="button" class="action-btn-small" (click)="undoXml()" [disabled]="!canUndoXml()" matTooltip="Undo (Ctrl+Z)"><mat-icon>undo</mat-icon></button>
+                        <button type="button" class="action-btn-small" (click)="redoXml()" [disabled]="!canRedoXml()" matTooltip="Redo (Ctrl+Y)"><mat-icon>redo</mat-icon></button>
+                        <button type="button" class="action-btn-small" (click)="formatXml()" [disabled]="!generatedXml" matTooltip="Format XML (Ctrl+S)"><mat-icon>format_align_left</mat-icon></button>
                     </div>
                 </div>
                 <div class="editor-wrapper">
@@ -1425,7 +1464,7 @@
                                     <div *ngIf="issue.fix_suggestion" style="background: rgba(16, 185, 129, 0.1); padding: 8px; border-radius: 6px; border: 1px solid rgba(16, 185, 129, 0.2); display: flex; align-items: center; gap: 10px;">
                                         <mat-icon style="color: #10b981; font-size: 18px;">lightbulb</mat-icon>
                                         <div style="flex: 1;"><strong>Fix Suggestion:</strong> {{issue.fix_suggestion}}</div>
-                                        <button class="action-btn-small" (click)="copyFix(issue.fix_suggestion, $event)" title="Copy fix"><mat-icon>content_copy</mat-icon></button>
+                                        <button type="button" class="action-btn-small" (click)="copyFix(issue.fix_suggestion, $event)" title="Copy fix"><mat-icon>content_copy</mat-icon></button>
                                     </div>
                                 </div>
                             </div>

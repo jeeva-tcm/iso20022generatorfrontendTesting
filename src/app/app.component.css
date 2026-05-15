@@ -97,11 +97,12 @@ body.light-theme .logo-secondary {
 .theme-toggle {
     color: var(--text-muted) !important;
     margin-left: 4px;
-    width: 40px !important;
-    height: 40px !important;
+    width: 36px !important;
+    height: 36px !important;
     display: flex !important;
     align-items: center;
     justify-content: center;
+    overflow: visible !important;
 }
 
 .theme-toggle:hover {
@@ -113,6 +114,8 @@ body.light-theme .logo-secondary {
     font-size: 20px !important;
     width: 20px !important;
     height: 20px !important;
+    line-height: 20px !important;
+    overflow: visible !important;
 }
 
 .nav-links a {
@@ -528,15 +531,16 @@ body.light-theme .msg-tag.pain {
     min-width: 80px;
     object-fit: contain;
     background: #ffffff;
-    padding: 5px 10px;
-    border-radius: 10px;
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    padding: 5px 12px;
+    border-radius: 8px;
+    border: none;
     display: block;
+    opacity: 0.92;
 }
 
 body.light-theme .user-info img {
-    border-color: #e2e8f0;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    opacity: 1;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
 }
 
 

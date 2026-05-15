@@ -1158,10 +1158,8 @@ textarea.code-editor::-webkit-scrollbar-thumb:hover {
     color: #ef4444;
     font-size: 0.72rem;
     font-weight: 600;
-    margin-top: 3px;
-    display: flex;
-    align-items: center;
-    gap: 2px;
+    margin-top: 4px;
+    display: block;
     animation: fadeIn 0.2s ease;
 }
 

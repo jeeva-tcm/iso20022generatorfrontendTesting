@@ -9,6 +9,7 @@ import { Router } from '@angular/router';
 import { UetrService } from '../../../services/uetr.service';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { BicSearchDialogComponent } from '../bic-search-dialog/bic-search-dialog.component';
+import { debounceTime } from 'rxjs/operators';
 
 @Component({
   selector: 'app-pacs2',
@@ -41,6 +42,7 @@ export class Pacs2Component implements OnInit, OnDestroy {
   private readonly DRAFT_KEY = 'draft_pacs002';
   private draftSaveTimer: ReturnType<typeof setTimeout> | null = null;
   showDraftBanner = false;
+  isClearingDraft = false;
 
   countries: string[] = [];
   statusCodes = ['ACTC', 'ACCP', 'RJCT', 'PDNG'];
@@ -201,7 +203,7 @@ export class Pacs2Component implements OnInit, OnDestroy {
       this.updateReasonValidation();
     });
 
-    this.form.valueChanges.subscribe(() => {
+    this.form.valueChanges.pipe(debounceTime(300)).subscribe(() => {
       if (!this.isParsingXml && !this.isInternalChange) {
         this.generateXml();
         this.pushHistory();
@@ -907,10 +909,11 @@ ${txInf.trimEnd()}
     } catch (e) { console.warn('Draft load failed:', e); return false; }
   }
 
-  clearDraft(): void {
+  clearDraft(reload = false): void {
+    this.isClearingDraft = reload;
     try { localStorage.removeItem(this.DRAFT_KEY); } catch (e) {}
     this.showDraftBanner = false;
-    window.location.reload();
+    if (reload) { setTimeout(() => window.location.reload(), 500); }
   }
 
   private scheduleDraftSave(): void {

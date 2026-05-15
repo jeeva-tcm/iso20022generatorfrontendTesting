@@ -12,8 +12,9 @@
                     <div class="draft-banner" *ngIf="showDraftBanner">
                         <mat-icon>restore</mat-icon>
                         <span>Draft restored from your last session.</span>
-                        <button type="button" class="draft-clear-btn" (click)="clearDraft()">
-                            <mat-icon>close</mat-icon> Clear
+                        <button type="button" class="draft-clear-btn" [class.clearing]="isClearingDraft" (click)="clearDraft(true)" [disabled]="isClearingDraft">
+                            <ng-container *ngIf="!isClearingDraft"><mat-icon>close</mat-icon> Clear</ng-container>
+                            <ng-container *ngIf="isClearingDraft"><span class="draft-clear-spinner"></span> Clearing...</ng-container>
                         </button>
                     </div>
 
@@ -94,7 +95,7 @@
 
                     <div class="form-group">
                         <label>Sender LEI <span class="opt">Optional</span></label>
-                        <input formControlName="head_fromLei" maxlength="20" placeholder="20-char LEI" style="text-transform:uppercase;">
+                        <input formControlName="head_fromLei" maxlength="20" placeholder="20-char LEI" class="auto-uppercase">
                         <div class="validation-msg" *ngIf="err('head_fromLei') as e">{{e}}</div>
                         <div class="field-hint at-limit" *ngIf="hint('head_fromLei', 20) as h">{{h}}</div>
                     </div>
@@ -138,7 +139,7 @@
 
                     <div class="form-group">
                         <label>Receiver LEI <span class="opt">Optional</span></label>
-                        <input formControlName="head_toLei" maxlength="20" placeholder="20-char LEI" style="text-transform:uppercase;">
+                        <input formControlName="head_toLei" maxlength="20" placeholder="20-char LEI" class="auto-uppercase">
                         <div class="validation-msg" *ngIf="err('head_toLei') as e">{{e}}</div>
                         <div class="field-hint at-limit" *ngIf="hint('head_toLei', 20) as h">{{h}}</div>
                     </div>
@@ -191,7 +192,7 @@
                     </div>
                     <div class="form-group">
                         <label>Creation DateTime <span class="req">*</span></label>
-                        <input formControlName="creDtTm">
+                        <input formControlName="creDtTm" placeholder="YYYY-MM-DDThh:mm:ss±hh:mm">
                         <div class="validation-msg" *ngIf="err('creDtTm') as e">{{e}}</div>
                     </div>
 
@@ -222,10 +223,12 @@
                     <div class="form-group">
                         <label>Number of Txns</label>
                         <input formControlName="nbOfTxs" readonly style="background: var(--bg-card-hover);">
+                        <div class="validation-msg" *ngIf="err('nbOfTxs') as e">{{e}}</div>
                     </div>
                     <div class="form-group">
                         <label>Control Sum</label>
                         <input formControlName="ctrlSum" readonly style="background: var(--bg-card-hover);">
+                        <div class="validation-msg" *ngIf="err('ctrlSum') as e">{{e}}</div>
                     </div>
 
                     <div class="party-group">
@@ -333,6 +336,7 @@
                                     <option value="unstructured">Unstructured</option>
                                     <option value="hybrid">Hybrid</option>
                                 </select>
+                                <div class="validation-msg" *ngIf="err('dbtrAddrType') as e">{{e}}</div>
                             </div>
                         </div>
 
@@ -494,6 +498,7 @@
                                     <option value="unstructured">Unstructured</option>
                                     <option value="hybrid">Hybrid</option>
                                 </select>
+                                <div class="validation-msg" *ngIf="err('dbtrAgtAddrType') as e">{{e}}</div>
                             </div>
                         </div>
 
@@ -984,13 +989,13 @@
         <div class="right-panel">
             <div class="bottom-actions" style="margin-top: 0; margin-bottom: 1rem;">
                 <div class="down">
-                    <button class="action-btn copy-btn" (click)="copyToClipboard()">
+                    <button type="button" class="action-btn copy-btn" (click)="copyToClipboard()">
                         <mat-icon>content_copy</mat-icon> Copy XML
                     </button>
-                    <button class="action-btn" (click)="downloadXml()">
+                    <button type="button" class="action-btn" (click)="downloadXml()">
                         <mat-icon>download</mat-icon> Download XML
                     </button>
-                    <button class="action-btn validate-btn" (click)="validateMessage()">
+                    <button type="button" class="action-btn validate-btn" (click)="validateMessage()">
                         <mat-icon>verified</mat-icon> Validate Message
                     </button>
                 </div>
@@ -999,13 +1004,13 @@
             <div class="content-box preview-box">
                 <div class="editor-header">
                     <div class="up">
-                        <button class="action-btn-small" (click)="undoXml()" [disabled]="!canUndoXml()" matTooltip="Undo (Ctrl+Z)">
+                        <button type="button" class="action-btn-small" (click)="undoXml()" [disabled]="!canUndoXml()" matTooltip="Undo (Ctrl+Z)">
                             <mat-icon>undo</mat-icon>
                         </button>
-                        <button class="action-btn-small" (click)="redoXml()" [disabled]="!canRedoXml()" matTooltip="Redo (Ctrl+Y)">
+                        <button type="button" class="action-btn-small" (click)="redoXml()" [disabled]="!canRedoXml()" matTooltip="Redo (Ctrl+Y)">
                             <mat-icon>redo</mat-icon>
                         </button>
-                        <button class="action-btn-small" (click)="formatXml()" [disabled]="!generatedXml" matTooltip="Format XML (Ctrl+S)">
+                        <button type="button" class="action-btn-small" (click)="formatXml()" [disabled]="!generatedXml" matTooltip="Format XML (Ctrl+S)">
                             <mat-icon>subject</mat-icon>
                         </button>
                     </div>

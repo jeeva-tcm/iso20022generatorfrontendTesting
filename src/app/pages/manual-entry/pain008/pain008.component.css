@@ -872,3 +872,11 @@ textarea.code-editor::-webkit-scrollbar-thumb:hover {
         grid-template-columns: 1fr;
     }
 }
+
+.validation-msg {
+    color: #ef4444;
+    font-size: 0.72rem;
+    font-weight: 600;
+    margin-top: 4px;
+    display: block;
+}

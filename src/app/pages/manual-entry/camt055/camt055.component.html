@@ -27,8 +27,9 @@
                                         <div class="draft-banner" *ngIf="showDraftBanner">
                                             <mat-icon>restore</mat-icon>
                                             <span>Draft restored from your last session.</span>
-                                            <button type="button" class="draft-clear-btn" (click)="clearDraft()">
-                                                <mat-icon>close</mat-icon> Clear
+                                            <button type="button" class="draft-clear-btn" [class.clearing]="isClearingDraft" (click)="clearDraft(true)" [disabled]="isClearingDraft">
+                                                <ng-container *ngIf="!isClearingDraft"><mat-icon>close</mat-icon> Clear</ng-container>
+                                                <ng-container *ngIf="isClearingDraft"><span class="draft-clear-spinner"></span> Clearing...</ng-container>
                                             </button>
                                         </div>
 
@@ -147,10 +148,12 @@
                                         </div>
                                         <div class="form-group"><label>Message Definition ID <span class="req">*</span></label><input
                                                         formControlName="head_msgDefIdr"
-                                                        placeholder="e.g. camt.055.001.08"></div>
+                                                        placeholder="e.g. camt.055.001.08">
+                                                <div class="validation-msg" *ngIf="err('head_msgDefIdr') as e">{{e}}</div></div>
                                         <div class="form-group"><label>Business Service <span class="req">*</span></label><input
                                                         formControlName="head_bizSvc"
-                                                        placeholder="e.g. swift.cbprplus.02"></div>
+                                                        placeholder="e.g. swift.cbprplus.02">
+                                                <div class="validation-msg" *ngIf="err('head_bizSvc') as e">{{e}}</div></div>
 
                                         <div class="form-group full-width"
                                                  style="font-weight: bold; margin-top: 1rem; margin-bottom: 0.5rem; color: var(--accent-color); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border-light); padding-bottom: 4px;">
@@ -173,6 +176,7 @@
                                                         <option *ngFor="let c of copyDplctCodes" [value]="c">{{c}}
                                                         </option>
                                                 </select>
+                                                <div class="validation-msg" *ngIf="err('head_cpyDplct') as e">{{e}}</div>
                                         </div>
                                         <div class="form-group"><label>Priority <span
                                                                 class="opt">Optional</span></label>
@@ -180,6 +184,7 @@
                                                         <option *ngFor="let p of priorityCodes" [value]="p">{{p}}
                                                         </option>
                                                 </select>
+                                                <div class="validation-msg" *ngIf="err('head_prty') as e">{{e}}</div>
                                         </div>
 
                                         <!-- Related Header Segment -->
@@ -329,6 +334,7 @@
                                                                         <option *ngFor="let c of copyDplctCodes" [value]="c">
                                                                                 {{c}}</option>
                                                                 </select>
+                                                                <div class="validation-msg" *ngIf="err('head_rltd_cpyDplct') as e">{{e}}</div>
                                                         </div>
                                                         <div class="form-group" style="grid-column: span 1;">
                                                                 <label>Related Priority</label>
@@ -337,6 +343,7 @@
                                                                         <option *ngFor="let p of priorityCodes" [value]="p">
                                                                                 {{p}}</option>
                                                                 </select>
+                                                                <div class="validation-msg" *ngIf="err('head_rltd_prty') as e">{{e}}</div>
                                                         </div>
                                                         <div class="form-group full-width" *ngIf="err('head_rltd') as e">
                                                                 <div class="validation-msg">{{e}}</div>
@@ -380,6 +387,7 @@
                                                 <div class="form-group full-width" style="margin-bottom: 1.5rem;">
                                                         <label>Case ID <span class="opt">Optional</span></label>
                                                         <input formControlName="case_id" maxlength="35" placeholder="e.g. CASE-20240331-001234">
+                                                        <div class="validation-msg" *ngIf="err('case_id') as e">{{e}}</div>
                                                         <div class="char-counter" [class.near-limit]="isNearLimit('case_id', 35)">{{charCount('case_id', 35)}}</div>
                                                 </div>
 
@@ -452,12 +460,14 @@
                                                                 class="opt">Optional</span></label><input
                                                         formControlName="orgnlEndToEndId" maxlength="35"
                                                         placeholder="e.g. E2E-20240330-001234">
+                                                <div class="validation-msg" *ngIf="err('orgnlEndToEndId') as e">{{e}}</div>
                                                 <div class="char-counter" [class.near-limit]="isNearLimit('orgnlEndToEndId', 35)">{{charCount('orgnlEndToEndId', 35)}}</div>
                                         </div>
                                         <div class="form-group"><label>Original Instruction ID <span
                                                                 class="opt">Optional</span></label><input
                                                         formControlName="orgnlInstrId" maxlength="35"
                                                         placeholder="e.g. INSTRID-20240330-001234">
+                                                <div class="validation-msg" *ngIf="err('orgnlInstrId') as e">{{e}}</div>
                                                 <div class="char-counter" [class.near-limit]="isNearLimit('orgnlInstrId', 35)">{{charCount('orgnlInstrId', 35)}}</div>
                                         </div>
                                         <div class="form-group"><label>Original Amount <span
@@ -545,6 +555,7 @@
                                                 <div class="field-hint">Predefined ISO 20022 cancellation reason codes only</div>
                                                 <label>Additional Information</label>
                                                 <input formControlName="cxlRsnAddtlInf" maxlength="140">
+                                                <div class="validation-msg" *ngIf="err('cxlRsnAddtlInf') as e">{{e}}</div>
                                                 <div class="char-counter" [class.near-limit]="isNearLimit('cxlRsnAddtlInf', 140)" [class.at-limit]="isAtLimit('cxlRsnAddtlInf', 140)">{{charCount('cxlRsnAddtlInf', 140)}}</div>
                                         </div>
 
@@ -564,12 +575,12 @@
                         <!-- Top Actions -->
                         <div class="bottom-actions" style="margin-top: 0; margin-bottom: 1rem;">
                                 <div class="down">
-                                        <button class="action-btn copy-btn"
+                                        <button type="button" class="action-btn copy-btn"
                                                 (click)="copyXml()"><mat-icon>content_copy</mat-icon> Copy
                                                 XML</button>
-                                        <button class="action-btn" (click)="downloadXml()"><mat-icon>download</mat-icon>
+                                        <button type="button" class="action-btn" (click)="downloadXml()"><mat-icon>download</mat-icon>
                                                 Download XML</button>
-                                        <button class="action-btn validate-btn" (click)="validateMessage()"
+                                        <button type="button" class="action-btn validate-btn" (click)="validateMessage()"
                                                 [disabled]="form.invalid">
                                                 <mat-icon>verified</mat-icon> Validate Message
                                         </button>
@@ -579,15 +590,15 @@
                         <!-- XML Preview & Actions -->
                         <div class="content-box preview-box">
                                 <div class="up">
-                                        <button class="action-btn-small" (click)="undoXml()"
+                                        <button type="button" class="action-btn-small" (click)="undoXml()"
                                                 [disabled]="!canUndoXml()" title="Undo">
                                                 <mat-icon>undo</mat-icon>
                                         </button>
-                                        <button class="action-btn-small" (click)="redoXml()"
+                                        <button type="button" class="action-btn-small" (click)="redoXml()"
                                                 [disabled]="!canRedoXml()" title="Redo">
                                                 <mat-icon>redo</mat-icon>
                                         </button>
-                                        <button class="action-btn-small" (click)="formatXml()"
+                                        <button type="button" class="action-btn-small" (click)="formatXml()"
                                                 [disabled]="!generatedXml" title="Format XML">
                                                 <mat-icon>format_align_left</mat-icon>
                                         </button>
@@ -646,6 +657,7 @@
                                 <option value="unstructured">Unstructured</option>
                                 <option value="hybrid">Hybrid</option>
                         </select>
+                        <div class="validation-msg" *ngIf="err(prefix+'AddrType') as e">{{e}}</div>
                 </div>
 
                 <!-- Dynamic Address Fields -->
@@ -655,21 +667,25 @@
                                         *ngIf="['structured','hybrid'].includes(form.get(prefix+'AddrType')?.value)">
                                         <label>{{title}} Street Name</label>
                                         <input [formControlName]="prefix+'StrtNm'" maxlength="70">
+                                        <div class="validation-msg" *ngIf="err(prefix+'StrtNm') as e">{{e}}</div>
                                 </div>
                                 <div class="form-group"
                                         *ngIf="['structured','hybrid'].includes(form.get(prefix+'AddrType')?.value)">
                                         <label>{{title}} Building Number</label>
                                         <input [formControlName]="prefix+'BldgNb'" maxlength="16">
+                                        <div class="validation-msg" *ngIf="err(prefix+'BldgNb') as e">{{e}}</div>
                                 </div>
                                 <div class="form-group"
                                         *ngIf="['structured','hybrid'].includes(form.get(prefix+'AddrType')?.value)">
                                         <label>{{title}} Building Name</label>
                                         <input [formControlName]="prefix+'BldgNm'" maxlength="35">
+                                        <div class="validation-msg" *ngIf="err(prefix+'BldgNm') as e">{{e}}</div>
                                 </div>
                                 <div class="form-group"
                                         *ngIf="['structured','hybrid'].includes(form.get(prefix+'AddrType')?.value)">
                                         <label>{{title}} Post Code</label>
                                         <input [formControlName]="prefix+'PstCd'" maxlength="16">
+                                        <div class="validation-msg" *ngIf="err(prefix+'PstCd') as e">{{e}}</div>
                                 </div>
                                 <div class="form-group"
                                         *ngIf="['structured','hybrid'].includes(form.get(prefix+'AddrType')?.value)">
@@ -683,12 +699,14 @@
                                                 <option value="">Select Country</option>
                                                 <option *ngFor="let c of countries" [value]="c">{{c}}</option>
                                         </select>
+                                        <div class="validation-msg" *ngIf="err(prefix + 'Ctry') as e">{{e}}</div>
                                 </div>
                                 <ng-container
                                         *ngIf="['unstructured','hybrid'].includes(form.get(prefix+'AddrType')?.value)">
                                         <div class="form-group">
                                                 <label>{{title}} Address Line 1</label>
                                                 <input [formControlName]="prefix+'AdrLine1'" maxlength="70">
+                                                <div class="validation-msg" *ngIf="err(prefix+'AdrLine1') as e">{{e}}</div>
                                         </div>
                                 </ng-container>
                                 <ng-container
@@ -696,6 +714,7 @@
                                         <div class="form-group">
                                                 <label>{{title}} Address Line 2</label>
                                                 <input [formControlName]="prefix+'AdrLine2'" maxlength="70">
+                                                <div class="validation-msg" *ngIf="err(prefix+'AdrLine2') as e">{{e}}</div>
                                         </div>
                                 </ng-container>
                                 <ng-container
@@ -703,6 +722,7 @@
                                         <div class="form-group">
                                                 <label>{{title}} Address Line 3</label>
                                                 <input [formControlName]="prefix+'AdrLine3'" maxlength="70">
+                                                <div class="validation-msg" *ngIf="err(prefix+'AdrLine3') as e">{{e}}</div>
                                         </div>
                                 </ng-container>
                         </div>
@@ -711,6 +731,7 @@
                 <div class="form-group" *ngIf="prefix !== 'assgnr' && prefix !== 'assgne'">
                         <label>{{title}} Name</label>
                         <input [formControlName]="prefix+'Name'" maxlength="140">
+                        <div class="validation-msg" *ngIf="err(prefix+'Name') as e">{{e}}</div>
                 </div>
 
                 <div class="form-group" *ngIf="prefix === 'cxlRsnOrgtr'">
@@ -719,6 +740,7 @@
                                 <option value="">Select Country</option>
                                 <option *ngFor="let c of countries" [value]="c">{{c}}</option>
                         </select>
+                        <div class="validation-msg" *ngIf="err(prefix+'CtryOfRes') as e">{{e}}</div>
                 </div>
 
                 <!-- Party Identification (Org OR Prvt — mutually exclusive) -->
@@ -732,6 +754,7 @@
                                                 <option value="org">Organisation (OrgId)</option>
                                                 <option value="prvt">Individual (PrvtId)</option>
                                         </select>
+                                        <div class="validation-msg" *ngIf="err(prefix+'IdType') as e">{{e}}</div>
                                 </div>
 
                                 <!-- OrgId Fields (shown only when IdType = 'org') -->
@@ -741,6 +764,7 @@
                                                  <div class="form-group">
                                                          <label>Other ID (Id)</label>
                                                          <input [formControlName]="prefix+'OrgOthrId'" maxlength="35">
+                                                         <div class="validation-msg" *ngIf="err(prefix+'OrgOthrId') as e">{{e}}</div>
                                                          <div class="field-hint" *ngIf="getSchemeGuidance(prefix, 'Org') as hint">
                                                                  <mat-icon style="font-size: 14px; width: 14px; height: 14px; vertical-align: middle;">info</mat-icon> {{hint}}
                                                          </div>
@@ -751,9 +775,11 @@
                                                                  <option value="">Select Code</option>
                                                                  <option *ngFor="let c of orgSchemeCodes" [value]="c">{{c}}</option>
                                                          </select>
+                                                         <div class="validation-msg" *ngIf="err(prefix+'OrgOthrCd') as e">{{e}}</div>
                                                  </div>
                                                  <div class="form-group"><label>Issuer (Issr)</label>
                                                          <input [formControlName]="prefix+'OrgOthrIssr'" maxlength="35"></div>
+                                                         <div class="validation-msg" *ngIf="err(prefix+'OrgOthrIssr') as e">{{e}}</div>
                                          </div>
                                 </ng-container>
 
@@ -767,17 +793,21 @@
                                                  </div>
                                                  <div class="form-group"><label>Province of Birth</label>
                                                          <input [formControlName]="prefix+'PrvtPrvcOfBirth'" maxlength="35"></div>
+                                                         <div class="validation-msg" *ngIf="err(prefix+'PrvtPrvcOfBirth') as e">{{e}}</div>
                                                  <div class="form-group"><label>City of Birth</label>
                                                          <input [formControlName]="prefix+'PrvtCityOfBirth'" maxlength="35"></div>
+                                                         <div class="validation-msg" *ngIf="err(prefix+'PrvtCityOfBirth') as e">{{e}}</div>
                                                  <div class="form-group"><label>Country of Birth</label>
                                                          <select [formControlName]="prefix+'PrvtCtryOfBirth'">
                                                                  <option value="">Select Country</option>
                                                                  <option *ngFor="let c of countries" [value]="c">{{c}}</option>
                                                          </select>
+                                                         <div class="validation-msg" *ngIf="err(prefix+'PrvtCtryOfBirth') as e">{{e}}</div>
                                                  </div>
                                                  <div class="form-group">
                                                          <label>Prvt Other ID</label>
                                                          <input [formControlName]="prefix+'PrvtOthrId'" maxlength="35">
+                                                         <div class="validation-msg" *ngIf="err(prefix+'PrvtOthrId') as e">{{e}}</div>
                                                          <div class="field-hint" *ngIf="getSchemeGuidance(prefix, 'Prvt') as hint">
                                                                  <mat-icon style="font-size: 14px; width: 14px; height: 14px; vertical-align: middle;">info</mat-icon> {{hint}}
                                                          </div>
@@ -788,9 +818,11 @@
                                                                  <option value="">Select Code</option>
                                                                  <option *ngFor="let c of prvtSchemeCodes" [value]="c">{{c}}</option>
                                                          </select>
+                                                         <div class="validation-msg" *ngIf="err(prefix+'PrvtOthrCd') as e">{{e}}</div>
                                                  </div>
                                                  <div class="form-group"><label>Prvt Issuer</label>
                                                          <input [formControlName]="prefix+'PrvtOthrIssr'" maxlength="35"></div>
+                                                         <div class="validation-msg" *ngIf="err(prefix+'PrvtOthrIssr') as e">{{e}}</div>
                                          </div>
                                 </ng-container>
                         </div>
@@ -803,6 +835,7 @@
                                 <label>{{title}} Member ID</label>
                                 <input [formControlName]="prefix+'ClrSysMmbId'"
                                         maxlength="35" placeholder="Clearing Member ID">
+                                <div class="validation-msg" *ngIf="err(prefix+'ClrSysMmbId') as e">{{e}}</div>
                         </div>
 
                         <!-- Clearing System Code -->
@@ -810,6 +843,7 @@
                                 <label>{{title}} Clearing System Code</label>
                                 <input [formControlName]="prefix+'ClrSysCd'" maxlength="5"
                                         placeholder="e.g. USABA, CHAPS">
+                                <div class="validation-msg" *ngIf="err(prefix+'ClrSysCd') as e">{{e}}</div>
                         </div>
                 </ng-container>
 
@@ -818,6 +852,7 @@
                         <label>{{title}} LEI</label>
                         <input [formControlName]="isAgent ? prefix+'Lei' : prefix+'OrgLEI'" maxlength="20"
                                 placeholder="20-char LEI">
+                        <div class="validation-msg" *ngIf="err(isAgent ? prefix+'Lei' : prefix+'OrgLEI') as e">{{e}}</div>
                 </div>
 
         </div>

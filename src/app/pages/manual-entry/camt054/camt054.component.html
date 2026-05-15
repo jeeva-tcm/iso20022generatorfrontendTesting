@@ -1,4 +1,4 @@
-﻿<div class="container" (click)="$event.stopPropagation()">
+<div class="container" (click)="$event.stopPropagation()">
     <header>
         <h1>Debit Credit Notification (camt.054) <mat-icon class="title-icon">receipt_long</mat-icon></h1>
         <!-- <p style="margin-top: -1rem;">Visual camt.054 Message Builder</p> -->
@@ -11,8 +11,9 @@
                     <div class="draft-banner" *ngIf="showDraftBanner">
                         <mat-icon>restore</mat-icon>
                         <span>Draft restored from your last session.</span>
-                        <button type="button" class="draft-clear-btn" (click)="clearDraft()">
-                            <mat-icon>close</mat-icon> Clear
+                        <button type="button" class="draft-clear-btn" [class.clearing]="isClearingDraft" (click)="clearDraft(true)" [disabled]="isClearingDraft">
+                            <ng-container *ngIf="!isClearingDraft"><mat-icon>close</mat-icon> Clear</ng-container>
+                            <ng-container *ngIf="isClearingDraft"><span class="draft-clear-spinner"></span> Clearing...</ng-container>
                         </button>
                     </div>
 
@@ -96,6 +97,7 @@
                                     <option value="CODU">Copy Duplicate [CODU]</option>
                                     <option value="DUPL">Duplicate [DUPL]</option>
                                 </select>
+                                <div class="validation-msg" *ngIf="err('copyDuplicate') as e">{{e}}</div>
                             </div>
                             <div class="form-group">
                                 <label>Priority</label>
@@ -103,22 +105,27 @@
                                     <option value="NORM">Normal</option>
                                     <option value="HIGH">High</option>
                                 </select>
+                                <div class="validation-msg" *ngIf="err('priority') as e">{{e}}</div>
                             </div>
                             <div class="form-group">
                                 <label>Market Practice</label>
                                 <input type="text" formControlName="marketPractice" placeholder="Regy">
+                                <div class="validation-msg" *ngIf="err('marketPractice') as e">{{e}}</div>
                             </div>
                             <div class="form-group">
                                 <label>Market Practice ID</label>
                                 <input type="text" formControlName="marketPracticeId" placeholder="Id">
+                                <div class="validation-msg" *ngIf="err('marketPracticeId') as e">{{e}}</div>
                             </div>
                             <div class="form-group">
                                 <label>Character Set</label>
                                 <input type="text" formControlName="charSet" placeholder="UTF-8">
+                                <div class="validation-msg" *ngIf="err('charSet') as e">{{e}}</div>
                             </div>
                             <div class="form-group">
                                 <label>Possible Duplicate</label>
                                 <input type="text" formControlName="possibleDuplicate" placeholder="true/false">
+                                <div class="validation-msg" *ngIf="err('possibleDuplicate') as e">{{e}}</div>
                             </div>
                         </div>
                     </div>
@@ -147,6 +154,7 @@
                             <div class="form-group" style="grid-column: span 2;">
                                 <label>Additional Info</label>
                                 <textarea formControlName="additionalInformation" rows="2" maxlength="500"></textarea>
+                                <div class="validation-msg" *ngIf="err('additionalInformation') as e">{{e}}</div>
                                 <div class="field-hint at-limit" *ngIf="hint('additionalInformation', 500) as h">{{h}}</div>
                             </div>
                         </div>
@@ -199,6 +207,7 @@
                             <div class="form-group">
                                 <label>Birth Date</label>
                                 <input type="date" formControlName="rcptPrvtIdBirthDt">
+                                <div class="validation-msg" *ngIf="err('rcptPrvtIdBirthDt') as e">{{e}}</div>
                             </div>
                             <div class="form-group">
                                 <label>City Of Birth</label>
@@ -236,6 +245,7 @@
                             <div class="form-group">
                                 <label>Page Number</label>
                                 <input type="text" formControlName="pageNumber" placeholder="1">
+                                <div class="validation-msg" *ngIf="err('pageNumber') as e">{{e}}</div>
                             </div>
                             <div class="form-group">
                                 <label>Last Page</label>
@@ -243,6 +253,7 @@
                                     <option [value]="false">FALSE</option>
                                     <option [value]="true">TRUE</option>
                                 </select>
+                                <div class="validation-msg" *ngIf="err('lastPageInd') as e">{{e}}</div>
                             </div>
                             <div class="form-group">
                                 <label>Elec. Sequence NB</label>
@@ -267,10 +278,12 @@
                             <div class="form-group">
                                 <label>From Date Time</label>
                                 <input type="text" formControlName="fromDateTm">
+                                <div class="validation-msg" *ngIf="err('fromDateTm') as e">{{e}}</div>
                             </div>
                             <div class="form-group">
                                 <label>To Date Time</label>
                                 <input type="text" formControlName="toDateTm">
+                                <div class="validation-msg" *ngIf="err('toDateTm') as e">{{e}}</div>
                             </div>
                             <div class="form-group">
                                 <label>Copy Duplicate Ind.</label>
@@ -279,10 +292,12 @@
                                     <option value="COPY">COPY</option>
                                     <option value="DUPL">DUPL</option>
                                 </select>
+                                <div class="validation-msg" *ngIf="err('copyDuplicateIndicatorNtf') as e">{{e}}</div>
                             </div>
                             <div class="form-group">
                                 <label>Reporting Source</label>
                                 <input type="text" formControlName="reportingSource" placeholder="Prtry">
+                                <div class="validation-msg" *ngIf="err('reportingSource') as e">{{e}}</div>
                             </div>
                             <div class="form-group">
                                 <label>Account IBAN <span class="req">*</span></label>
@@ -348,6 +363,7 @@
                             <div class="form-group" style="grid-column: span 2;">
                                 <label>Additional Notification Info</label>
                                 <textarea formControlName="additionalNotificationInfo" rows="2" maxlength="500"></textarea>
+                                <div class="validation-msg" *ngIf="err('additionalNotificationInfo') as e">{{e}}</div>
                                 <div class="field-hint at-limit" *ngIf="hint('additionalNotificationInfo', 500) as h">{{h}}</div>
                             </div>
                         </div>
@@ -387,6 +403,7 @@
                                             <option value="CRDT">Credit (CRDT)</option>
                                             <option value="DBIT">Debit (DBIT)</option>
                                         </select>
+                                        <div class="validation-msg" *ngIf="err('creditDebitIndicator') as e">{{e}}</div>
                                     </div>
                                     <div class="form-group">
                                         <label>Status <span class="req">*</span></label>
@@ -394,6 +411,7 @@
                                             <option value="BOOK">BOOK</option>
                                             <option value="PDNG">PDNG</option>
                                         </select>
+                                        <div class="validation-msg" *ngIf="err('status') as e">{{e}}</div>
                                     </div>
                                     <div class="form-group">
                                         <label>Booking Date <span class="req">*</span></label>
@@ -403,6 +421,7 @@
                                     <div class="form-group">
                                         <label>Value Date</label>
                                         <input type="text" formControlName="valueDate">
+                                        <div class="validation-msg" *ngIf="err('valueDate') as e">{{e}}</div>
                                     </div>
                                     <div class="form-group">
                                         <label>Servicer Reference</label>
@@ -434,6 +453,7 @@
                                             <option [value]="false">FALSE</option>
                                             <option [value]="true">TRUE</option>
                                         </select>
+                                        <div class="validation-msg" *ngIf="err('reversalIndicator') as e">{{e}}</div>
                                     </div>
                                     <div class="form-group">
                                         <label>Waiver Indicator</label>
@@ -441,6 +461,7 @@
                                             <option [value]="false">FALSE</option>
                                             <option [value]="true">TRUE</option>
                                         </select>
+                                        <div class="validation-msg" *ngIf="err('waiverIndicator') as e">{{e}}</div>
                                     </div>
                                     <div class="form-group">
                                         <label>Charges</label>
@@ -546,6 +567,7 @@
                                     <div class="form-group" style="display: flex; flex-direction: column; gap: 8px;">
                                         <label style="text-align: left; width: 100%; margin-bottom: 0;">Additional Entry Info</label>
                                         <textarea formControlName="additionalEntryInfo" rows="3" maxlength="500" style="width: 100%; min-height: 80px;"></textarea>
+                                        <div class="validation-msg" *ngIf="err('additionalEntryInfo') as e">{{e}}</div>
                                         <div class="field-hint at-limit" *ngIf="hint('additionalEntryInfo', 500, entry) as h">{{h}}</div>
                                     </div>
                                 </div>
@@ -561,13 +583,13 @@
             <!-- Top Action Area (matches pacs.008 screenshot) -->
             <div class="bottom-actions" style="margin-top: 0; margin-bottom: 1rem;">
                 <div class="down" style="display: flex; gap: 0.5rem; justify-content: flex-end; width: 100%;">
-                    <button class="action-btn copy-btn" (click)="copyToClipboard()">
+                    <button type="button" class="action-btn copy-btn" (click)="copyToClipboard()">
                         <mat-icon>content_copy</mat-icon> Copy XML
                     </button>
-                    <button class="action-btn" (click)="downloadXml()">
+                    <button type="button" class="action-btn" (click)="downloadXml()">
                         <mat-icon>download</mat-icon> Download XML
                     </button>
-                    <button class="action-btn validate-btn" (click)="validateMessage()" [disabled]="form.invalid">
+                    <button type="button" class="action-btn validate-btn" (click)="validateMessage()" [disabled]="form.invalid">
                          <mat-icon>verified</mat-icon> Validate Message
                     </button>
                 </div>
@@ -576,13 +598,13 @@
             <!-- Preview Container with Internal Toolbar -->
             <div class="content-box preview-box">
                 <div class="up" style="border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom: 0.5rem; margin-bottom: 0.5rem; display: flex; gap: 0.5rem;">
-                    <button class="action-btn-small" (click)="undoXml()" matTooltip="Undo changes">
+                    <button type="button" class="action-btn-small" (click)="undoXml()" matTooltip="Undo changes">
                         <mat-icon>undo</mat-icon>
                     </button>
-                    <button class="action-btn-small" (click)="redoXml()" matTooltip="Redo changes">
+                    <button type="button" class="action-btn-small" (click)="redoXml()" matTooltip="Redo changes">
                         <mat-icon>redo</mat-icon>
                     </button>
-                    <button class="action-btn-small" (click)="formatXml()" matTooltip="Format XML">
+                    <button type="button" class="action-btn-small" (click)="formatXml()" matTooltip="Format XML">
                         <mat-icon>format_align_left</mat-icon>
                     </button>
                 </div>
