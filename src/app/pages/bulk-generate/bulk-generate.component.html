@@ -205,27 +205,16 @@
       </label>
     </div>
 
-    <div class="config-tabs" *ngIf="selectedConfigs.length > 1" style="display: flex; gap: 10px; margin-bottom: 1rem; overflow-x: auto; padding-bottom: 8px;">
+    <div class="config-tabs" *ngIf="selectedConfigs.length > 1">
       <div *ngFor="let cfg of selectedConfigs"
            class="config-tab"
            [class.active]="activeConfig?.id === cfg.id"
-           (click)="setActiveConfig(cfg)"
-           style="padding: 10px 16px; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-weight: 500; white-space: nowrap; transition: all 0.2s;">
-        {{ cfg.label }}
-        <mat-icon *ngIf="(dependencyWarnings[cfg.id]?.length || 0) > 0" style="color: #f59e0b; font-size: 18px; width: 18px; height: 18px;">warning</mat-icon>
+           (click)="setActiveConfig(cfg)">
+        <span class="tab-label">{{ cfg.label }}</span>
+        <mat-icon class="tab-warning" *ngIf="(dependencyWarnings[cfg.id]?.length || 0) > 0" matTooltip="Missing dependencies">warning</mat-icon>
+        <mat-icon class="tab-check" *ngIf="activeConfig?.id === cfg.id">check_circle</mat-icon>
       </div>
     </div>
-    
-    <style>
-      .config-tab.active {
-        background: var(--primary-light) !important;
-        border-color: var(--primary-color) !important;
-        color: var(--primary-color);
-      }
-      .config-tab:hover:not(.active) {
-        background: var(--bg-hover) !important;
-      }
-    </style>
 
     <!-- Block Selection -->
     <div class="section" *ngIf="!loadingBlocks && activeConfig && activeConfig.blocks.length > 0">

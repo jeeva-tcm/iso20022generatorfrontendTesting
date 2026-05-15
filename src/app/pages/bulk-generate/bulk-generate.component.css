@@ -1,4 +1,4 @@
-﻿/* ════════════════════════════════════════════
+/* ════════════════════════════════════════════
    Bulk Message Generation — Component Styles
    ════════════════════════════════════════════ */
 
@@ -840,6 +840,84 @@ body.light-theme .msg-tag.pain { color: #be185d; border-color: rgba(236,72,153,0
   height: 16px;
 }
 
+/* ── Config Tabs ── */
+.config-tabs {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 1.5rem;
+  overflow-x: auto;
+  padding-bottom: 10px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(99,102,241,0.3) transparent;
+}
+
+.config-tabs::-webkit-scrollbar { height: 6px; }
+.config-tabs::-webkit-scrollbar-track { background: transparent; }
+.config-tabs::-webkit-scrollbar-thumb { background: rgba(99,102,241,0.3); border-radius: 3px; }
+
+.config-tab {
+  padding: 10px 18px;
+  background: var(--bg-card);
+  border: 1.5px solid var(--border-light);
+  border-radius: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.config-tab:hover {
+  border-color: rgba(99,102,241,0.4);
+  background: var(--bg-card-hover);
+  color: var(--text-main);
+  transform: translateY(-1px);
+}
+
+.config-tab.active {
+  background: rgba(99,102,241,0.1);
+  border-color: #2563eb;
+  color: #2563eb;
+  box-shadow: 0 4px 12px rgba(37,99,235,0.15);
+}
+
+.tab-label {
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: -0.3px;
+}
+
+.tab-warning {
+  color: #f59e0b;
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}
+
+.tab-check {
+  color: #2563eb;
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  animation: scaleIn 0.2s ease-out forwards;
+}
+
+@keyframes scaleIn {
+  from { transform: scale(0.5); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+body.light-theme .config-tab.active {
+  background: rgba(37,99,235,0.08);
+}
+
 /* ── Dependency Warnings ── */
 .dep-warnings {
   background: rgba(251, 146, 60, 0.08);
@@ -1089,6 +1167,36 @@ body.light-theme .msg-tag.pain { color: #be185d; border-color: rgba(236,72,153,0
 
 .gen-summary strong {
   color: var(--text-main);
+}
+
+.btn-primary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 24px;
+  border-radius: 10px;
+  border: none;
+  background: #2563eb;
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+  letter-spacing: 0.2px;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #1d4ed8;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.35);
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
 .btn-generate {
