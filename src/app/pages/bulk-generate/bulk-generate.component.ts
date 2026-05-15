@@ -110,7 +110,7 @@ export class BulkGenerateComponent implements OnInit {
   selectedConfigs: MessageTypeConfig[] = [];
   activeConfig: MessageTypeConfig | null = null;
 
-  messageCount: number = 10;
+  messageCount: number = 1;
   messageCountError: string = '';
 
   // block selection: configId -> blockId -> boolean

@@ -7,37 +7,190 @@
     <!-- Toolbar -->
     <div class="converter-toolbar">
         <div class="toolbar-left">
+            
             <span class="toolbar-label">Samples:</span>
             <mat-form-field appearance="outline" class="toolbar-select-field">
-                <mat-select placeholder="Select MT Message" (selectionChange)="loadSample($event.value)" class="sample-select">
-                    <mat-option value="#">Clear Message</mat-option>
-                    <mat-option value="MT103">MT103 (pacs.008)</mat-option>
-                    <mat-option value="MT103+">MT103+ (pacs.008-STP)</mat-option>
-                    <mat-option value="MT103 REMIT">MT103 REMIT (pacs.008-Remit)</mat-option>
-                    <mat-option value="MT202">MT202 (pacs.009)</mat-option>
-                    <mat-option value="MT202COV">MT202 COV (pacs.009-COV)</mat-option>
-                    <mat-option value="MT200">MT200 (pacs.009-Cash)</mat-option>
-                    <mat-option value="MT210">MT210 (camt.057)</mat-option>
-                    <mat-option value="MT900">MT900 (camt.054-Debit)</mat-option>
-                    <mat-option value="MT910">MT910 (camt.054-Credit)</mat-option>
-                    <mat-option value="MT940">MT940 (camt.053)</mat-option>
-                    <mat-option value="MT950">MT950 (camt.053-Stat)</mat-option>
-                    <mat-option value="MT942">MT942 (camt.052)</mat-option>
-                    <mat-option value="MT199">MT199 (pacs.002)</mat-option>
-                    <mat-option value="MT299">MT299 (pacs.002-ACK)</mat-option>
-                    <mat-option value="MT192">MT192 (camt.056)</mat-option>
-                    <mat-option value="MT196">MT196 (camt.029)</mat-option>
+                <mat-select placeholder="Select MT Message" (selectionChange)="loadSample($event.value)" class="sample-select" #sampleSelect panelClass="custom-select-panel">
+                    <mat-select-trigger>
+                        {{ sampleSelect.value || 'Select MT Message' }}
+                    </mat-select-trigger>
+                    <mat-option value="MT103">
+                        <div class="opt-layout">
+                            <div class="opt-text">
+                                <span class="opt-title">MT103 (pacs.008)</span>
+                                <span class="opt-sub">Customer Credit Transfer</span>
+                            </div>
+                        </div>
+                    </mat-option>
+                    <mat-option value="MT103+">
+                        <div class="opt-layout">
+                            <div class="opt-text">
+                                <span class="opt-title">MT103+ (pacs.008-STP)</span>
+                                <span class="opt-sub">Customer Credit Transfer (STP)</span>
+                            </div>
+                        </div>
+                    </mat-option>
+                    <mat-option value="MT103 REMIT">
+                        <div class="opt-layout">
+                            <div class="opt-text">
+                                <span class="opt-title">MT103 REMIT (pacs.008-Remit)</span>
+                                <span class="opt-sub">Customer Credit Transfer (Remit)</span>
+                            </div>
+                        </div>
+                    </mat-option>
+                    <mat-option value="MT202">
+                        <div class="opt-layout">
+                            <div class="opt-text">
+                                <span class="opt-title">MT202 (pacs.009)</span>
+                                <span class="opt-sub">FI Credit Transfer</span>
+                            </div>
+                        </div>
+                    </mat-option>
+                    <mat-option value="MT202COV">
+                        <div class="opt-layout">
+                            <div class="opt-text">
+                                <span class="opt-title">MT202 COV (pacs.009-COV)</span>
+                                <span class="opt-sub">FI Credit Transfer (COV)</span>
+                            </div>
+                        </div>
+                    </mat-option>
+                    <mat-option value="MT200">
+                        <div class="opt-layout">
+                            <div class="opt-text">
+                                <span class="opt-title">MT200 (pacs.009-Cash)</span>
+                                <span class="opt-sub">FI Credit Transfer (Cash)</span>
+                            </div>
+                        </div>
+                    </mat-option>
+                    <mat-option value="MT210">
+                        <div class="opt-layout">
+                            <div class="opt-text">
+                                <span class="opt-title">MT210 (camt.057)</span>
+                                <span class="opt-sub">Notification To Receive</span>
+                            </div>
+                        </div>
+                    </mat-option>
+                    <mat-option value="MT900">
+                        <div class="opt-layout">
+                            <div class="opt-text">
+                                <span class="opt-title">MT900 (camt.054-Debit)</span>
+                                <span class="opt-sub">Bank To Customer Debit Advice</span>
+                            </div>
+                        </div>
+                    </mat-option>
+                    <mat-option value="MT910">
+                        <div class="opt-layout">
+                            <div class="opt-text">
+                                <span class="opt-title">MT910 (camt.054-Credit)</span>
+                                <span class="opt-sub">Bank To Customer Credit Advice</span>
+                            </div>
+                        </div>
+                    </mat-option>
+                    <mat-option value="MT940">
+                        <div class="opt-layout">
+                            <div class="opt-text">
+                                <span class="opt-title">MT940 (camt.053)</span>
+                                <span class="opt-sub">Bank To Customer Statement</span>
+                            </div>
+                        </div>
+                    </mat-option>
+                    <mat-option value="MT950">
+                        <div class="opt-layout">
+                            <div class="opt-text">
+                                <span class="opt-title">MT950 (camt.053-Stat)</span>
+                                <span class="opt-sub">Bank To Customer Statement</span>
+                            </div>
+                        </div>
+                    </mat-option>
+                    <mat-option value="MT942">
+                        <div class="opt-layout">
+                            <div class="opt-text">
+                                <span class="opt-title">MT942 (camt.052)</span>
+                                <span class="opt-sub">Bank To Customer Account Report</span>
+                            </div>
+                        </div>
+                    </mat-option>
+                    <mat-option value="MT199">
+                        <div class="opt-layout">
+                            <div class="opt-text">
+                                <span class="opt-title">MT199 (pacs.002)</span>
+                                <span class="opt-sub">FIToFI Payment Status Report</span>
+                            </div>
+                        </div>
+                    </mat-option>
+                    <mat-option value="MT299">
+                        <div class="opt-layout">
+                            <div class="opt-text">
+                                <span class="opt-title">MT299 (pacs.002-ACK)</span>
+                                <span class="opt-sub">FIToFI Payment Status Report</span>
+                            </div>
+                        </div>
+                    </mat-option>
+                    <mat-option value="MT192">
+                        <div class="opt-layout">
+                            <div class="opt-text">
+                                <span class="opt-title">MT192 (camt.056)</span>
+                                <span class="opt-sub">FIToFI Payment Cancellation Request</span>
+                            </div>
+                        </div>
+                    </mat-option>
+                    <mat-option value="MT196">
+                        <div class="opt-layout">
+                            <div class="opt-text">
+                                <span class="opt-title">MT196 (camt.029)</span>
+                                <span class="opt-sub">Resolution Of Investigation</span>
+                            </div>
+                        </div>
+                    </mat-option>
                 </mat-select>
             </mat-form-field>
-        </div>
-        <div class="toolbar-right">
-            <button class="action-btn clear-btn" (click)="clearAll()">
+            
+            <button class="action-btn clear-btn" style="margin-left: 10px;" (click)="clearAll()" title="Clear Form">
                 <mat-icon>delete_sweep</mat-icon> Clear
             </button>
-            <button class="action-btn convert-btn" (click)="convert()"
+            
+            <div class="divider" style="width: 1px; height: 24px; background: #cbd5e1; margin: 0 10px;"></div>
+            <!-- Upload section moved to left side -->
+            <input type="file" #fileUpload style="display: none;" (change)="onFileSelected($event)" accept=".txt,.fin,.mt,.message,.zip">
+            <div style="display: flex; flex-direction: column; align-items: center;">
+                <button class="action-btn upload-btn" (click)="fileUpload.click()" *ngIf="!isFileLoading">
+                    <mat-icon>upload_file</mat-icon> {{ uploadedFileName ? 'Upload Another' : 'Upload MT File' }}
+                </button>
+                <div class="upload-loading" *ngIf="isFileLoading">
+                    <mat-icon class="spin-icon">sync</mat-icon> Reading file...
+                </div>
+                <span style="font-size: 0.65rem; color: #64748b; margin-top: 4px; font-weight: 500;">Supports: .txt, .fin, .mt, .zip</span>
+            </div>
+        </div>
+        <div class="toolbar-right">
+            <!-- Uploaded File Info -->
+            <div class="uploaded-file-info" *ngIf="uploadedFileName">
+                <mat-icon [class.warning-icon]="isFileWarning" [class.success-icon]="!isFileWarning">
+                    {{isFileWarning ? 'warning' : 'description'}}
+                </mat-icon>
+                <span class="file-name" [title]="uploadedFileName">{{uploadedFileName}}</span>
+                <button class="remove-file-btn" (click)="removeUploadedFile()" title="Remove file">
+                    <mat-icon>close</mat-icon>
+                </button>
+            </div>
+
+            <button *ngIf="!isBulkMode && bulkMtMessages.length > 0" class="action-btn" style="background: #e2e8f0; color: #475569;" (click)="isBulkMode = true; uploadedFileName = bulkZipName">
+                <mat-icon>keyboard_return</mat-icon> Back to ZIP
+            </button>
+            <button *ngIf="!isBulkMode" class="action-btn convert-btn" (click)="convert()"
                 [disabled]="!mtInput.trim() || conversionStatus === 'converting'">
                 <mat-icon>{{conversionStatus === 'converting' ? 'sync' : 'transform'}}</mat-icon>
                 {{conversionStatus === 'converting' ? 'Converting...' : 'Convert MT → MX'}}
+            </button>
+            <button *ngIf="isBulkMode && conversionStatus !== 'success'" class="action-btn convert-btn bulk-convert-btn" (click)="convertBulk()"
+                [disabled]="conversionStatus === 'converting' || selectedBulkCount === 0">
+                <mat-icon [class.spin-icon]="conversionStatus === 'converting'">
+                    {{conversionStatus === 'converting' ? 'sync' : 'dynamic_feed'}}
+                </mat-icon>
+                {{conversionStatus === 'converting' ? ('Converting ' + bulkConversionProgress + '%') : (selectedBulkCount === bulkTotalFiles ? 'Bulk Convert All' : 'Bulk Convert (' + selectedBulkCount + ')')}}
+            </button>
+            <button *ngIf="isBulkMode && conversionStatus === 'success'" class="action-btn download-btn bulk-convert-btn" (click)="downloadBulkZip()" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none;">
+                <mat-icon>download</mat-icon> Download ZIP
             </button>
         </div>
     </div>
@@ -56,12 +209,18 @@
     <div class="detection-strip" *ngIf="detectedMtType && conversionStatus !== 'idle'">
         <div class="detect-item">
             <span class="detect-label">Detected</span>
-            <span class="detect-value mt-badge">{{detectedMtType}}</span>
+            <div class="detect-block mt-badge">
+                <span class="detect-value">{{detectedMtType}}</span>
+                <span class="detect-sub" *ngIf="mappedMxDesc">{{mappedMxDesc}}</span>
+            </div>
         </div>
         <mat-icon class="arrow-icon">arrow_forward</mat-icon>
         <div class="detect-item" *ngIf="mappedMxType">
             <span class="detect-label">Target</span>
-            <span class="detect-value mx-badge">{{mappedMxType}}</span>
+            <div class="detect-block mx-badge">
+                <span class="detect-value">{{mappedMxType}}</span>
+                <span class="detect-sub" *ngIf="mappedMxDesc">{{mappedMxDesc}}</span>
+            </div>
         </div>
         <div class="detect-status" *ngIf="conversionStatus === 'success'">
             <mat-icon class="status-ok">check_circle</mat-icon> Converted
@@ -84,7 +243,7 @@
     </div>
 
     <!-- Split View -->
-    <div class="split-view">
+    <div class="split-view" *ngIf="!isBulkMode">
         <!-- Left: MT Input -->
         <div class="panel">
             <div class="panel-header">
@@ -186,7 +345,68 @@
         </div>
     </div>
 
+    <!-- Bulk View -->
+    <div class="bulk-view panel" *ngIf="isBulkMode">
+        <div class="bulk-header">
+            <mat-icon class="bulk-icon">folder_zip</mat-icon>
+            <div class="bulk-title">
+                <h2>Bulk MT Upload Detected</h2>
+                <p>ZIP File: <strong>{{uploadedFileName}}</strong> &nbsp;|&nbsp; Total MT Messages: <strong>{{bulkTotalFiles}}</strong></p>
+            </div>
+            <!-- We keep the bulk convert button in the main toolbar, but also add one here for clarity -->
+            <button class="action-btn convert-btn bulk-convert-btn-large" *ngIf="conversionStatus !== 'success'" (click)="convertBulk()" [disabled]="conversionStatus === 'converting' || selectedBulkCount === 0">
+                <mat-icon [class.spin-icon]="conversionStatus === 'converting'">
+                    {{conversionStatus === 'converting' ? 'sync' : 'dynamic_feed'}}
+                </mat-icon>
+                {{conversionStatus === 'converting' ? ('Converting ' + bulkConversionProgress + '%') : (selectedBulkCount === bulkTotalFiles ? 'Bulk Convert All' : 'Bulk Convert (' + selectedBulkCount + ')')}}
+            </button>
+            <button class="action-btn download-btn bulk-convert-btn-large" *ngIf="conversionStatus === 'success'" (click)="downloadBulkZip()" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+                <mat-icon>download</mat-icon> Download ZIP
+            </button>
+        </div>
+        
+        <div class="bulk-progress-container" *ngIf="conversionStatus === 'converting'">
+            <div class="bulk-progress-bar">
+                <div class="bulk-progress-fill" [style.width.%]="bulkConversionProgress"></div>
+            </div>
+            <div class="bulk-progress-text" *ngIf="conversionStatus === 'converting'">Processing... {{bulkConversionProgress}}%</div>
+        </div>
 
+        <div class="bulk-list-actions" *ngIf="bulkMtMessages.length > 0">
+            <label class="bf-checkbox-container select-all">
+                <input type="checkbox" [checked]="selectedBulkCount === bulkTotalFiles && bulkTotalFiles > 0" (change)="toggleAllBulkSelection($event)">
+                <span class="bf-checkmark"></span>
+                <strong>Select All</strong>
+            </label>
+            <span class="bf-selected-count">{{selectedBulkCount}} of {{bulkTotalFiles}} selected</span>
+        </div>
+
+        <div class="bulk-file-list">
+            <div class="bulk-file-item" *ngFor="let file of bulkMtMessages.slice(0, 50)" [class.unchecked]="!file.selected">
+                <label class="bf-checkbox-container">
+                    <input type="checkbox" [(ngModel)]="file.selected">
+                    <span class="bf-checkmark"></span>
+                </label>
+                <div class="bf-icon">
+                    <mat-icon *ngIf="!file.status">description</mat-icon>
+                    <mat-icon *ngIf="file.status === 'pending'" class="spin-icon" style="color: #6366f1;">sync</mat-icon>
+                    <mat-icon *ngIf="file.status === 'success'" style="color: #10b981;">check_circle</mat-icon>
+                    <mat-icon *ngIf="file.status === 'error'" style="color: #ef4444;" [title]="file.errorMsg">error</mat-icon>
+                </div>
+                <div class="bf-name" [title]="file.filename">{{file.filename}} <span *ngIf="file.errorMsg" class="bf-error-text" style="color: #ef4444; font-size: 0.8rem;"> - {{file.errorMsg}}</span></div>
+                <div class="bf-size">{{ (file.content.length / 1024) | number:'1.1-2' }} KB</div>
+                <button class="bf-load-btn" *ngIf="file.status === 'success'" (click)="viewSingleMtMessage(file)" title="View MX Output & Validate">
+                    <mat-icon>visibility</mat-icon> View MX
+                </button>
+                <button class="bf-load-btn" *ngIf="file.status !== 'success'" (click)="viewSingleMtMessage(file)" title="Load this message into the editor">
+                    <mat-icon>open_in_browser</mat-icon> Load MT
+                </button>
+            </div>
+            <div class="bulk-file-more" *ngIf="bulkMtMessages.length > 50">
+                ... and {{bulkMtMessages.length - 50}} more files ready to convert.
+            </div>
+        </div>
+    </div>
 
     <!-- Validation Results Modal -->
     <div class="validation-overlay" *ngIf="showValidationModal" (click)="closeValidationModal()">

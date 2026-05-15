@@ -8,6 +8,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { ConfigService } from '../../services/config.service';
+import JSZip from 'jszip';
 
 @Component({
     selector: 'app-mt-to-mx',
@@ -23,6 +24,7 @@ export class MtToMxComponent implements OnInit {
     outputLineCount: number[] = [1];
     detectedMtType = '';
     mappedMxType = '';
+    mappedMxDesc = '';
     conversionStatus: 'idle' | 'converting' | 'success' | 'error' = 'idle';
     errorMessage = '';
     showValidationSummary = false;
@@ -30,6 +32,32 @@ export class MtToMxComponent implements OnInit {
     conversionLog: { severity: string; message: string }[] = [];
     conversionErrors: string[] = [];
     activeFieldGuide: any = null;
+    uploadedFileName: string | null = null;
+    isFileLoading = false;
+    isFileWarning = false;
+    
+    // Bulk Conversion State
+    isBulkMode = false;
+    bulkMtMessages: { 
+        filename: string; 
+        content: string; 
+        selected: boolean;
+        status?: 'pending' | 'success' | 'error';
+        mxOutput?: string;
+        errorMsg?: string;
+    }[] = [];
+    bulkConversionProgress = 0;
+    bulkTotalFiles = 0;
+    bulkZipName: string | null = null;
+
+    get selectedBulkCount(): number {
+        return this.bulkMtMessages.filter(m => m.selected).length;
+    }
+
+    toggleAllBulkSelection(event: any) {
+        const checked = event.target.checked;
+        this.bulkMtMessages.forEach(m => m.selected = checked);
+    }
 
     // Undo/Redo History
     private mtHistory: string[] = [];
@@ -158,9 +186,11 @@ export class MtToMxComponent implements OnInit {
             const cleanType = detected.replace('MT', '');
             const mapping = this.mtToMxMap[detected] || this.mtToMxMap[cleanType];
             this.mappedMxType = mapping ? mapping.mx : 'Unknown';
+            this.mappedMxDesc = mapping ? mapping.desc : '';
         } else {
             this.detectedMtType = '';
             this.mappedMxType = '';
+            this.mappedMxDesc = '';
         }
         this.activeFieldGuide = null; // Don't show guide proactively
         this.updateLineCount('mt');
@@ -407,6 +437,7 @@ export class MtToMxComponent implements OnInit {
                     const mapping = this.mtToMxMap[this.detectedMtType] || this.mtToMxMap[typeValue] || this.mtToMxMap['MT' + typeValue];
                     if (mapping) {
                         this.mappedMxType = mapping.mx;
+                        this.mappedMxDesc = mapping.desc;
                     }
                 }
 
@@ -1156,8 +1187,248 @@ export class MtToMxComponent implements OnInit {
         this.errorMessage = '';
         this.conversionErrors = [];
         this.missingFields = [];
+        this.uploadedFileName = null;
+        this.isFileWarning = false;
+        
+        this.isBulkMode = false;
+        this.bulkMtMessages = [];
+        this.bulkConversionProgress = 0;
+        this.bulkTotalFiles = 0;
+        this.bulkZipName = null;
+
         this.updateLineCount('mt');
         this.updateLineCount('mx');
+    }
+
+    onFileSelected(event: any) {
+        const file = event.target.files[0];
+        event.target.value = ''; // reset to allow selecting same file again
+        
+        if (!file) return;
+
+        // 1. File Extension Validation
+        const validExtensions = ['.txt', '.fin', '.mt', '.message', '.zip'];
+        const fileName = file.name.toLowerCase();
+        if (!validExtensions.some(ext => fileName.endsWith(ext))) {
+            this.snackBar.open('Unsupported file type. Allowed: .txt, .fin, .mt, .message, .zip', 'Dismiss', { duration: 4000 });
+            return;
+        }
+
+        // 2. File Size Validation (Max 15 MB for zip)
+        if (file.size > 15 * 1024 * 1024) {
+            this.snackBar.open('File size exceeds maximum allowed limit (15 MB).', 'Dismiss', { duration: 4000 });
+            return;
+        }
+
+        if (fileName.endsWith('.zip')) {
+            this.handleZipUpload(file);
+            return;
+        }
+
+        // 3. Read & Validate Content
+        this.isFileLoading = true;
+        
+        const reader = new FileReader();
+        reader.onload = (e: any) => {
+            this.isFileLoading = false;
+            const content = e.target.result as string;
+
+            if (!content || !content.trim()) {
+                this.snackBar.open('Please upload a non-empty MT message file.', 'Dismiss', { duration: 4000 });
+                return;
+            }
+
+            // 1. Explicitly reject XML/MX content
+            const cleanContent = content.trim();
+            if (cleanContent.startsWith('<?xml') || cleanContent.startsWith('<') || cleanContent.includes('<Document') || cleanContent.includes('<AppHdr')) {
+                this.snackBar.open('Uploaded file appears to be XML/MX, not a valid SWIFT MT message.', 'Dismiss', { duration: 4000 });
+                return;
+            }
+
+            // 2. Check for SWIFT MT blocks OR common MT fields
+            const hasBlocks = /\{[1-5]:/.test(content);
+            const hasFields = /(?:^|[\n\r{]):([0-9]{2}[A-Z]?):/.test(content);
+            
+            if (!hasBlocks && !hasFields) {
+                this.snackBar.open('Uploaded file does not contain valid SWIFT MT message.', 'Dismiss', { duration: 4000 });
+                return;
+            }
+
+            // Success (with possible warning)
+            this.clearAll(); // Ensure bulk mode is off
+            this.uploadedFileName = file.name;
+            this.mtInput = content;
+            this.onMtChange(this.mtInput);
+            
+            setTimeout(() => {
+                this.syncScroll(this.mtEditorRef.nativeElement, this.mtLineNumbersRef.nativeElement);
+            }, 0);
+
+            if ((hasBlocks && !hasFields && !content.includes('-}')) || (!hasBlocks && hasFields)) {
+                this.isFileWarning = true;
+                this.snackBar.open('MT message loaded with possible formatting issues.', 'Dismiss', { duration: 4000 });
+            } else {
+                this.isFileWarning = false;
+                this.snackBar.open('MT file uploaded successfully.', '', { duration: 2000 });
+            }
+        };
+        
+        reader.onerror = () => {
+            this.isFileLoading = false;
+            this.snackBar.open('Error reading file.', 'Dismiss', { duration: 3000 });
+        };
+        
+        reader.readAsText(file);
+    }
+    
+    async handleZipUpload(file: File) {
+        this.clearAll();
+        this.isFileLoading = true;
+        this.uploadedFileName = file.name;
+        
+        try {
+            const zip = new JSZip();
+            const contents = await zip.loadAsync(file);
+            const mtFiles: { filename: string; content: string; selected: boolean }[] = [];
+            
+            for (const filename of Object.keys(contents.files)) {
+                const zipEntry: any = contents.files[filename];
+                if (!zipEntry.dir && filename.match(/\.(txt|fin|mt|message)$/i)) {
+                    const text = await zipEntry.async('string');
+                    // Basic sanity check, not strict validation per file to save time,
+                    // but drop obvious XMLs
+                    const cleanText = text.trim();
+                    if (!cleanText.startsWith('<?xml') && !cleanText.startsWith('<') && !cleanText.includes('<AppHdr')) {
+                        const baseFilename = filename.split('/').pop()?.split('\\').pop() || filename;
+                        mtFiles.push({ filename: baseFilename, content: text, selected: true });
+                    }
+                }
+            }
+            
+            this.isFileLoading = false;
+            
+            if (mtFiles.length === 0) {
+                this.uploadedFileName = null;
+                this.snackBar.open('ZIP file does not contain any valid MT files (.txt, .fin, .mt).', 'Dismiss', { duration: 4000 });
+                return;
+            }
+            
+            this.isBulkMode = true;
+            this.bulkMtMessages = mtFiles;
+            this.bulkTotalFiles = mtFiles.length;
+            this.bulkZipName = file.name;
+            this.isFileWarning = false;
+            
+            // Clear standard input since we show bulk UI instead
+            this.mtInput = '';
+            
+            this.updateLineCount('mt');
+            this.snackBar.open(`Loaded ${mtFiles.length} messages from ZIP.`, '', { duration: 3000 });
+            
+        } catch (error) {
+            this.isFileLoading = false;
+            this.uploadedFileName = null;
+            this.snackBar.open('Error reading ZIP file. It may be corrupted.', 'Dismiss', { duration: 4000 });
+        }
+    }
+
+    viewSingleMtMessage(file: { filename: string; content: string; selected: boolean; mxOutput?: string; status?: string }) {
+        this.isBulkMode = false;
+        this.uploadedFileName = file.filename;
+        this.mtInput = file.content;
+        this.onMtChange(this.mtInput);
+        if (file.status === 'success' && file.mxOutput) {
+            this.mxOutput = file.mxOutput;
+            this.conversionStatus = 'success';
+        }
+        this.snackBar.open(`Loaded ${file.filename} into editor.`, 'Dismiss', { duration: 3000 });
+        setTimeout(() => {
+            this.syncScroll(this.mtEditorRef.nativeElement, this.mtLineNumbersRef.nativeElement);
+        }, 0);
+    }
+
+    async convertBulk() {
+        const selectedMessages = this.bulkMtMessages.filter(m => m.selected);
+        if (!this.isBulkMode || selectedMessages.length === 0) return;
+        
+        this.conversionStatus = 'converting';
+        this.bulkConversionProgress = 0;
+        
+        let successCount = 0;
+        
+        for (let i = 0; i < selectedMessages.length; i++) {
+            const msg = selectedMessages[i];
+            msg.status = 'pending';
+            
+            try {
+                // Async await HTTP request using Promises
+                const response: any = await new Promise((resolve, reject) => {
+                    this.http.post(this.config.getApiUrl('/convert-mt-to-mx'), {
+                        mt_message: msg.content,
+                        target_mt_type: null
+                    }).subscribe({
+                        next: resolve,
+                        error: reject
+                    });
+                });
+                
+                if (response.mx_message) {
+                    msg.mxOutput = response.mx_message;
+                    msg.status = 'success';
+                    successCount++;
+                } else {
+                    msg.status = 'error';
+                    msg.errorMsg = 'No MX output generated.';
+                }
+            } catch (error: any) {
+                msg.status = 'error';
+                const errDetail = error.error?.errors?.[0] || 'Unknown backend error';
+                msg.errorMsg = errDetail;
+            }
+            
+            this.bulkConversionProgress = Math.round(((i + 1) / selectedMessages.length) * 100);
+            this.cdr.detectChanges();
+        }
+        
+        this.conversionStatus = 'success';
+        this.bulkConversionProgress = 100;
+        this.snackBar.open(`Successfully converted ${successCount} files. Review results below.`, 'Dismiss', { duration: 4000 });
+    }
+
+    async downloadBulkZip() {
+        const zipOutput = new JSZip();
+        const successMessages = this.bulkMtMessages.filter(m => m.status === 'success' && m.mxOutput);
+        const errorMessages = this.bulkMtMessages.filter(m => m.status === 'error');
+        
+        if (successMessages.length === 0) {
+            this.snackBar.open('No successfully converted files to download.', 'Dismiss', { duration: 3000 });
+            return;
+        }
+
+        successMessages.forEach(msg => {
+            const baseName = msg.filename.replace(/\.[^/.]+$/, '');
+            zipOutput.file(`${baseName}_MX.xml`, msg.mxOutput!);
+        });
+        
+        if (errorMessages.length > 0) {
+            const errorLog = errorMessages.map(m => `File: ${m.filename} - Failed: ${m.errorMsg}`).join('\\n');
+            zipOutput.file('conversion_errors.log', errorLog);
+        }
+        
+        try {
+            const content = await zipOutput.generateAsync({ type: 'blob' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(content);
+            a.download = `Bulk_MX_Conversion_${Date.now()}.zip`;
+            a.click();
+            URL.revokeObjectURL(a.href);
+        } catch (err) {
+            this.snackBar.open('Error generating ZIP file output.', 'Dismiss', { duration: 3000 });
+        }
+    }
+    
+    removeUploadedFile() {
+        this.clearAll();
     }
 
     // Sample messages

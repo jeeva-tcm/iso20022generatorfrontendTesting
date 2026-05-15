@@ -1,4 +1,4 @@
-﻿/* Angular Material Theme */
+/* Angular Material Theme */
 @import '@angular/material/prebuilt-themes/indigo-pink.css';
 
 /* Google Fonts Import */
@@ -1244,4 +1244,9 @@ body.light-theme .draft-clear-btn {
     font-size: 0.85rem;
     color: var(--text-muted);
     font-weight: 500;
+}
+
+/* Fix for Angular Material overlays (Snackbar, Select) behind custom modals */
+.cdk-overlay-container, .cdk-global-overlay-wrapper {
+    z-index: 99999 !important;
 }
