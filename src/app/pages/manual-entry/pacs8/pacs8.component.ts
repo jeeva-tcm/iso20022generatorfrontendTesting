@@ -992,6 +992,13 @@ export class Pacs8Component implements OnInit, OnDestroy {
     const formattedAmt = this.formatting.formatAmount(v.amount, v.currency);
     tx += `\t\t\t\t<IntrBkSttlmAmt Ccy="${this.e(v.currency)}">${formattedAmt}</IntrBkSttlmAmt>\n`;
     tx += this.el('IntrBkSttlmDt', v.sttlmDt, 4);
+    // SttlmTmIndctn must appear right after IntrBkSttlmDt per pacs.008.001.08 XSD sequence
+    if (v.dbtDtTm || v.cdtDtTm) {
+        let stind = '';
+        if (v.dbtDtTm) stind += this.el('DbtDtTm', this.fdt(v.dbtDtTm), 5);
+        if (v.cdtDtTm) stind += this.el('CdtDtTm', this.fdt(v.cdtDtTm), 5);
+        tx += this.tag('SttlmTmIndctn', stind, 4);
+    }
     if (v.sttlmPrty?.trim()) tx += this.el('SttlmPrty', v.sttlmPrty, 4);
     if (v.chrgBr?.trim()) tx += this.el('ChrgBr', v.chrgBr, 4);
 
@@ -1036,14 +1043,6 @@ export class Pacs8Component implements OnInit, OnDestroy {
         tx += this.tag(p.charAt(0).toUpperCase() + p.slice(1) + 'Acct', this.tag('Id', this.tag('Othr', this.el('Id', v[p + 'Acct'], 7), 6), 5), 4);
       }
     });
-
-    // SttlmTmIndctn
-    if (v.dbtDtTm || v.cdtDtTm) {
-        let stind = '';
-        if (v.dbtDtTm) stind += this.el('DbtDtTm', this.fdt(v.dbtDtTm), 5);
-        if (v.cdtDtTm) stind += this.el('CdtDtTm', this.fdt(v.cdtDtTm), 5);
-        tx += this.tag('SttlmTmIndctn', stind, 4);
-    }
 
     // ISO 20022 pacs.008.001.08 CdtTrfTxInf schema order:
     // UltmtDbtr → InitgPty → Dbtr → DbtrAcct → DbtrAgt → DbtrAgtAcct → CdtrAgt → CdtrAgtAcct → Cdtr → CdtrAcct → UltmtCdtr

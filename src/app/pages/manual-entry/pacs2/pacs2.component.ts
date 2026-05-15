@@ -84,6 +84,11 @@ export class Pacs2Component implements OnInit, OnDestroy {
   ngOnInit() {
     this.fetchCountries();
     this.buildForm();
+    // Auto-sync AppHdr BICs with TxInfAndSts InstgAgt/InstdAgt BICs (bidirectional)
+    this.form.get('fromBic')?.valueChanges.subscribe(v => this.form.patchValue({ instgAgtBic: v }, { emitEvent: false }));
+    this.form.get('toBic')?.valueChanges.subscribe(v => this.form.patchValue({ instdAgtBic: v }, { emitEvent: false }));
+    this.form.get('instgAgtBic')?.valueChanges.subscribe(v => this.form.patchValue({ fromBic: v }, { emitEvent: false }));
+    this.form.get('instdAgtBic')?.valueChanges.subscribe(v => this.form.patchValue({ toBic: v }, { emitEvent: false }));
     const hadDraft = this.loadDraft();
     if (hadDraft) {
       this.showDraftBanner = true;
@@ -186,13 +191,13 @@ export class Pacs2Component implements OnInit, OnDestroy {
       clrSysRef: ['', Validators.maxLength(35)],
 
       // InstgAgt
-      instgAgtBic: ['', BIC_OPT],
+      instgAgtBic: ['BBBBUS33XXX', BIC_OPT],
       instgAgtClrSysCd: ['', Validators.maxLength(5)],
       instgAgtMmbId: ['', Validators.maxLength(35)],
       instgAgtLei: ['', Validators.pattern(/^[A-Z0-9]{18}[0-9]{2}$/)],
 
       // InstdAgt
-      instdAgtBic: ['', BIC_OPT],
+      instdAgtBic: ['CCCCGB2LXXX', BIC_OPT],
       instdAgtClrSysCd: ['', Validators.maxLength(5)],
       instdAgtMmbId: ['', Validators.maxLength(35)],
       instdAgtLei: ['', Validators.pattern(/^[A-Z0-9]{18}[0-9]{2}$/)]
