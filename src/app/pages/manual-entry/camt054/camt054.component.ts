@@ -157,8 +157,8 @@ export class Camt054Component implements OnInit, OnDestroy {
       electronicSequenceNumber: ['', [Validators.pattern(/^\d{1,18}$/)]],
       reportingSequence: ['', [Validators.pattern(/^\d{1,18}$/)]],
       legalSeqNb: ['', [Validators.pattern(/^\d{1,18}$/)]],
-      fromDateTm: [''],
-      toDateTm: [''],
+      fromDateTm: [this.isoNow()],
+      toDateTm: [this.isoNow()],
       copyDuplicateIndicatorNtf: [''], // COPY or DUPL
       reportingSource: [''],
       accountIBAN: ['GB29NWBK60161331926819', [Validators.required, Validators.maxLength(34), Validators.pattern(IBAN_REG)]],
@@ -201,8 +201,18 @@ export class Camt054Component implements OnInit, OnDestroy {
       endToEndId: ['E2E' + Date.now().toString().slice(-13), [Validators.maxLength(16)]],
       instructionId: ['INS' + Date.now().toString().slice(-13), [Validators.maxLength(16)]],
       dbtrNm: ['JOHN DOE SENDER', [Validators.maxLength(140)]],
+      dbtrAddrType: ['hybrid'],
+      dbtrStrtNm: ['123 Business Street', [Validators.maxLength(70)]],
+      dbtrTwnNm: ['New York', [Validators.maxLength(35)]],
+      dbtrCtry: ['US', [Validators.pattern(/^[A-Z]{2}$/)]],
+      dbtrAdrLine1: ['123 Business Street, New York', [Validators.maxLength(70)]],
       dbtrAgtBic: ['SNDRBEBBXXX', [Validators.pattern(/^[A-Z0-9]{8,11}$/)]],
       cdtrNm: ['JANE DOE RECEIVER', [Validators.maxLength(140)]],
+      cdtrAddrType: ['hybrid'],
+      cdtrStrtNm: ['456 Commerce Avenue', [Validators.maxLength(70)]],
+      cdtrTwnNm: ['London', [Validators.maxLength(35)]],
+      cdtrCtry: ['GB', [Validators.pattern(/^[A-Z]{2}$/)]],
+      cdtrAdrLine1: ['456 Commerce Avenue, London', [Validators.maxLength(70)]],
       cdtrAgtBic: ['RCVRBEBBXXX', [Validators.pattern(/^[A-Z0-9]{8,11}$/)]],
       ultmtDbtrNm: ['', [Validators.maxLength(140)]],
       ultmtCdtrNm: ['', [Validators.maxLength(140)]],
@@ -486,10 +496,27 @@ export class Camt054Component implements OnInit, OnDestroy {
 
       // Related Parties
       if (ntry.dbtrNm || ntry.cdtrNm) {
+        const buildPtyAddr = (addrType: string, strtNm: string, twnNm: string, ctry: string, adrLine1: string, ind: number) => {
+          if (!addrType || addrType === 'none' || (!strtNm && !twnNm && !ctry && !adrLine1)) return '';
+          let a = t(ind) + `<PstlAdr>\n`;
+          if ((addrType === 'structured' || addrType === 'hybrid') && strtNm) a += t(ind+1) + `<StrtNm>${this.e(strtNm)}</StrtNm>\n`;
+          if ((addrType === 'structured' || addrType === 'hybrid') && twnNm) a += t(ind+1) + `<TwnNm>${this.e(twnNm)}</TwnNm>\n`;
+          if (ctry) a += t(ind+1) + `<Ctry>${this.e(ctry)}</Ctry>\n`;
+          if ((addrType === 'unstructured' || addrType === 'hybrid') && adrLine1) a += t(ind+1) + `<AdrLine>${this.e(adrLine1)}</AdrLine>\n`;
+          return a + t(ind) + `</PstlAdr>\n`;
+        };
         xml += t(7) + `<RltdPties>\n`;
-        if (ntry.dbtrNm) xml += t(8) + `<Dbtr>\n` + t(9) + `<Pty>\n` + t(10) + `<Nm>${this.e(ntry.dbtrNm)}</Nm>\n` + t(9) + `</Pty>\n` + t(8) + `</Dbtr>\n`;
+        if (ntry.dbtrNm) {
+          xml += t(8) + `<Dbtr>\n` + t(9) + `<Pty>\n` + t(10) + `<Nm>${this.e(ntry.dbtrNm)}</Nm>\n`;
+          xml += buildPtyAddr(ntry.dbtrAddrType, ntry.dbtrStrtNm, ntry.dbtrTwnNm, ntry.dbtrCtry, ntry.dbtrAdrLine1, 10);
+          xml += t(9) + `</Pty>\n` + t(8) + `</Dbtr>\n`;
+        }
         if (ntry.ultmtDbtrNm) xml += t(8) + `<UltmtDbtr>\n` + t(9) + `<Pty>\n` + t(10) + `<Nm>${this.e(ntry.ultmtDbtrNm)}</Nm>\n` + t(9) + `</Pty>\n` + t(8) + `</UltmtDbtr>\n`;
-        if (ntry.cdtrNm) xml += t(8) + `<Cdtr>\n` + t(9) + `<Pty>\n` + t(10) + `<Nm>${this.e(ntry.cdtrNm)}</Nm>\n` + t(9) + `</Pty>\n` + t(8) + `</Cdtr>\n`;
+        if (ntry.cdtrNm) {
+          xml += t(8) + `<Cdtr>\n` + t(9) + `<Pty>\n` + t(10) + `<Nm>${this.e(ntry.cdtrNm)}</Nm>\n`;
+          xml += buildPtyAddr(ntry.cdtrAddrType, ntry.cdtrStrtNm, ntry.cdtrTwnNm, ntry.cdtrCtry, ntry.cdtrAdrLine1, 10);
+          xml += t(9) + `</Pty>\n` + t(8) + `</Cdtr>\n`;
+        }
         if (ntry.ultmtCdtrNm) xml += t(8) + `<UltmtCdtr>\n` + t(9) + `<Pty>\n` + t(10) + `<Nm>${this.e(ntry.ultmtCdtrNm)}</Nm>\n` + t(9) + `</Pty>\n` + t(8) + `</UltmtCdtr>\n`;
         xml += t(7) + `</RltdPties>\n`;
       }

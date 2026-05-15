@@ -285,8 +285,8 @@ export class Camt052Component implements OnInit, OnDestroy {
             rptPgLastPgInd: ['true', [Validators.required]],
 
             // New Rpt levels
-            frDtTm: [''],
-            toDtTm: [''],
+            frDtTm: [new Date().toISOString()],
+            toDtTm: [new Date().toISOString()],
             cpyDplctInd: [''], // CODU, COPY, DUPL
             rptgSrc: ['', [Validators.maxLength(35)]], // Prtry
 
@@ -311,7 +311,7 @@ export class Camt052Component implements OnInit, OnDestroy {
             bal2Type: [''],
             bal2Ind: [''],
             bal2Amt: [''],
-            bal2Dt: [''],
+            bal2Dt: [new Date().toISOString().split('T')[0]],
 
             // Entry (Ntry)
             ntryRef: ['NTRY-001', [Validators.maxLength(35)]],
@@ -324,7 +324,7 @@ export class Camt052Component implements OnInit, OnDestroy {
             ntryAcctSvcrRef: ['', [Validators.maxLength(35)]],
 
             // New Ntry Fields
-            ntryAvlbtyDt: [''],
+            ntryAvlbtyDt: [new Date().toISOString().split('T')[0]],
             ntryAvlbtyAmt: ['', [Validators.pattern(/^[0-9]+(\.[0-9]{1,5})?$/)]],
             ntryAvlbtyCdtDbtInd: [''],
             ntryComssnWvrInd: [''],
@@ -782,7 +782,7 @@ export class Camt052Component implements OnInit, OnDestroy {
 
         this.generatedXml += t(1) + '</AppHdr>\n'
             + t(1) + '<Document xmlns="urn:iso:std:iso:20022:tech:xsd:camt.052.001.08">\n'
-            + t(2) + '<BankToCustomerAccountReportV08>\n'
+            + t(2) + '<BkToCstmrAcctRpt>\n'
             + t(3) + '<GrpHdr>\n'
             + t(4) + '<MsgId>' + this.e(v.msgId) + '</MsgId>\n'
             + t(4) + '<CreDtTm>' + creDtTm + '</CreDtTm>\n';
@@ -830,7 +830,7 @@ export class Camt052Component implements OnInit, OnDestroy {
             + ntryXml
             + addtlRptInfXml
             + t(3) + '</Rpt>\n'
-            + t(2) + '</BankToCustomerAccountReportV08>\n'
+            + t(2) + '</BkToCstmrAcctRpt>\n'
             + t(1) + '</Document>\n'
             + '</BusMsgEnvlp>';
         this.onEditorChange(this.generatedXml, true);

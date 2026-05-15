@@ -338,8 +338,8 @@ export class Camt053Component implements OnInit, OnDestroy {
             stmtPgLastPgInd: ['true', [Validators.required]],
 
             // New Rpt levels
-            frDtTm: [''],
-            toDtTm: [''],
+            frDtTm: [new Date().toISOString()],
+            toDtTm: [new Date().toISOString()],
             cpyDplctInd: [''], // CODU, COPY, DUPL
             rptgSrc: ['', [Validators.maxLength(35)]], // Prtry
 
@@ -377,7 +377,7 @@ export class Camt053Component implements OnInit, OnDestroy {
             ntryAcctSvcrRef: ['', [Validators.maxLength(35)]],
 
             // New Ntry Fields
-            ntryAvlbtyDt: [''],
+            ntryAvlbtyDt: [new Date().toISOString().split('T')[0]],
             ntryAvlbtyAmt: ['', [Validators.pattern(/^[0-9]+(\.[0-9]{1,5})?$/)]],
             ntryAvlbtyCdtDbtInd: [''],
             ntryComssnWvrInd: [''],

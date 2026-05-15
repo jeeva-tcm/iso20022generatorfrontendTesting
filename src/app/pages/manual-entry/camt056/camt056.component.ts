@@ -143,7 +143,7 @@ export class Camt056Component implements OnInit, OnDestroy {
       rltdBizMsgIdr: ['', [Validators.maxLength(35)]],
       rltdMsgDefIdr: [''],
       rltdBizSvc: [''],
-      rltdCreDt: [''],
+      rltdCreDt: [this.isoNowWithTZ()],
       rltdCpyDplct: [''],
       rltdPrty: [''],
 

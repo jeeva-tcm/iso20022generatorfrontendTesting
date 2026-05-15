@@ -214,7 +214,7 @@ export class Camt055Component implements OnInit, OnDestroy {
       orgnlInstdAmt_val: ['', [Validators.pattern(/^\d+(\.\d+)?$/)]],
 
       // Dates
-      orgnlReqdExctnDt: ['', [Validators.pattern(/^\d{4}-\d{2}-\d{2}$/)]],
+      orgnlReqdExctnDt: [new Date().toISOString().split('T')[0], [Validators.pattern(/^\d{4}-\d{2}-\d{2}$/)]],
       orgnlReqdExctnDtTm: ['', [Validators.pattern(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2})?([+-]\d{2}:\d{2}|Z)?$/)]],
       orgnlReqdColltnDt: ['', [Validators.pattern(/^\d{4}-\d{2}-\d{2}$/)]],
 
