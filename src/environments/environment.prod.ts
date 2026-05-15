@@ -16,4 +16,4 @@ export const environment = {
   measurementId: "G-DLL7243BQ1"
     }
 };
-// const app = initializeApp(environment.firebaseConfig);
+const app = initializeApp(environment.firebaseConfig);
