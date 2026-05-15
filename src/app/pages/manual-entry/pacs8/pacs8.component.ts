@@ -45,7 +45,7 @@ export class Pacs8Component implements OnInit, OnDestroy {
   countries: string[] = [];
   categoryPurposes: string[] = [];
   purposes: string[] = [];
-  sttlmMethods = ['INDA', 'INGA'];
+  sttlmMethods = ['INDA', 'INGA', 'COVE', 'CLRG'];
   chargeBearers = ['SHAR', 'DEBT', 'CRED', 'SLEV'];
   // Duplicate import and component definition removed � kept earlier import and @Component
 
@@ -458,44 +458,54 @@ export class Pacs8Component implements OnInit, OnDestroy {
     const SAFE_NAME = Validators.pattern(/^[a-zA-Z0-9 .,()'\-]+$/);
     // ISO 20022 MX allowed character pattern for address fields
     const ADDR_PATTERN = Validators.pattern(/^[a-zA-Z0-9\/\-\?:\(\)\.,\+' ]+$/);    const c: any = {
-      fromBic: ['BBBBUS33XXX', BIC], toBic: ['CCCCGB2LXXX', BIC], bizMsgId: ['B-2026-FI-001', [Validators.required, Validators.maxLength(35)]],
-      msgId: ['M-2026-FI-001', [Validators.required, Validators.maxLength(35)]], creDtTm: [this.isoNow(), Validators.required],
-      nbOfTxs: ['1', [Validators.required, Validators.pattern(/^[1-9]\d{0,14}$/)]], sttlmMtd: ['INDA', Validators.required],
-      instgAgtBic: ['BBBBUS33XXX', BIC], instdAgtBic: ['CCCCGB2LXXX', BIC],
-      instrId: ['I-2026-FI-001', [Validators.required, Validators.maxLength(35)]], endToEndId: ['E2E-2026-FI-001', [Validators.required, Validators.maxLength(35)]],
-      txId: ['T-2026-FI-001', [Validators.required, Validators.maxLength(35)]],
+      // ── AppHdr fields ──
+      fromBic: ['SNDRBEBBXXX', BIC], toBic: ['RCVRLU2AXXX', BIC],
+      bizMsgId: ['BIZM-20260515-PACS008-001', [Validators.required, Validators.maxLength(35)]],
+      // ── GrpHdr fields ──
+      msgId: ['MSGID-20260515-PACS008-001', [Validators.required, Validators.maxLength(35)]],
+      creDtTm: [this.isoNow(), Validators.required],
+      nbOfTxs: ['1', [Validators.required, Validators.pattern(/^[1-9]\d{0,14}$/)]],
+      sttlmMtd: ['INDA', Validators.required],
+      instgAgtBic: ['SNDRBEBBXXX', BIC], instdAgtBic: ['RCVRLU2AXXX', BIC],
+      // ── CdtTrfTxInf Identification ──
+      instrId: ['INSTR-20260515-001', [Validators.required, Validators.maxLength(35)]],
+      endToEndId: ['E2E-20260515-SALARY-001', [Validators.required, Validators.maxLength(35)]],
+      txId: ['TXN-20260515-001', [Validators.required, Validators.maxLength(35)]],
       uetr: ['550e8400-e29b-41d4-a716-446655440000', [Validators.required, Validators.pattern(/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/)]],
       clrSysRef: ['', [Validators.pattern(/^[A-Za-z0-9]{1,35}$/)]],
-      amount: ['1500.00', [Validators.required, Validators.pattern(/^\d{1,13}(\.\d{1,5})?$/)]], currency: ['USD', Validators.required],
-      sttlmDt: [new Date().toISOString().split('T')[0], [Validators.required, Validators.pattern(/^\d{4}-\d{2}-\d{2}$/)]], 
+      // ── Amount and Settlement ──
+      amount: ['15000.00', [Validators.required, Validators.pattern(/^\d{1,13}(\.\d{1,5})?$/)]],
+      currency: ['EUR', Validators.required],
+      sttlmDt: [new Date().toISOString().split('T')[0], [Validators.required, Validators.pattern(/^\d{4}-\d{2}-\d{2}$/)]],
 
-      appHdrPriority: [''],
+      appHdrPriority: ['NORM'],
       fromMmbId: [''], fromClrSysId: [''], fromLei: [''],
       toMmbId: [''], toClrSysId: [''], toLei: [''],
       rltd: [''], rltdCharSet: [''],
       sttlmPrty: [''],
 
-
       instdAmt: [''], instdAmtCcy: [''],
       xchgRate: [''],
-      dbtDtTm: [''], cdtDtTm: [''],
+      dbtDtTm: [this.isoNow()], cdtDtTm: [this.isoNow()],
       chrgsInfAmt: [''], chrgsInfCcy: [''], chrgsInfAgtBic: [''],
       rgltryRptg1Code: [''], rgltryRptg1Inf: [''],
       rgltryRptg2Code: [''], rgltryRptg2Inf: [''],
       rgltryRptg3Code: [''], rgltryRptg3Inf: [''],
       rltdRmtInf1Ref: [''], rltdRmtInf2Ref: [''], rltdRmtInf3Ref: [''],
 
-      instrPrty: ['', [Validators.pattern(/^(HIGH|NORM)$/)]],
+      instrPrty: ['NORM', [Validators.pattern(/^(HIGH|NORM)$/)]],
       clrChanl: ['', [Validators.pattern(/^(BOOK|MPNS|RTGS|RTNS)$/)]],
-      svcLvlCd: ['', [Validators.pattern(/^[A-Z0-9]{1,4}$/)]],
+      svcLvlCd: ['G001', [Validators.pattern(/^[A-Z0-9]{1,4}$/)]],
       svcLvlPrtry: ['', [Validators.pattern(/^[A-Za-z0-9 .\-]{1,35}$/)]],
       chrgBr: ['SHAR', Validators.required],
-      dbtrName: ['Debtor Name', [Validators.required, Validators.maxLength(140), SAFE_NAME]],
-      dbtrOrgAnyBIC: ['BBBBUS33XXX', BIC],
-      dbtrAgtBic: ['BBBBUS33XXX', BIC],
-      cdtrName: ['Creditor Name', [Validators.required, Validators.maxLength(140), SAFE_NAME]],
-      cdtrOrgAnyBIC: ['CCCCGB2LXXX', BIC],
-      cdtrAgtBic: ['CCCCGB2LXXX', BIC],
+      // ── Debtor ──
+      dbtrName: ['Meridian Global Trading GmbH', [Validators.required, Validators.maxLength(140), SAFE_NAME]],
+      dbtrOrgAnyBIC: ['SNDRBEBBXXX', BIC],
+      dbtrAgtBic: ['SNDRBEBBXXX', BIC],
+      // ── Creditor ──
+      cdtrName: ['Northwind Financial Services Ltd', [Validators.required, Validators.maxLength(140), SAFE_NAME]],
+      cdtrOrgAnyBIC: ['RCVRLU2AXXX', BIC],
+      cdtrAgtBic: ['RCVRLU2AXXX', BIC],
       ultmtDbtrName: ['', [Validators.maxLength(140), SAFE_NAME]],
       ultmtCdtrName: ['', [Validators.maxLength(140), SAFE_NAME]],
       initgPtyName: ['', [Validators.maxLength(140), SAFE_NAME]],
@@ -509,8 +519,8 @@ export class Pacs8Component implements OnInit, OnDestroy {
       ctgyPurpPrtry: ['', [Validators.pattern(/^[A-Za-z0-9 .\-]{1,35}$/)]],
       lclInstrmCd: ['', [Validators.pattern(/^[A-Z0-9]{1,4}$/)]],
       lclInstrmPrtry: ['', [Validators.pattern(/^[A-Za-z0-9 .\-]{1,35}$/)]],
-      dbtrAcct: ['471932901234'],
-      cdtrAcct: ['471932905678'],
+      dbtrAcct: ['BE68539007547034'],
+      cdtrAcct: ['LU280019400644750000'],
       dbtrAgtAcct: [''],
       cdtrAgtAcct: [''],
       initgPtyAcct: [''],
@@ -542,7 +552,7 @@ export class Pacs8Component implements OnInit, OnDestroy {
 
 
     }; [...this.agentPrefixes, ...this.partyPrefixes].forEach(p => {
-      if (!c[p + 'AddrType']) c[p + 'AddrType'] = 'none';
+      if (!c[p + 'AddrType']) c[p + 'AddrType'] = (p === 'instgAgt' || p === 'instdAgt') ? 'none' : 'hybrid';
       if (!c[p + 'AdrLine1']) c[p + 'AdrLine1'] = ['', [Validators.maxLength(70), ADDR_PATTERN]];
       if (!c[p + 'AdrLine2']) c[p + 'AdrLine2'] = ['', [Validators.maxLength(70), ADDR_PATTERN]];
       if (!c[p + 'Dept']) c[p + 'Dept'] = ['', [Validators.maxLength(70), ADDR_PATTERN]];
@@ -573,26 +583,39 @@ export class Pacs8Component implements OnInit, OnDestroy {
 
     // Add static address data to resolve "Name and Address must always be present together"
     // AND the rule: "If Address Line is present and any other element is present, then Town Name and Country are mandatory"
-    c['dbtrAddrType'] = ['unstructured'];
-    c['dbtrCtry'] = ['US', Validators.pattern(/^[A-Z]{2,2}$/)];
-    c['dbtrTwnNm'] = ['New York', [Validators.maxLength(35), ADDR_PATTERN]];
-    c['dbtrAdrLine1'] = ['123 Wall Street', [Validators.maxLength(70), ADDR_PATTERN]];
+    // Using HYBRID address type: TwnNm + Ctry (structured) + AdrLines (unstructured) coexist safely
+    // Debtor address (Belgium)
+    c['dbtrAddrType'] = ['hybrid'];
+    c['dbtrCtry'] = ['BE', Validators.pattern(/^[A-Z]{2,2}$/)];
+    c['dbtrTwnNm'] = ['Brussels', [Validators.maxLength(35), ADDR_PATTERN]];
+    c['dbtrAdrLine1'] = ['42 Avenue Louise', [Validators.maxLength(70), ADDR_PATTERN]];
+    c['dbtrAdrLine2'] = ['1050 Ixelles', [Validators.maxLength(70), ADDR_PATTERN]];
 
-    c['cdtrAddrType'] = ['unstructured'];
-    c['cdtrCtry'] = ['GB', Validators.pattern(/^[A-Z]{2,2}$/)];
-    c['cdtrTwnNm'] = ['London', [Validators.maxLength(35), ADDR_PATTERN]];
-    c['cdtrAdrLine1'] = ['456 Canary Wharf', [Validators.maxLength(70), ADDR_PATTERN]];
+    // Creditor address (Luxembourg)
+    c['cdtrAddrType'] = ['hybrid'];
+    c['cdtrCtry'] = ['LU', Validators.pattern(/^[A-Z]{2,2}$/)];
+    c['cdtrTwnNm'] = ['Luxembourg City', [Validators.maxLength(35), ADDR_PATTERN]];
+    c['cdtrAdrLine1'] = ['18 Boulevard Royal', [Validators.maxLength(70), ADDR_PATTERN]];
+    c['cdtrAdrLine2'] = ['L-2449 Luxembourg', [Validators.maxLength(70), ADDR_PATTERN]];
 
-    // Also for Agents if required by some rules
-    c['dbtrAgtAddrType'] = ['unstructured'];
-    c['dbtrAgtCtry'] = ['US', Validators.pattern(/^[A-Z]{2,2}$/)];
-    c['dbtrAgtTwnNm'] = ['New York', [Validators.maxLength(35), ADDR_PATTERN]];
-    c['dbtrAgtAdrLine1'] = ['789 Banker Lane', [Validators.maxLength(70), ADDR_PATTERN]];
+    // Debtor Agent address (Belgium)
+    c['dbtrAgtAddrType'] = ['hybrid'];
+    c['dbtrAgtCtry'] = ['BE', Validators.pattern(/^[A-Z]{2,2}$/)];
+    c['dbtrAgtTwnNm'] = ['Brussels', [Validators.maxLength(35), ADDR_PATTERN]];
+    c['dbtrAgtAdrLine1'] = ['1 Rue de la Banque', [Validators.maxLength(70), ADDR_PATTERN]];
+    c['dbtrAgtAdrLine2'] = ['1000 Brussels', [Validators.maxLength(70), ADDR_PATTERN]];
 
-    c['cdtrAgtAddrType'] = ['unstructured'];
-    c['cdtrAgtCtry'] = ['GB', Validators.pattern(/^[A-Z]{2,2}$/)];
-    c['cdtrAgtTwnNm'] = ['London', [Validators.maxLength(35), ADDR_PATTERN]];
-    c['cdtrAgtAdrLine1'] = ['321 Finance Square', [Validators.maxLength(70), ADDR_PATTERN]];
+    // Creditor Agent address (Luxembourg)
+    c['cdtrAgtAddrType'] = ['hybrid'];
+    c['cdtrAgtCtry'] = ['LU', Validators.pattern(/^[A-Z]{2,2}$/)];
+    c['cdtrAgtTwnNm'] = ['Luxembourg City', [Validators.maxLength(35), ADDR_PATTERN]];
+    c['cdtrAgtAdrLine1'] = ['25 Avenue Monterey', [Validators.maxLength(70), ADDR_PATTERN]];
+    c['cdtrAgtAdrLine2'] = ['L-2163 Luxembourg', [Validators.maxLength(70), ADDR_PATTERN]];
+
+    // Reimbursement Agent BICs (required when SttlmMtd = COVE)
+    c['instgRmbrsmntAgtBic'] = ['', [Validators.pattern(/^[A-Z]{4}[A-Z]{2}[A-Z0-9]{2}([A-Z0-9]{3})?$/)]]; 
+    c['instdRmbrsmntAgtBic'] = ['', [Validators.pattern(/^[A-Z]{4}[A-Z]{2}[A-Z0-9]{2}([A-Z0-9]{3})?$/)]]; 
+    c['thrdRmbrsmntAgtBic'] = ['', [Validators.pattern(/^[A-Z]{4}[A-Z]{2}[A-Z0-9]{2}([A-Z0-9]{3})?$/)]];
 
     this.partyPrefixes.forEach(p => {
       if (!c[p + 'IdType']) c[p + 'IdType'] = 'none';
@@ -615,8 +638,8 @@ export class Pacs8Component implements OnInit, OnDestroy {
     });
 
     // Set default names for mandatory agents
-    c['dbtrAgtName'] = ['Debtor Agent', [Validators.required, Validators.maxLength(140), SAFE_NAME]];
-    c['cdtrAgtName'] = ['Creditor Agent', [Validators.required, Validators.maxLength(140), SAFE_NAME]];
+    c['dbtrAgtName'] = ['KBC Bank NV', [Validators.required, Validators.maxLength(140), SAFE_NAME]];
+    c['cdtrAgtName'] = ['Banque Internationale a Luxembourg', [Validators.required, Validators.maxLength(140), SAFE_NAME]];
 
     this.form = this.fb.group(c);
   }
@@ -1160,7 +1183,7 @@ ${appHdrFi(v.toBic, v.toMmbId, v.toClrSysId, v.toLei)}\t\t</To>
 \t\t\t\t<CreDtTm>${creDtTm}</CreDtTm>
 \t\t\t\t<NbOfTxs>${v.nbOfTxs}</NbOfTxs>
 \t\t\t\t<SttlmInf>
-\t\t\t\t\t<SttlmMtd>${this.e(v.sttlmMtd)}</SttlmMtd>
+\t\t\t\t\t<SttlmMtd>${this.e(v.sttlmMtd)}</SttlmMtd>${v.sttlmMtd === 'COVE' && v.instgRmbrsmntAgtBic?.trim() ? `\n\t\t\t\t\t<InstgRmbrsmntAgt>\n\t\t\t\t\t\t<FinInstnId>\n\t\t\t\t\t\t\t<BICFI>${this.e(v.instgRmbrsmntAgtBic)}</BICFI>\n\t\t\t\t\t\t</FinInstnId>\n\t\t\t\t\t</InstgRmbrsmntAgt>` : ''}${v.sttlmMtd === 'COVE' && v.instdRmbrsmntAgtBic?.trim() ? `\n\t\t\t\t\t<InstdRmbrsmntAgt>\n\t\t\t\t\t\t<FinInstnId>\n\t\t\t\t\t\t\t<BICFI>${this.e(v.instdRmbrsmntAgtBic)}</BICFI>\n\t\t\t\t\t\t</FinInstnId>\n\t\t\t\t\t</InstdRmbrsmntAgt>` : ''}${v.sttlmMtd === 'COVE' && v.thrdRmbrsmntAgtBic?.trim() ? `\n\t\t\t\t\t<ThrdRmbrsmntAgt>\n\t\t\t\t\t\t<FinInstnId>\n\t\t\t\t\t\t\t<BICFI>${this.e(v.thrdRmbrsmntAgtBic)}</BICFI>\n\t\t\t\t\t\t</FinInstnId>\n\t\t\t\t\t</ThrdRmbrsmntAgt>` : ''}
 \t\t\t\t</SttlmInf>
 ${this.initgPtyXml(v, 4)}\t\t\t</GrpHdr>
 \t\t\t<CdtTrfTxInf>

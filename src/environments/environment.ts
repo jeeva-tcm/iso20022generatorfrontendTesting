@@ -6,13 +6,13 @@ export const environment = {
     apiBaseUrl: 'http://localhost:8001',
     firebaseConfig: {
         
-        apiKey: "AIzaSyBHD--ylzxTtP0JLI7j1ajSNx-9tzLneKw",
-  authDomain: "avid-winter-492811-g9.firebaseapp.com",
-  projectId: "avid-winter-492811-g9",
-  storageBucket: "avid-winter-492811-g9.firebasestorage.app",
-  messagingSenderId: "926327189516",
-  appId: "1:926327189516:web:d0a7b912cc633b032d3e29",
-  measurementId: "G-J2XH6CXTQP"
+        apiKey: "AIzaSyBfcr6vXTJW6Rm5mvkYz5FYPxsX0VQJxBU",
+  authDomain: "isovalidator-118ef.firebaseapp.com",
+  projectId: "isovalidator-118ef",
+  storageBucket: "isovalidator-118ef.firebasestorage.app",
+  messagingSenderId: "846063121477",
+  appId: "1:846063121477:web:177dd17aa6c0aeeee95f2c",
+  measurementId: "G-DLL7243BQ1"
     }
 };
 const app = initializeApp(environment.firebaseConfig);

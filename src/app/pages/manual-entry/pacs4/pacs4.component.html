@@ -161,10 +161,11 @@
 
 <ng-template #partyForm let-prefix="prefix" let-title="title" let-required="required" let-isAgent="isAgent" let-group="group">
     <div [formGroup]="group" class="party-grid">
+        <!-- BIC -->
         <div class="form-group">
             <label>{{title}} BIC <span class="req" *ngIf="required">*</span></label>
             <div class="uetr-control-row">
-                <input [formControlName]="prefix+'Bic'" maxlength="11" placeholder="e.g. BBBBUSD1XXX" class="auto-uppercase">
+                <input [formControlName]="prefix+'Bic'" maxlength="11" placeholder="e.g. BBBBUS33XXX" class="auto-uppercase">
                 <button type="button" class="uetr-refresh-btn"
                     (click)="openBicSearchGroup(prefix+'Bic', group)"
                     matTooltip="Search BIC">
@@ -172,64 +173,113 @@
                 </button>
             </div>
             <div class="validation-msg" *ngIf="err(prefix+'Bic') as e">{{e}}</div>
+            <div class="field-hint at-limit" *ngIf="hint(prefix+'Bic', 11) as h">{{h}}</div>
         </div>
 
-        <div class="form-group" *ngIf="!isAgent">
+        <!-- Address Type -->
+        <div class="form-group">
             <label>{{title}} Address Type</label>
             <select [formControlName]="prefix+'AddrType'">
                 <option value="none">None (BIC/ID Only)</option>
+                <option value="hybrid">Hybrid</option>
                 <option value="structured">Structured</option>
+                <option value="unstructured">Unstructured</option>
             </select>
             <div class="validation-msg" *ngIf="err(prefix+'AddrType') as e">{{e}}</div>
         </div>
 
-        <ng-container *ngIf="form.get(prefix+'AddrType')?.value === 'structured'">
-            <div class="form-group"><label>Building Number</label><input [formControlName]="prefix+'BldgNb'"></div>
-            <div class="validation-msg" *ngIf="err(prefix+'BldgNb') as e">{{e}}</div>
-            <div class="form-group"><label>Street Name</label><input [formControlName]="prefix+'StrtNm'"></div>
-            <div class="validation-msg" *ngIf="err(prefix+'StrtNm') as e">{{e}}</div>
-            <div class="form-group"><label>Post Code</label><input [formControlName]="prefix+'PstCd'"></div>
-            <div class="validation-msg" *ngIf="err(prefix+'PstCd') as e">{{e}}</div>
-            <div class="form-group"><label>Town Name <span class="req">*</span></label><input [formControlName]="prefix+'TwnNm'">
-              <div class="validation-msg" *ngIf="err(prefix+'TwnNm') as e">{{e}}</div>
-            </div>
-            <div class="form-group">
-                <label>Country <span class="req">*</span></label>
-                <select [formControlName]="prefix+'Ctry'">
-                    <option value="">Select Country</option>
-                    <option *ngFor="let c of countries" [value]="c">{{c}}</option>
-                </select>
-                <div class="validation-msg" *ngIf="err(prefix+'Ctry') as e">{{e}}</div>
+        <!-- Dynamic Address Fields -->
+        <ng-container *ngIf="form.get(prefix+'AddrType')?.value !== 'none'">
+            <div class="address-subgrid">
+                <div class="form-group" *ngIf="['structured','hybrid'].includes(form.get(prefix+'AddrType')?.value)">
+                    <label>{{title}} Building Number</label>
+                    <input [formControlName]="prefix+'BldgNb'" maxlength="16" placeholder="e.g. 11">
+                    <div class="validation-msg" *ngIf="err(prefix+'BldgNb') as e">{{e}}</div>
+                    <div class="field-hint at-limit" *ngIf="hint(prefix+'BldgNb', 16) as h">{{h}}</div>
+                </div>
+                <div class="form-group" *ngIf="['structured','hybrid'].includes(form.get(prefix+'AddrType')?.value)">
+                    <label>{{title}} Building Name</label>
+                    <input [formControlName]="prefix+'BldgNm'" maxlength="35">
+                    <div class="validation-msg" *ngIf="err(prefix+'BldgNm') as e">{{e}}</div>
+                    <div class="field-hint at-limit" *ngIf="hint(prefix+'BldgNm', 35) as h">{{h}}</div>
+                </div>
+                <div class="form-group" *ngIf="['structured','hybrid'].includes(form.get(prefix+'AddrType')?.value)">
+                    <label>{{title}} Street Name</label>
+                    <input [formControlName]="prefix+'StrtNm'" maxlength="70" placeholder="e.g. Broadway">
+                    <div class="validation-msg" *ngIf="err(prefix+'StrtNm') as e">{{e}}</div>
+                    <div class="field-hint at-limit" *ngIf="hint(prefix+'StrtNm', 70) as h">{{h}}</div>
+                </div>
+                <div class="form-group" *ngIf="['structured','hybrid'].includes(form.get(prefix+'AddrType')?.value)">
+                    <label>{{title}} Post Code</label>
+                    <input [formControlName]="prefix+'PstCd'" maxlength="16" placeholder="e.g. 10005">
+                    <div class="validation-msg" *ngIf="err(prefix+'PstCd') as e">{{e}}</div>
+                    <div class="field-hint at-limit" *ngIf="hint(prefix+'PstCd', 16) as h">{{h}}</div>
+                </div>
+                <div class="form-group" *ngIf="['structured','hybrid'].includes(form.get(prefix+'AddrType')?.value)">
+                    <label>{{title}} City (Town Name) <span class="req">*</span></label>
+                    <input [formControlName]="prefix+'TwnNm'" maxlength="35" placeholder="e.g. New York">
+                    <div class="validation-msg" *ngIf="err(prefix+'TwnNm') as e">{{e}}</div>
+                    <div class="field-hint at-limit" *ngIf="hint(prefix+'TwnNm', 35) as h">{{h}}</div>
+                </div>
+                <div class="form-group">
+                    <label>{{title}} Country <span class="req">*</span></label>
+                    <select [formControlName]="prefix+'Ctry'">
+                        <option value="">Select Country</option>
+                        <option *ngFor="let c of countries" [value]="c">{{c}}</option>
+                    </select>
+                    <div class="validation-msg" *ngIf="err(prefix+'Ctry') as e">{{e}}</div>
+                </div>
+                <ng-container *ngIf="['unstructured','hybrid'].includes(form.get(prefix+'AddrType')?.value)">
+                    <div class="form-group">
+                        <label>{{title}} Address Line 1</label>
+                        <input [formControlName]="prefix+'AdrLine1'" maxlength="70" placeholder="e.g. 123 Wall Street">
+                        <div class="validation-msg" *ngIf="err(prefix+'AdrLine1') as e">{{e}}</div>
+                        <div class="field-hint at-limit" *ngIf="hint(prefix+'AdrLine1', 70) as h">{{h}}</div>
+                    </div>
+                    <div class="form-group">
+                        <label>{{title}} Address Line 2</label>
+                        <input [formControlName]="prefix+'AdrLine2'" maxlength="70" placeholder="e.g. Suite 400">
+                        <div class="validation-msg" *ngIf="err(prefix+'AdrLine2') as e">{{e}}</div>
+                        <div class="field-hint at-limit" *ngIf="hint(prefix+'AdrLine2', 70) as h">{{h}}</div>
+                    </div>
+                </ng-container>
             </div>
         </ng-container>
 
-        <div class="form-group" *ngIf="!isAgent">
+        <!-- Name -->
+        <div class="form-group">
             <label>{{title}} Name <span class="req" *ngIf="required">*</span></label>
             <input [formControlName]="prefix+'Name'" maxlength="140">
             <div class="validation-msg" *ngIf="err(prefix+'Name') as e">{{e}}</div>
             <div class="field-hint at-limit" *ngIf="hint(prefix+'Name', 140) as h">{{h}}</div>
         </div>
 
+        <!-- Member ID -->
         <div class="form-group">
-            <label>{{isAgent ? title : title + ' FI'}} Member ID</label>
+            <label>{{title}} Member ID</label>
             <input [formControlName]="prefix+'MmbId'" maxlength="35" placeholder="Clearing Member ID">
             <div class="validation-msg" *ngIf="err(prefix+'MmbId') as e">{{e}}</div>
             <div class="field-hint at-limit" *ngIf="hint(prefix+'MmbId', 35) as h">{{h}}</div>
         </div>
+
+        <!-- Clearing System Code -->
         <div class="form-group">
-            <label>{{isAgent ? title : title + ' FI'}} Clearing System Code</label>
-            <input [formControlName]="prefix+'ClrSysCd'" maxlength="4" placeholder="e.g. USABA">
+            <label>{{title}} Clearing System Code</label>
+            <input [formControlName]="prefix+'ClrSysCd'" maxlength="4" placeholder="e.g. USABA, T2">
             <div class="validation-msg" *ngIf="err(prefix+'ClrSysCd') as e">{{e}}</div>
             <div class="field-hint at-limit" *ngIf="hint(prefix+'ClrSysCd', 4) as h">{{h}}</div>
         </div>
+
+        <!-- LEI -->
         <div class="form-group">
-            <label>{{isAgent ? title : title + ' FI'}} LEI</label>
+            <label>{{title}} LEI</label>
             <input [formControlName]="prefix+'Lei'" maxlength="20" placeholder="20-char LEI">
             <div class="validation-msg" *ngIf="err(prefix+'Lei') as e">{{e}}</div>
             <div class="field-hint at-limit" *ngIf="hint(prefix+'Lei', 20) as h">{{h}}</div>
         </div>
 
-        <div class="form-group" *ngIf="!isAgent">
+        <!-- Account Number -->
+        <div class="form-group">
             <label>{{title}} Account Number</label>
             <input [formControlName]="prefix+'Acct'" maxlength="34">
             <div class="validation-msg" *ngIf="err(prefix+'Acct') as e">{{e}}</div>

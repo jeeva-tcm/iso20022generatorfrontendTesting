@@ -85,6 +85,34 @@
                                                 <div class="validation-msg" *ngIf="err('sttlmMtd') as e">{{e}}</div>
                                         </div>
 
+                                        <!-- Reimbursement Agents: required when Settlement Method = COVE -->
+                                        <ng-container *ngIf="form.get('sttlmMtd')?.value === 'COVE'">
+                                                <div class="section-title">Reimbursement Agents <span class="req">*</span></div>
+                                                <div class="validation-msg" style="grid-column: 1 / -1; margin-bottom: 6px;" *ngIf="coveReimburseError">
+                                                        When Settlement Method is COVE, at least one Reimbursement Agent (Instructed or Instructing) must be provided.
+                                                </div>
+                                                <div class="form-group intermediary-field">
+                                                        <label>Instructing Reimbursement Agent BIC <span class="req">*</span></label>
+                                                        <div class="uetr-control-row">
+                                                                <input formControlName="instgRmbrsmntAgtBic" maxlength="11" class="auto-uppercase" placeholder="e.g. BBBBUS33XXX">
+                                                                <button type="button" class="uetr-refresh-btn" (click)="openBicSearch('instgRmbrsmntAgtBic')" matTooltip="Search BIC">
+                                                                        <mat-icon>search</mat-icon>
+                                                                </button>
+                                                        </div>
+                                                        <div class="validation-msg" *ngIf="err('instgRmbrsmntAgtBic') as e">{{e}}</div>
+                                                </div>
+                                                <div class="form-group intermediary-field">
+                                                        <label>Instructed Reimbursement Agent BIC <span class="opt">Optional</span></label>
+                                                        <div class="uetr-control-row">
+                                                                <input formControlName="instdRmbrsmntAgtBic" maxlength="11" class="auto-uppercase" placeholder="e.g. AAAAGB2LXXX">
+                                                                <button type="button" class="uetr-refresh-btn" (click)="openBicSearch('instdRmbrsmntAgtBic')" matTooltip="Search BIC">
+                                                                        <mat-icon>search</mat-icon>
+                                                                </button>
+                                                        </div>
+                                                        <div class="validation-msg" *ngIf="err('instdRmbrsmntAgtBic') as e">{{e}}</div>
+                                                </div>
+                                        </ng-container>
+
                                         <div class="section-title">Transaction Details</div>
                                         <div class="form-group intermediary-field"><label>Instruction ID <span
                                                                 class="req">*</span></label><input
@@ -681,9 +709,9 @@
             <label>{{title}} Address Type</label>
             <select [formControlName]="prefix+'AddrType'">
                 <option value="none">None (BIC/ID Only)</option>
+                <option value="hybrid">Hybrid</option>
                 <option value="structured">Structured</option>
                 <option value="unstructured">Unstructured</option>
-                <option value="hybrid">Hybrid</option>
             </select>
             <div class="validation-msg" *ngIf="err(prefix+'AddrType') as e">{{e}}</div>
         </div>

@@ -80,9 +80,11 @@ export class Pacs4Component implements OnInit, OnDestroy {
         this.buildForm();
         this.generateXml();
         
-        // Auto-sync AppHdr BICs
+        // Auto-sync AppHdr BICs (bidirectional)
         this.form.get('fromBic')?.valueChanges.subscribe(v => this.form.patchValue({ instgAgtBic: v }, { emitEvent: false }));
         this.form.get('toBic')?.valueChanges.subscribe(v => this.form.patchValue({ instdAgtBic: v }, { emitEvent: false }));
+        this.form.get('instgAgtBic')?.valueChanges.subscribe(v => this.form.patchValue({ fromBic: v }, { emitEvent: false }));
+        this.form.get('instdAgtBic')?.valueChanges.subscribe(v => this.form.patchValue({ toBic: v }, { emitEvent: false }));
 
         this.form.get('currency')?.valueChanges.subscribe(() => {
             this.updateAmountValidator('amount', 'currency');
@@ -247,28 +249,32 @@ export class Pacs4Component implements OnInit, OnDestroy {
             const isMandatory = (p === 'dbtr' || p === 'cdtr');
             let defaultBic = (p === 'dbtr' || p === 'instgAgt' || p === 'dbtrAgt') ? 'BBBBUS33XXX' : 'CCCCGB2LXXX';
             if (p === 'initgPty' || p === 'ultmtDbtr' || p === 'ultmtCdtr') defaultBic = '';
-            
+
             c[p + 'Bic'] = [isMandatory ? defaultBic : (defaultBic || ''), isMandatory ? BIC_REQ : BIC];
             c[p + 'Name'] = [isMandatory ? (p === 'dbtr' ? 'Original Debtor' : 'Original Creditor') : '', [Validators.maxLength(140), SAFE_NAME]];
-            
-            // Default address for mandatory parties to resolve coexistence errors
+
             if (isMandatory) {
-                c[p + 'AddrType'] = ['unstructured'];
-                c[p + 'Ctry'] = ['US', Validators.pattern(/^[A-Z]{2,2}$/)];
-                c[p + 'TwnNm'] = ['New York', [Validators.maxLength(35), ADDR_PATTERN]];
-                c[p + 'StrtNm'] = ['123 Business Street', [Validators.maxLength(70), ADDR_PATTERN]];
+                const isDbtr = p === 'dbtr';
+                c[p + 'AddrType'] = ['hybrid'];
+                c[p + 'Ctry'] = [isDbtr ? 'US' : 'GB', Validators.pattern(/^[A-Z]{2,2}$/)];
+                c[p + 'TwnNm'] = [isDbtr ? 'New York' : 'London', [Validators.maxLength(35), ADDR_PATTERN]];
+                c[p + 'StrtNm'] = [isDbtr ? '123 Business Street' : '456 Commerce Avenue', [Validators.maxLength(70), ADDR_PATTERN]];
+                c[p + 'AdrLine1'] = [isDbtr ? '123 Business Street, New York' : '456 Commerce Avenue, London', [Validators.maxLength(70), ADDR_PATTERN]];
+                c[p + 'AdrLine2'] = ['', [Validators.maxLength(70), ADDR_PATTERN]];
             } else {
                 c[p + 'AddrType'] = ['none'];
                 c[p + 'Ctry'] = ['', Validators.pattern(/^[A-Z]{2,2}$/)];
                 c[p + 'TwnNm'] = ['', [Validators.maxLength(35), ADDR_PATTERN]];
                 c[p + 'StrtNm'] = ['', [Validators.maxLength(70), ADDR_PATTERN]];
+                c[p + 'AdrLine1'] = ['', [Validators.maxLength(70), ADDR_PATTERN]];
+                c[p + 'AdrLine2'] = ['', [Validators.maxLength(70), ADDR_PATTERN]];
             }
-            
+
             c[p + 'BldgNb'] = ['', [Validators.maxLength(16), ADDR_PATTERN]];
+            c[p + 'BldgNm'] = ['', [Validators.maxLength(35), ADDR_PATTERN]];
             c[p + 'PstCd'] = ['', [Validators.maxLength(16), ADDR_PATTERN]];
             c[p + 'Acct'] = ['', [Validators.pattern(/^[A-Z0-9]{5,34}$/)]];
-            
-            // Financial Institution specific
+
             c[p + 'MmbId'] = ['', [Validators.maxLength(35), ADDR_PATTERN]];
             c[p + 'ClrSysCd'] = [''];
             c[p + 'Lei'] = ['', [Validators.pattern(/^[A-Z0-9]{18}[0-9]{2}$/)]];
@@ -446,17 +452,17 @@ ${tx}\t\t\t</TxInf>
         if (!bic && !lei && !mmbId) return '';
 
         let fi = '';
-        if (bic) fi += this.el('BICFI', bic, indent + 3);
+        if (bic) fi += this.el('BICFI', bic, indent + 2);
         if (mmbId) {
             let clr = '';
-            if (clrSys) clr += this.tag('ClrSysId', this.el('Cd', clrSys, indent + 6), indent + 5);
-            clr += this.el('MmbId', mmbId, indent + 5);
-            fi += this.tag('ClrSysMmbId', clr, indent + 3);
+            if (clrSys) clr += this.tag('ClrSysId', this.el('Cd', clrSys, indent + 5), indent + 4);
+            clr += this.el('MmbId', mmbId, indent + 4);
+            fi += this.tag('ClrSysMmbId', clr, indent + 2);
         }
-        if (lei) fi += this.el('LEI', lei, indent + 3);
+        if (lei) fi += this.el('LEI', lei, indent + 2);
 
-        const finInstnId = this.tag('FinInstnId', fi, indent + 2);
-        return this.tag(tag, this.tag('Agt', finInstnId, indent + 1), indent);
+        const finInstnId = this.tag('FinInstnId', fi, indent + 1);
+        return this.tag(tag, finInstnId, indent);
     }
 
     party(tag: string, prefix: string, v: any, indent = 4) {
@@ -486,12 +492,18 @@ ${tx}\t\t\t</TxInf>
         if (!type || type === 'none') return '';
         
         let content = '';
-        if (v[p + 'StrtNm']) content += this.el('StrtNm', v[p + 'StrtNm'], indent + 1);
-        if (v[p + 'BldgNb']) content += this.el('BldgNb', v[p + 'BldgNb'], indent + 1);
-        if (v[p + 'PstCd']) content += this.el('PstCd', v[p + 'PstCd'], indent + 1);
+        if (['structured', 'hybrid'].includes(type)) {
+            if (v[p + 'StrtNm']) content += this.el('StrtNm', v[p + 'StrtNm'], indent + 1);
+            if (v[p + 'BldgNb']) content += this.el('BldgNb', v[p + 'BldgNb'], indent + 1);
+            if (v[p + 'BldgNm']) content += this.el('BldgNm', v[p + 'BldgNm'], indent + 1);
+            if (v[p + 'PstCd']) content += this.el('PstCd', v[p + 'PstCd'], indent + 1);
+        }
         if (v[p + 'TwnNm']) content += this.el('TwnNm', v[p + 'TwnNm'], indent + 1);
         if (v[p + 'Ctry']) content += this.el('Ctry', v[p + 'Ctry'], indent + 1);
-        
+        if (['unstructured', 'hybrid'].includes(type)) {
+            if (v[p + 'AdrLine1']) content += this.el('AdrLine', v[p + 'AdrLine1'], indent + 1);
+            if (v[p + 'AdrLine2']) content += this.el('AdrLine', v[p + 'AdrLine2'], indent + 1);
+        }
         return content ? this.tag('PstlAdr', content, indent) : '';
     }
 
@@ -628,12 +640,12 @@ ${tx}\t\t\t</TxInf>
                     patch[p + 'Name'] = tval('Nm', el);
                     const pstl = getT('PstlAdr', el);
                     if (pstl) {
-                        patch[p + 'AddrType'] = 'unstructured';
+                        patch[p + 'AddrType'] = 'hybrid';
                         const lines = pstl.querySelectorAll(':scope > AdrLine');
                         if (lines.length > 0) {
                             patch[p + 'AdrLine1'] = lines[0].textContent || '';
                             if (lines.length > 1) patch[p + 'AdrLine2'] = lines[1].textContent || '';
-                            patch[p + 'AddrType'] = 'unstructured';
+                            patch[p + 'AddrType'] = 'hybrid';
                         } else {
                             patch[p + 'Ctry'] = tval('Ctry', pstl);
                             patch[p + 'TwnNm'] = tval('TwnNm', pstl);

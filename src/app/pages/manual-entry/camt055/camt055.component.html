@@ -653,9 +653,9 @@
                         <label>{{title}} Address Type</label>
                         <select [formControlName]="prefix+'AddrType'">
                                 <option value="none">None (BIC/ID Only)</option>
+                                <option value="hybrid">Hybrid</option>
                                 <option value="structured">Structured</option>
                                 <option value="unstructured">Unstructured</option>
-                                <option value="hybrid">Hybrid</option>
                         </select>
                         <div class="validation-msg" *ngIf="err(prefix+'AddrType') as e">{{e}}</div>
                 </div>

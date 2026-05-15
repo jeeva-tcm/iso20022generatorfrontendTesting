@@ -405,14 +405,14 @@ export class Pacs10v3Component implements OnInit, OnDestroy {
             cdtrAgtLei: ['7H6LDXLRUQGFU57RNE97', [Validators.pattern(/^[A-Z0-9]{18}[0-9]{2}$/)]],
             cdtrAgtClrSysCd: ['USFW', Validators.maxLength(4)],
             cdtrAgtClrSysMmbId: ['MEM-CAGT-01', Validators.maxLength(35)],
-            cdtrAgtAddrType: ['structured'],
+            cdtrAgtAddrType: ['hybrid'],
             
             cdtrBic: ['CITIUS33XXX', BIC],
             cdtrName: ['CITIBANK NA', [Validators.maxLength(140), SAFE_NAME]],
             cdtrLei: ['E57ODZWZ7FF32TWEFS77', [Validators.pattern(/^[A-Z0-9]{18}[0-9]{2}$/)]],
             cdtrClrSysCd: ['USFW', Validators.maxLength(4)],
             cdtrClrSysMmbId: ['MEM-CDTR-01', Validators.maxLength(35)],
-            cdtrAddrType: ['structured'],
+            cdtrAddrType: ['hybrid'],
             
             instrId: ['INSTR-2026-PAC010-001', [Validators.required, Validators.maxLength(35), Validators.pattern(/^[a-zA-Z0-9\/\-\?:\(\)\.,\+' ]*$/)]],
             endToEndId: ['E2E-2026-PAC010-001', [Validators.required, Validators.maxLength(35), Validators.pattern(/^[a-zA-Z0-9\/\-\?:\(\)\.,\+' ]*$/)]],
@@ -456,7 +456,7 @@ export class Pacs10v3Component implements OnInit, OnDestroy {
             dbtrAgtLei: ['724500PMK2A2M1SQQ228', [Validators.pattern(/^[A-Z0-9]{18}[0-9]{2}$/)]],
             dbtrAgtClrSysCd: ['USFW', Validators.maxLength(4)],
             dbtrAgtClrSysMmbId: ['MEM-DAGT-01', Validators.maxLength(35)],
-            dbtrAgtAddrType: ['structured'],
+            dbtrAgtAddrType: ['hybrid'],
             
             instgAgtBic: ['BOFAUS3NXXX', BIC],
             instdAgtBic: ['CITIUS33XXX', BIC],
@@ -482,7 +482,7 @@ export class Pacs10v3Component implements OnInit, OnDestroy {
         prefixes.forEach(p => {
             const defaults = addrMap[p] || {};
             const isAgent = this.agentPrefixes.includes(p);
-            const defAddrType = addrPty.includes(p) ? 'structured' : 'none';
+            const defAddrType = (p === 'instgAgt' || p === 'instdAgt') ? 'none' : 'hybrid';
             if (!c[p + 'AddrType']) c[p + 'AddrType'] = [defAddrType];
 
             ['Dept', 'SubDept', 'StrtNm', 'BldgNb', 'BldgNm', 'Flr', 'PstBx', 'Room', 'PstCd', 'TwnNm', 'TwnLctnNm', 'Ctry']

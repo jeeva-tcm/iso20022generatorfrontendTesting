@@ -316,7 +316,7 @@ export class Pacs9AdvComponent implements OnInit, OnDestroy {
         };
         // Address prefixes for agents
         this.agentPrefixes.forEach(p => {
-            if (!c[p + 'AddrType']) c[p + 'AddrType'] = 'none';
+            if (!c[p + 'AddrType']) c[p + 'AddrType'] = (p === 'instgAgt' || p === 'instdAgt') ? 'none' : 'hybrid';
             if (!c[p + 'AdrLine1']) c[p + 'AdrLine1'] = ['', [Validators.maxLength(70), ADDR_PATTERN]];
             if (!c[p + 'AdrLine2']) c[p + 'AdrLine2'] = ['', [Validators.maxLength(70), ADDR_PATTERN]];
             if (!c[p + 'Dept']) c[p + 'Dept'] = ['', [Validators.maxLength(70), ADDR_PATTERN]];
@@ -347,11 +347,18 @@ export class Pacs9AdvComponent implements OnInit, OnDestroy {
         mandatoryParties.forEach(p => {
             const label = p.startsWith('dbtr') ? 'Debtor' : 'Creditor';
             const suffix = p.endsWith('Agt') ? ' Agent' : '';
+            const isDbtr = p.startsWith('dbtr');
             c[p + 'Name'] = [label + suffix, [Validators.required, Validators.maxLength(140), SAFE_NAME]];
-            c[p + 'AddrType'] = ['unstructured'];
-            c[p + 'AdrLine1'] = ['123 Business Street', [Validators.maxLength(70), ADDR_PATTERN]];
-            c[p + 'Ctry'] = ['US', Validators.pattern(/^[A-Z]{2,2}$/)];
+            c[p + 'AddrType'] = ['hybrid'];
+            c[p + 'AdrLine1'] = [isDbtr ? '123 Business Street' : '456 Commerce Avenue', [Validators.maxLength(70), ADDR_PATTERN]];
+            c[p + 'AdrLine2'] = [isDbtr ? 'Suite 100' : 'Floor 12', [Validators.maxLength(70), ADDR_PATTERN]];
+            c[p + 'TwnNm'] = [isDbtr ? 'New York' : 'London', [Validators.maxLength(35), ADDR_PATTERN]];
+            c[p + 'Ctry'] = [isDbtr ? 'US' : 'GB', Validators.pattern(/^[A-Z]{2,2}$/)];
         });
+
+        // Reimbursement agents (required when SttlmMtd = COVE)
+        if (!c['instgRmbrsmntAgtBic']) c['instgRmbrsmntAgtBic'] = ['BBBBUS33XXX', [Validators.pattern(/^[A-Z]{4}[A-Z]{2}[A-Z0-9]{2}([A-Z0-9]{3})?$/)]];
+        if (!c['instdRmbrsmntAgtBic']) c['instdRmbrsmntAgtBic'] = ['', [Validators.pattern(/^[A-Z]{4}[A-Z]{2}[A-Z0-9]{2}([A-Z0-9]{3})?$/)]];
 
         this.form = this.fb.group(c);
     }
@@ -403,6 +410,13 @@ export class Pacs9AdvComponent implements OnInit, OnDestroy {
         if (c.errors?.['target2']) return 'TARGET2 payments must use EUR as the settlement currency.';
         if (c.errors?.['chaps']) return 'Invalid Currency for CHAPS clearing system. When ClrSysId/Cd = CHAPS, the transaction currency must be GBP.';
         return 'Invalid value.';
+    }
+
+    get coveReimburseError(): boolean {
+        const isCove = this.form.get('sttlmMtd')?.value === 'COVE';
+        const hasInstg = !!this.form.get('instgRmbrsmntAgtBic')?.value?.trim();
+        const hasInstd = !!this.form.get('instdRmbrsmntAgtBic')?.value?.trim();
+        return isCove && !hasInstg && !hasInstd;
     }
 
     /**
@@ -563,6 +577,13 @@ export class Pacs9AdvComponent implements OnInit, OnDestroy {
             return;
         }
 
+        // Stop generation if COVE is selected but no reimbursement agent is provided
+        if (this.coveReimburseError) {
+            this.generatedXml = '<!-- COVE VALIDATION ERROR: When SettlementMethod is COVE, InstructedReimbursementAgent or InstructingReimbursementAgent must be present. Please provide at least one Reimbursement Agent BIC. -->';
+            this.onEditorChange(this.generatedXml, true);
+            return;
+        }
+
         // Stop generation if ClrSysRef is forbidden
         if (this.form.get('clrSysRef')?.hasError('forbidden')) {
             this.generatedXml = '<!-- CLEARING SYSTEM REFERENCE VALIDATION ERROR: Clearing System Reference must NOT be sent if no active standard clearing system is used. -->';
@@ -707,7 +728,17 @@ export class Pacs9AdvComponent implements OnInit, OnDestroy {
 \t\t\t\t<CreDtTm>${creDtTm}</CreDtTm>
 \t\t\t\t<NbOfTxs>${v.nbOfTxs}</NbOfTxs>
 \t\t\t\t<SttlmInf>
-\t\t\t\t\t<SttlmMtd>${this.e(v.sttlmMtd)}</SttlmMtd>
+\t\t\t\t\t<SttlmMtd>${this.e(v.sttlmMtd)}</SttlmMtd>${v.sttlmMtd === 'COVE' && v.instgRmbrsmntAgtBic?.trim() ? `
+\t\t\t\t\t<InstgRmbrsmntAgt>
+\t\t\t\t\t\t<FinInstnId>
+\t\t\t\t\t\t\t<BICFI>${this.e(v.instgRmbrsmntAgtBic)}</BICFI>
+\t\t\t\t\t\t</FinInstnId>
+\t\t\t\t\t</InstgRmbrsmntAgt>` : ''}${v.sttlmMtd === 'COVE' && v.instdRmbrsmntAgtBic?.trim() ? `
+\t\t\t\t\t<InstdRmbrsmntAgt>
+\t\t\t\t\t\t<FinInstnId>
+\t\t\t\t\t\t\t<BICFI>${this.e(v.instdRmbrsmntAgtBic)}</BICFI>
+\t\t\t\t\t\t</FinInstnId>
+\t\t\t\t\t</InstdRmbrsmntAgt>` : ''}
 \t\t\t\t</SttlmInf>
 \t\t\t</GrpHdr>
 \t\t\t<CdtTrfTxInf>
@@ -848,6 +879,10 @@ ${tx}\t\t\t</CdtTrfTxInf>
         if (this.form.invalid) {
             this.form.markAllAsTouched();
             this.snackBar.open('Please fix the errors in the form before validating.', 'Close', { duration: 3000 });
+            return;
+        }
+        if (this.coveReimburseError) {
+            this.snackBar.open('Settlement Method is COVE: at least one Reimbursement Agent (Instructed or Instructing) must be provided.', 'Close', { duration: 5000 });
             return;
         }
         if (!this.generatedXml?.trim()) return;
@@ -1096,7 +1131,12 @@ ${tx}\t\t\t</CdtTrfTxInf>
                 patch.msgId = tval('MsgId', grpHdr);
                 patch.creDtTm = tval('CreDtTm', grpHdr);
                 patch.nbOfTxs = tval('NbOfTxs', grpHdr);
-                patch.sttlmMtd = tval('SttlmMtd', getT('SttlmInf', grpHdr) || grpHdr);
+                const sttlmInf = getT('SttlmInf', grpHdr) || grpHdr;
+                patch.sttlmMtd = tval('SttlmMtd', sttlmInf);
+                const instgRmbrs = getT('InstgRmbrsmntAgt', sttlmInf);
+                if (instgRmbrs) patch.instgRmbrsmntAgtBic = tval('BICFI', getT('FinInstnId', instgRmbrs) || instgRmbrs);
+                const instdRmbrs = getT('InstdRmbrsmntAgt', sttlmInf);
+                if (instdRmbrs) patch.instdRmbrsmntAgtBic = tval('BICFI', getT('FinInstnId', instdRmbrs) || instdRmbrs);
             }
 
             const tx = getT('CdtTrfTxInf');
