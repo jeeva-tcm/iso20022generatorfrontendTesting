@@ -1643,11 +1643,8 @@ textarea.code-editor {
 
 .uetr-success {
     color: #22c55e;
-.uetr-success {
-    color: #22c55e;
     font-size: 0.72rem;
     font-weight: 600;
-    margin-top: 3px;
     margin-top: 3px;
     animation: fadeIn 0.2s ease;
 }
@@ -1670,66 +1667,8 @@ input[list]::-webkit-calendar-picker-indicator {
 .left-panel, .right-panel {
     scrollbar-width: thin;
     scrollbar-color: #d1d5db transparent;
-.info-icon-small {
-    font-size: 14px;
-    width: 14px;
-    height: 14px;
-    vertical-align: middle;
-    color: var(--text-muted);
-    margin-left: 4px;
-    cursor: help;
 }
 
-input[list]::-webkit-calendar-picker-indicator {
-    display: flex !important;
-}
-
-
-.left-panel, .right-panel {
-    scrollbar-width: thin;
-    scrollbar-color: #d1d5db transparent;
-}
-
-textarea.code-editor {
-    scrollbar-width: thin;
-    scrollbar-color: #d1d5db var(--editor-bg);
-}
-
-.left-panel::-webkit-scrollbar,
-.right-panel::-webkit-scrollbar,
-textarea.code-editor::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-}
-
-.left-panel::-webkit-scrollbar-track,
-.right-panel::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-textarea.code-editor::-webkit-scrollbar-track {
-    background: var(--editor-bg);
-}
-
-.left-panel::-webkit-scrollbar-thumb,
-.right-panel::-webkit-scrollbar-thumb,
-textarea.code-editor::-webkit-scrollbar-thumb {
-    background-color: #d1d5db; /* Grey */
-    border-radius: 4px;
-}
-
-.left-panel::-webkit-scrollbar-thumb:hover,
-.right-panel::-webkit-scrollbar-thumb:hover,
-textarea.code-editor::-webkit-scrollbar-thumb:hover {
-    background-color: #9ca3af; /* Darker Grey */
-}
-
-.validation-msg {
-    color: #ef4444;
-    font-size: 0.72rem;
-    font-weight: 600;
-    margin-top: 4px;
-    display: block;
 textarea.code-editor {
     scrollbar-width: thin;
     scrollbar-color: #d1d5db var(--editor-bg);
