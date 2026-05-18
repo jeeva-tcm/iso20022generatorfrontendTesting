@@ -46,7 +46,7 @@ export class HistoryComponent implements OnInit {
     currentFilter: 'ALL' | 'PASSED' | 'FAILED' = 'ALL';
     messageTypeFilter: string = 'ALL';
     originFilter: string = 'ALL';
-    availableOrigins: string[] = ['ALL', 'Pasted', 'Uploaded', 'Generated via Manual Entry'];
+    availableOrigins: string[] = ['ALL', 'Pasted', 'Uploaded', 'Manual Entry', 'MT to MX'];
     readonly ALL_MESSAGE_TYPES: string[] = [
         'camt.052.001.08',
         'camt.053.001.08',
@@ -249,13 +249,22 @@ export class HistoryComponent implements OnInit {
         this.originDropdownOpen = false;
     }
 
+    getAllFilesCount(): number {
+        return this.dataSource.data.reduce((sum, r) => sum + (r.no_of_files || 1), 0);
+    }
+
     getPassedCount(): number {
-        // Includes both clean passes and warnings
-        return this.dataSource.data.filter(r => r.status === 'PASSED' || r.status === 'WARNING').length;
+        // Includes both clean passes and warnings, sum up their no_of_files
+        return this.dataSource.data
+            .filter(r => r.status === 'PASSED' || r.status === 'WARNING')
+            .reduce((sum, r) => sum + (r.no_of_files || 1), 0);
     }
 
     getFailedCount(): number {
-        return this.dataSource.data.filter(r => r.status === 'FAILED').length;
+        // Sum up no_of_files of FAILED rows
+        return this.dataSource.data
+            .filter(r => r.status === 'FAILED')
+            .reduce((sum, r) => sum + (r.no_of_files || 1), 0);
     }
 
     getStatusClass(status: string) {
@@ -405,12 +414,16 @@ export class HistoryComponent implements OnInit {
         const baseRow = `"${recordId}","${msgType}","${statusLabel}",${report.errors || 0},${report.warnings || 0}`;
 
         if (report.details && report.details.length > 0) {
-            report.details.forEach((issue: any) => {
+            report.details.forEach((issue: any, index: number) => {
                 const layer = `"${(issue.layer || '').toString().replace(/"/g, '""')}"`;
                 const severity = `"${(issue.severity || '').toString().replace(/"/g, '""')}"`;
                 const issuePath = `"${(issue.path || 'Root').toString().replace(/"/g, '""')}"`;
                 const msg = `"${(issue.message || '').toString().replace(/"/g, '""')}"`;
-                csv += `${baseRow},${layer},${severity},${issuePath},${msg}\n`;
+                if (index === 0) {
+                    csv += `${baseRow},${layer},${severity},${issuePath},${msg}\n`;
+                } else {
+                    csv += `,,,,,${layer},${severity},${issuePath},${msg}\n`;
+                }
             });
         } else {
             csv += `${baseRow},,,,\n`;

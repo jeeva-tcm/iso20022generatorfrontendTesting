@@ -31,10 +31,13 @@
                                                  <div class="field-hint at-limit" *ngIf="hint('fromLei', 20) as h">{{h}}</div>
                                           </div>
                                         <div class="form-group"><label>Sender BIC <span
-                                                                class="req">*</span></label><input
-                                                        formControlName="fromBic" maxlength="11"
-                                                        pattern="^[A-Z0-9]{4}[A-Z]{2}[A-Z0-9]{2}([A-Z0-9]{3})?$"
-                                                        required>
+                                                                class="req">*</span></label>
+                                                <div class="uetr-control-row">
+                                                         <input formControlName="fromBic" maxlength="11" class="auto-uppercase" required>
+                                                         <button type="button" class="uetr-refresh-btn" (click)="openBicSearchGroup('fromBic', form)" title="Search BIC">
+                                                                 <mat-icon style="font-size: 16px; width: 16px; height: 16px;">search</mat-icon>
+                                                         </button>
+                                                </div>
                                                 <div class="validation-msg" *ngIf="err('fromBic') as e">{{e}}</div>
                                                 <div class="field-hint at-limit" *ngIf="hint('fromBic', 11) as h">{{h}}
                                                 </div>

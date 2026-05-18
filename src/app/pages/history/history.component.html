@@ -11,7 +11,7 @@
                 <button class="status-tab" [class.active]="currentFilter === 'ALL'" (click)="applyFilter('ALL')">
                     <mat-icon>list</mat-icon>
                     <span>All Records</span>
-                    <span class="tab-count">{{dataSource.data.length}}</span>
+                    <span class="tab-count">{{ getAllFilesCount() }}</span>
                 </button>
                 <button class="status-tab tab-passed" [class.active]="currentFilter === 'PASSED'" (click)="applyFilter('PASSED')">
                     <mat-icon>check_circle</mat-icon>

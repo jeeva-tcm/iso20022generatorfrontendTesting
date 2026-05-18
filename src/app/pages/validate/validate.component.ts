@@ -23,7 +23,7 @@ export interface FileEntry {
   report: any;
   messageType: string;
   handle?: any;
-  origin?: 'Pasted' | 'Uploaded' | 'Generated via Manual Entry';
+  origin?: 'Pasted' | 'Uploaded' | 'Manual Entry' | 'MT to MX';
 }
 
 @Component({
@@ -249,12 +249,16 @@ export class ValidateComponent implements OnInit {
       const baseRow = `${batchId},${fileId},${name},${status},${passRate},${errs},${warns}`;
 
       if (f.report && f.report.details && f.report.details.length > 0) {
-        f.report.details.forEach((issue: any) => {
+        f.report.details.forEach((issue: any, index: number) => {
           const layer = `"${(issue.layer || '').toString().replace(/"/g, '""')}"`;
           const severity = `"${(issue.severity || '').toString().replace(/"/g, '""')}"`;
           const issuePath = `"${(issue.path || 'Root').toString().replace(/"/g, '""')}"`;
           const msg = `"${(issue.message || '').toString().replace(/"/g, '""')}"`;
-          csv += `${baseRow},${layer},${severity},${issuePath},${msg}\n`;
+          if (index === 0) {
+            csv += `${baseRow},${layer},${severity},${issuePath},${msg}\n`;
+          } else {
+            csv += `,,,,,,,${layer},${severity},${issuePath},${msg}\n`;
+          }
         });
       } else {
         csv += `${baseRow},,,,\n`;
@@ -288,12 +292,16 @@ export class ValidateComponent implements OnInit {
     const baseRow = `${name},${status},${passRate},${errs},${warns}`;
 
     if (f.report && f.report.details && f.report.details.length > 0) {
-      f.report.details.forEach((issue: any) => {
+      f.report.details.forEach((issue: any, index: number) => {
         const layer = `"${(issue.layer || '').toString().replace(/"/g, '""')}"`;
         const severity = `"${(issue.severity || '').toString().replace(/"/g, '""')}"`;
         const issuePath = `"${(issue.path || 'Root').toString().replace(/"/g, '""')}"`;
         const msg = `"${(issue.message || '').toString().replace(/"/g, '""')}"`;
-        csv += `${baseRow},${layer},${severity},${issuePath},${msg}\n`;
+        if (index === 0) {
+          csv += `${baseRow},${layer},${severity},${issuePath},${msg}\n`;
+        } else {
+          csv += `,,,,,${layer},${severity},${issuePath},${msg}\n`;
+        }
       });
     } else {
       csv += `${baseRow},,,,\n`;
