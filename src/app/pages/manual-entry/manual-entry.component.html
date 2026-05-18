@@ -25,51 +25,82 @@
     <!-- Main Content Area -->
     <div class="me-content-container">
 
-        <!-- Case 1: No Message Selected (Explorer View) -->
-        <div *ngIf="!selectedType" class="me-explorer-center">
-            <div class="explorer-inner">
-                <mat-icon class="hero-icon">explore</mat-icon>
-                <h2>What would you like to build?</h2>
-                <p>Choose a message family to browse our dynamic catalog of {{allTypes.length}} XSDs</p>
-                
-                <!-- Popular Selection -->
-                <div class="popular-grid" *ngIf="!selectedFamily">
-                    <div class="popular-card" *ngFor="let m of popularMessages" (click)="gotoMessage(m.route)">
-                        <div class="pop-tag" [ngClass]="m.type">{{m.type}}</div>
-                        <div class="pop-info">
-                            <span class="pop-id">{{m.id}}</span>
-                            <span class="pop-name">{{m.name}}</span>
+        <!-- Case 1: No Message Selected (Catalog View) -->
+        <div *ngIf="!selectedType" class="me-explorer-center-new">
+            <div class="explorer-banner">
+                <div class="banner-overlay"></div>
+                <div class="banner-content">
+                    <div class="banner-badge">
+                        <mat-icon>auto_awesome</mat-icon>
+                        <span>Enterprise Blueprints</span>
+                    </div>
+                    <h2 class="banner-title">Select a Message Blueprint</h2>
+                    <p class="banner-subtitle">
+                        Choose from our catalog of fully developed, compliance-validated manual entry forms. 
+                        Pre-populated with smart defaults for instant generation.
+                    </p>
+                    
+                    <!-- Search Input inside Banner -->
+                    <div class="banner-search-container">
+                        <mat-icon class="search-icon-new">search</mat-icon>
+                        <input type="text" class="search-input-new" placeholder="Search blueprints (e.g. pacs.008)..."
+                            [(ngModel)]="searchQuery">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab Switcher -->
+            <div class="catalog-tabs-container">
+                <div class="catalog-tabs">
+                    <button class="tab-btn" [class.active]="selectedCategory === 'pacs'" (click)="selectedCategory = 'pacs'">
+                        <mat-icon>account_balance</mat-icon>
+                        <span class="tab-label">Payments Clearing (PACS)</span>
+                        <span class="tab-badge pacs">9 Forms</span>
+                    </button>
+                    <button class="tab-btn" [class.active]="selectedCategory === 'camt'" (click)="selectedCategory = 'camt'">
+                        <mat-icon>assessment</mat-icon>
+                        <span class="tab-label">Cash Management (CAMT)</span>
+                        <span class="tab-badge camt">6 Forms</span>
+                    </button>
+                    <button class="tab-btn" [class.active]="selectedCategory === 'pain'" (click)="selectedCategory = 'pain'">
+                        <mat-icon>assignment_ind</mat-icon>
+                        <span class="tab-label">Payments Initiation (PAIN)</span>
+                        <span class="tab-badge pain">3 Forms</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Grid Content -->
+            <div class="catalog-grid-container">
+                <div class="catalog-grid" *ngIf="filteredCategoryMessages.length > 0">
+                    <div class="catalog-card" *ngFor="let m of filteredCategoryMessages" (click)="gotoMessage(m.route)">
+                        <div class="card-accent" [ngClass]="m.type"></div>
+                        <div class="card-top">
+                            <span class="card-badge" [ngClass]="m.type">{{m.type | uppercase}}</span>
+                            <span class="card-route-btn">Open Form <mat-icon>arrow_forward</mat-icon></span>
                         </div>
-                        <mat-icon class="pop-go">arrow_forward_ios</mat-icon>
-                    </div>
-                </div>
-
-                <div class="section-divider" *ngIf="!selectedFamily">
-                    <span>- or browse families -</span>
-                </div>
-
-                <!-- Family Grid -->
-                <div class="family-grid" *ngIf="!selectedFamily">
-                    <div class="family-card" *ngFor="let fam of families" (click)="selectFamily(fam)">
-                        <div class="fam-num">{{groupedTypes[fam].length}}</div>
-                        <div class="fam-body">
-                            <span class="fam-name">{{fam}}</span>
-                            <span class="fam-sub">ISO 20022 Blueprint</span>
+                        <div class="card-body">
+                            <h3 class="card-msg-id">{{m.id}}</h3>
+                            <p class="card-msg-name">{{m.name}}</p>
                         </div>
-                        <mat-icon>chevron_right</mat-icon>
+                        <div class="card-footer">
+                            <div class="footer-spec">
+                                <mat-icon>verified</mat-icon>
+                                <span>CBPR+ Validated</span>
+                            </div>
+                            <div class="footer-spec">
+                                <mat-icon>bolt</mat-icon>
+                                <span>Smart Default</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Family List -->
-                <div class="family-list-view" *ngIf="selectedFamily">
-                    <div class="lv-header">
-                        <button class="btn-text" (click)="selectedFamily = null"><mat-icon>arrow_back</mat-icon>
-                            Families</button>
-                        <h3>{{selectedFamily}} Messages</h3>
-                    </div>
-                    <div class="lv-grid">
-                        <div class="lv-item" *ngFor="let m of filteredTypes" (click)="selectType(m)">{{m}}</div>
-                    </div>
+                <!-- Empty State within Tab -->
+                <div class="catalog-empty" *ngIf="filteredCategoryMessages.length === 0">
+                    <mat-icon>search_off</mat-icon>
+                    <h3>No blueprints found</h3>
+                    <p>We couldn't find any blueprint matching "{{searchQuery}}". Try checking your spelling or selecting another category.</p>
                 </div>
             </div>
         </div>

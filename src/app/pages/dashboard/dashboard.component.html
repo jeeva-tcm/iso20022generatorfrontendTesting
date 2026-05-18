@@ -111,8 +111,9 @@
                     <h2 class="section-heading">Recent Activity</h2>
                 </div>
                 <div class="section-actions">
-                    <button mat-icon-button class="icon-btn" (click)="refresh()">
-                        <mat-icon>refresh</mat-icon>
+                    <span class="refreshing-text" *ngIf="isRefreshing">Reloading...</span>
+                    <button mat-icon-button class="icon-btn" (click)="refresh()" [disabled]="isRefreshing" [title]="isRefreshing ? 'Refreshing activity...' : 'Refresh Recent Activity'">
+                        <mat-icon [class.spinning]="isRefreshing">refresh</mat-icon>
                     </button>
                     <button mat-button class="text-link-btn" routerLink="/history">
                         View all <mat-icon>arrow_forward</mat-icon>

@@ -633,3 +633,34 @@ body.light-theme .db-hero::before {
     .hero-actions { flex-direction: column; }
     .db-aside { grid-template-columns: 1fr; }
 }
+
+/* Spinner animation for the refresh button */
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+.spinning {
+    animation: spin 0.8s linear infinite;
+    display: inline-block;
+}
+
+.refreshing-text {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #60a5fa;
+    margin-right: 8px;
+    letter-spacing: 0.5px;
+    animation: pulse-text 1.2s ease-in-out infinite;
+    display: inline-flex;
+    align-items: center;
+    text-transform: uppercase;
+}
+
+body.light-theme .refreshing-text {
+    color: #1d4ed8;
+}
+
+@keyframes pulse-text {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+}

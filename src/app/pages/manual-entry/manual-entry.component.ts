@@ -38,6 +38,18 @@ export class ManualEntryComponent implements OnInit {
     schema: SchemaNode | null = null;
     loading = false;
 
+    // Category filter for premium catalog view
+    selectedCategory: 'pacs' | 'camt' | 'pain' = 'pacs';
+
+    get filteredCategoryMessages() {
+        let list = this.popularMessages.filter(m => m.type === this.selectedCategory);
+        if (this.searchQuery) {
+            const q = this.searchQuery.toLowerCase();
+            list = list.filter(m => m.id.toLowerCase().includes(q) || m.name.toLowerCase().includes(q));
+        }
+        return list;
+    }
+
     // Grouped types: Family -> List of IDs
     groupedTypes: Record<string, string[]> = {};
     families: string[] = [];

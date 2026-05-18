@@ -6,11 +6,12 @@ import { MatIconModule } from '@angular/material/icon';
 import { RouterModule } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { ConfigService } from '../../services/config.service';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 
 @Component({
     selector: 'app-dashboard',
     standalone: true,
-    imports: [CommonModule, MatCardModule, MatButtonModule, MatIconModule, RouterModule],
+    imports: [CommonModule, MatCardModule, MatButtonModule, MatIconModule, RouterModule, MatSnackBarModule],
     templateUrl: './dashboard.component.html',
     styleUrls: ['./dashboard.component.css']
 })
@@ -21,7 +22,11 @@ export class DashboardComponent implements OnInit {
     // SVG ring: radius 33 inside 80×80 viewBox
     readonly ringCircumference = 2 * Math.PI * 33;
 
-    constructor(private http: HttpClient, private config: ConfigService) {}
+    constructor(
+        private http: HttpClient,
+        private config: ConfigService,
+        private snackBar: MatSnackBar
+    ) {}
 
     ngOnInit() {
         this.loadStats();
@@ -47,6 +52,8 @@ export class DashboardComponent implements OnInit {
         return 'other';
     }
 
+    isRefreshing = false;
+
     loadStats() {
         this.http.get<any>(this.config.getApiUrl('/dashboard/stats')).subscribe({
             next: (data) => {
@@ -67,7 +74,45 @@ export class DashboardComponent implements OnInit {
     }
 
     refresh() {
-        this.loadStats();
-        this.loadRecentActivity();
+        if (this.isRefreshing) return;
+        this.isRefreshing = true;
+
+        this.snackBar.open('Reloading dashboard data...', '', { duration: 1000 });
+
+        let completed = 0;
+        const checkDone = () => {
+            completed++;
+            if (completed === 2) {
+                setTimeout(() => {
+                    this.isRefreshing = false;
+                    this.snackBar.open('Dashboard updated successfully.', 'Close', { duration: 2500 });
+                }, 800);
+            }
+        };
+
+        this.http.get<any>(this.config.getApiUrl('/dashboard/stats')).subscribe({
+            next: (data) => {
+                this.stats.total = data.total_audits;
+                this.stats.passed = data.passed_messages;
+                this.stats.failed = data.failed_messages;
+                this.stats.efficiency = data.validation_quality + '%';
+                checkDone();
+            },
+            error: (err) => {
+                console.error('Dashboard stats error:', err);
+                checkDone();
+            }
+        });
+
+        this.http.get<any[]>(this.config.getApiUrl('/history?limit=5')).subscribe({
+            next: (data) => {
+                this.recentActivity = data;
+                checkDone();
+            },
+            error: (err) => {
+                console.error('Dashboard activity error:', err);
+                checkDone();
+            }
+        });
     }
 }
