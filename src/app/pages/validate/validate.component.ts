@@ -68,7 +68,7 @@ export class ValidateComponent implements OnInit {
   // ── Pagination State ───────────────────────────────────────────────────────
   currentPage = 1;
   pageSize = 10;
-  pageSizeOptions = [10, 25, 50, 100];
+  pageSizeOptions = [10, 25, 50, 100, 250, 500, 1000];
 
   // ── XML Editor state ─────────────────────────────────────────────────────────────
   editingEntry: FileEntry | null = null;
@@ -540,9 +540,9 @@ export class ValidateComponent implements OnInit {
 
     if (filesToProcess.length === 0) return;
 
-    if (this.files.length + filesToProcess.length > 100) {
-      this.snackBar.open(`Maximum 100 files allowed. You tried to add ${filesToProcess.length} to ${this.files.length} existing.`, 'Dismiss', { duration: 5000 });
-      const availableCount = 100 - this.files.length;
+    if (this.files.length + filesToProcess.length > 1000) {
+      this.snackBar.open(`Maximum 1000 files allowed. You tried to add ${filesToProcess.length} to ${this.files.length} existing.`, 'Dismiss', { duration: 5000 });
+      const availableCount = 1000 - this.files.length;
       if (availableCount <= 0) return;
       filesToProcess.splice(availableCount);
     }
