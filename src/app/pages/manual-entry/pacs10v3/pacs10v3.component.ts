@@ -482,13 +482,20 @@ export class Pacs10v3Component implements OnInit, OnDestroy {
         prefixes.forEach(p => {
             const defaults = addrMap[p] || {};
             const isAgent = this.agentPrefixes.includes(p);
-            const defAddrType = (p === 'instgAgt' || p === 'instdAgt') ? 'none' : 'hybrid';
+            // Only prefixes that ship with full address data (those in addrMap) default to 'hybrid'.
+            // Everything else (ultmtDbtr, ultmtCdtr, instg/instd) defaults to 'none' so users
+            // don't get spurious "Town/Country required" errors on unused agents.
+            const hasAddrData = Object.keys(defaults).length > 0;
+            const defAddrType = hasAddrData ? 'hybrid' : 'none';
             if (!c[p + 'AddrType']) c[p + 'AddrType'] = [defAddrType];
 
             ['Dept', 'SubDept', 'StrtNm', 'BldgNb', 'BldgNm', 'Flr', 'PstBx', 'Room', 'PstCd', 'TwnNm', 'TwnLctnNm', 'Ctry']
                 .forEach(f => {
                     const val = defaults[f] || '';
-                    const validators = (f === 'TwnNm' || f === 'Ctry') ? Validators.required : null;
+                    // Only require TwnNm/Ctry for prefixes that actually use an address
+                    // (i.e., those with addrMap data). For optional prefixes defaulting to
+                    // 'none', no required validator — users shouldn't see errors on unused agents.
+                    const validators = (hasAddrData && (f === 'TwnNm' || f === 'Ctry')) ? Validators.required : null;
                     if (!c[p + f]) c[p + f] = [val, validators];
                 });
 
