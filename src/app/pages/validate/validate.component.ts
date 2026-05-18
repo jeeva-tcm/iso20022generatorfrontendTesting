@@ -1,3 +1,4 @@
+import JSZip from 'jszip';
 import { Component, OnInit, HostListener, ElementRef, ViewChild, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormControl } from '@angular/forms';
@@ -469,8 +470,13 @@ export class ValidateComponent implements OnInit {
         const handles = await (window as any).showOpenFilePicker({
           multiple: true,
           types: [{
-            description: 'XML Files',
-            accept: { 'text/xml': ['.xml', '.xsd', '.txt'] }
+            description: 'Supported Files (.xml, .zip, .xsd, .txt)',
+            accept: {
+              'application/xml': ['.xml'],
+              'text/xml': ['.xml', '.xsd', '.txt'],
+              'application/zip': ['.zip'],
+              'application/x-zip-compressed': ['.zip']
+            }
           }]
         });
         const validFiles: File[] = [];
@@ -497,10 +503,54 @@ export class ValidateComponent implements OnInit {
   }
 
   private async loadFiles(files: File[]) {
+    // 1. Unzip any zip files first
+    const filesToProcess: File[] = [];
+    for (const file of files) {
+      if (file.name.toLowerCase().endsWith('.zip')) {
+        try {
+          const zip = new JSZip();
+          const contents = await zip.loadAsync(file);
+          const zipFiles: File[] = [];
+          for (const filename of Object.keys(contents.files)) {
+            const zipEntry = contents.files[filename];
+            if (!zipEntry.dir) {
+              const ext = '.' + filename.split('.').pop()?.toLowerCase();
+              if (ext === '.xml' || ext === '.xsd' || ext === '.txt') {
+                const blob = await zipEntry.async('blob');
+                const baseName = filename.split('/').pop() || filename;
+                const extractedFile = new File([blob], baseName, { type: 'text/xml' });
+                zipFiles.push(extractedFile);
+              }
+            }
+          }
+          if (zipFiles.length === 0) {
+            this.snackBar.open(`${file.name}: No valid XML/XSD/TXT files found inside the zip.`, 'Dismiss', { duration: 4000 });
+          } else {
+            filesToProcess.push(...zipFiles);
+            this.snackBar.open(`Extracted ${zipFiles.length} file(s) from ${file.name}`, 'Dismiss', { duration: 3000 });
+          }
+        } catch (err) {
+          console.error('Error reading zip file:', err);
+          this.snackBar.open(`${file.name}: Failed to unzip/read file.`, 'Dismiss', { duration: 4000 });
+        }
+      } else {
+        filesToProcess.push(file);
+      }
+    }
+
+    if (filesToProcess.length === 0) return;
+
+    if (this.files.length + filesToProcess.length > 100) {
+      this.snackBar.open(`Maximum 100 files allowed. You tried to add ${filesToProcess.length} to ${this.files.length} existing.`, 'Dismiss', { duration: 5000 });
+      const availableCount = 100 - this.files.length;
+      if (availableCount <= 0) return;
+      filesToProcess.splice(availableCount);
+    }
+
     const allowed = ['.xml', '.xsd', '.txt'];
-    const validFiles = files.filter(file => {
+    const validFiles = filesToProcess.filter(file => {
       const isAllowed = allowed.some(ext => file.name.toLowerCase().endsWith(ext));
-      if (!isAllowed) this.snackBar.open(`${file.name}: Invalid type. XML/XSD/TXT only.`, 'Dismiss', { duration: 3000 });
+      if (!isAllowed) this.snackBar.open(`${file.name}: Invalid type. XML/XSD/TXT/ZIP only.`, 'Dismiss', { duration: 3000 });
 
       const isSizeOk = file.size <= 1024 * 1024 * 3;
       if (!isSizeOk) this.snackBar.open(`${file.name}: File too large (max 3 MB).`, 'Dismiss', { duration: 5000 });

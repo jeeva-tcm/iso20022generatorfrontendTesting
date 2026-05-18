@@ -33,10 +33,10 @@
         <div class="drop-icon">
           <mat-icon>add_circle_outline</mat-icon>
         </div>
-        <p class="drop-title">Drop XML Files Here</p>
-        <p class="drop-sub">or click to browse · ISO 20022 .xml files only</p>
+        <p class="drop-title">Drop Files Here (.xml, .zip)</p>
+        <p class="drop-sub">or click to browse · Supports .xml, .zip, .xsd, .txt files</p>
         <p class="drop-limit">MAX 100KB PER FILE · NO FILE LIMIT</p>
-        <input #fileInput type="file" multiple accept=".xml,.xsd,.txt" (change)="onFileSelected($event)"
+        <input #fileInput type="file" multiple accept=".xml,.xsd,.txt,.zip" (change)="onFileSelected($event)"
           style="position: absolute; width: 0; height: 0; opacity: 0; z-index: -1;">
       </div>
 
