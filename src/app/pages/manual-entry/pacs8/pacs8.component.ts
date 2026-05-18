@@ -465,7 +465,7 @@ export class Pacs8Component implements OnInit, OnDestroy {
       sttlmMtd: ['INDA', Validators.required],
       instgAgtBic: ['SNDRBEBBXXX', BIC], instdAgtBic: ['RCVRLU2AXXX', BIC],
       // ── CdtTrfTxInf Identification ──
-      instrId: ['INSTR-20260515-001', [Validators.required, Validators.maxLength(35)]],
+      instrId: ['INSTR-20260515-1', [Validators.required, Validators.maxLength(35)]],
       endToEndId: ['E2E-20260515-SALARY-001', [Validators.required, Validators.maxLength(35)]],
       txId: ['TXN-20260515-001', [Validators.required, Validators.maxLength(35)]],
       uetr: ['550e8400-e29b-41d4-a716-446655440000', [Validators.required, Validators.pattern(/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/)]],
