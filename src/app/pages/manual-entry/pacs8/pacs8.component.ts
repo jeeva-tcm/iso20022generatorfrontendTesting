@@ -261,10 +261,15 @@ export class Pacs8Component implements OnInit, OnDestroy {
       const ctryCtrl = this.form.get(p + 'Ctry');
       const twnNmCtrl = this.form.get(p + 'TwnNm');
 
-      if (addrType && addrType !== 'none') {
+      // Country & Town are only mandatory when 'hybrid' is selected
+      if (addrType === 'hybrid') {
         if (!ctryCtrl?.hasValidator(Validators.required)) {
           ctryCtrl?.setValidators([Validators.required, Validators.pattern(/^[A-Z]{2,2}$/)]);
           ctryCtrl?.updateValueAndValidity({ emitEvent: false });
+        }
+        if (!twnNmCtrl?.hasValidator(Validators.required)) {
+          twnNmCtrl?.setValidators([Validators.required, Validators.maxLength(35), ADDR_PATTERN]);
+          twnNmCtrl?.updateValueAndValidity({ emitEvent: false });
         }
       } else {
         if (ctryCtrl?.hasValidator(Validators.required)) {
@@ -272,14 +277,6 @@ export class Pacs8Component implements OnInit, OnDestroy {
           ctryCtrl?.setValidators([Validators.pattern(/^[A-Z]{2,2}$/)]);
           ctryCtrl?.updateValueAndValidity({ emitEvent: false });
         }
-      }
-
-      if (addrType === 'structured' || addrType === 'hybrid') {
-        if (!twnNmCtrl?.hasValidator(Validators.required)) {
-          twnNmCtrl?.setValidators([Validators.required, Validators.maxLength(35), ADDR_PATTERN]);
-          twnNmCtrl?.updateValueAndValidity({ emitEvent: false });
-        }
-      } else {
         if (twnNmCtrl?.hasValidator(Validators.required)) {
           twnNmCtrl?.clearValidators();
           twnNmCtrl?.setValidators([Validators.maxLength(35), ADDR_PATTERN]);
@@ -468,7 +465,7 @@ export class Pacs8Component implements OnInit, OnDestroy {
       sttlmMtd: ['INDA', Validators.required],
       instgAgtBic: ['SNDRBEBBXXX', BIC], instdAgtBic: ['RCVRLU2AXXX', BIC],
       // ── CdtTrfTxInf Identification ──
-      instrId: ['INSTR-20260515-001', [Validators.required, Validators.maxLength(35)]],
+      instrId: ['INSTR-20260515-1', [Validators.required, Validators.maxLength(35)]],
       endToEndId: ['E2E-20260515-SALARY-001', [Validators.required, Validators.maxLength(35)]],
       txId: ['TXN-20260515-001', [Validators.required, Validators.maxLength(35)]],
       uetr: ['550e8400-e29b-41d4-a716-446655440000', [Validators.required, Validators.pattern(/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/)]],
@@ -552,7 +549,13 @@ export class Pacs8Component implements OnInit, OnDestroy {
 
 
     }; [...this.agentPrefixes, ...this.partyPrefixes].forEach(p => {
-      if (!c[p + 'AddrType']) c[p + 'AddrType'] = (p === 'instgAgt' || p === 'instdAgt') ? 'none' : 'hybrid';
+      // Only the four main parties default to 'hybrid' (they ship with full address data).
+      // Everyone else (intermediary/previous agents, ultimate parties, initiating party,
+      // instructing/instructed agents) defaults to 'none' so changing their BIC doesn't
+      // trigger spurious "Country/Town required" errors on empty fields.
+      if (!c[p + 'AddrType']) {
+        c[p + 'AddrType'] = ['dbtr', 'cdtr', 'dbtrAgt', 'cdtrAgt'].includes(p) ? 'hybrid' : 'none';
+      }
       if (!c[p + 'AdrLine1']) c[p + 'AdrLine1'] = ['', [Validators.maxLength(70), ADDR_PATTERN]];
       if (!c[p + 'AdrLine2']) c[p + 'AdrLine2'] = ['', [Validators.maxLength(70), ADDR_PATTERN]];
       if (!c[p + 'Dept']) c[p + 'Dept'] = ['', [Validators.maxLength(70), ADDR_PATTERN]];
@@ -921,7 +924,30 @@ export class Pacs8Component implements OnInit, OnDestroy {
     try {
       const saved = localStorage.getItem(this.DRAFT_KEY);
       if (!saved) return false;
-      this.form.patchValue(JSON.parse(saved), { emitEvent: false });
+      const parsed = JSON.parse(saved);
+
+      // Migrate older drafts: optional agents (initiating party, ultimate parties,
+      // intermediary agents) used to default to AddrType='hybrid'. If the draft has
+      // these as 'hybrid' but no BIC/Name was actually entered, reset to 'none' so
+      // the user doesn't see spurious required-field errors on unused agents.
+      const optionalAgents: Array<{ prefix: string; isParty: boolean }> = [
+        { prefix: 'initgPty', isParty: true },
+        { prefix: 'ultmtDbtr', isParty: true },
+        { prefix: 'ultmtCdtr', isParty: true },
+        { prefix: 'intrmyAgt1', isParty: false },
+        { prefix: 'intrmyAgt2', isParty: false },
+        { prefix: 'intrmyAgt3', isParty: false },
+      ];
+      optionalAgents.forEach(({ prefix, isParty }) => {
+        const bicKey = isParty ? prefix + 'OrgAnyBIC' : prefix + 'Bic';
+        const hasBic = !!parsed[bicKey]?.toString().trim();
+        const hasName = !!parsed[prefix + 'Name']?.toString().trim();
+        if (parsed[prefix + 'AddrType'] === 'hybrid' && !hasBic && !hasName) {
+          parsed[prefix + 'AddrType'] = 'none';
+        }
+      });
+
+      this.form.patchValue(parsed, { emitEvent: false });
       return true;
     } catch (e) { console.warn('Draft load failed:', e); return false; }
   }

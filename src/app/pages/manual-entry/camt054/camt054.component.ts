@@ -606,7 +606,7 @@ export class Camt054Component implements OnInit, OnDestroy {
 
   err(f: string, group?: any): string | null {
     const c = group ? group.get(f) : this.form.get(f);
-    if (!c || c.valid) return null;
+    if (!c || !c.touched || c.valid) return null;
     if (c.errors?.['required']) return 'Required field.';
     if (c.errors?.['maxlength']) return `Max ${c.errors['maxlength'].requiredLength} chars.`;
     if (c.errors?.['pattern']) {

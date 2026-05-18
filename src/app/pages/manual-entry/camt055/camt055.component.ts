@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ElementRef, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
@@ -61,6 +61,36 @@ export class Camt055Component implements OnInit, OnDestroy {
   // Form submission validation
   formSubmissionErrors: string[] = [];
   showSubmissionErrors = false;
+
+  // Max-length warning state (uniform with camt054/camt056)
+  showMaxLenWarning: { [key: string]: boolean } = {};
+  warningTimeouts: { [key: string]: ReturnType<typeof setTimeout> } = {};
+
+  @HostListener('input', ['$event'])
+  onInput(event: any) {
+    const target = event.target as HTMLInputElement;
+    if (!target) return;
+    const name = target.getAttribute('formControlName') || target.getAttribute('id');
+    if (!name) return;
+
+    if (name.toLowerCase().includes('bic') || name.toLowerCase().includes('iban')) {
+      const up = target.value.toUpperCase();
+      if (target.value !== up) {
+        target.value = up;
+        const control = this.form.get(name);
+        if (control) control.patchValue(up, { emitEvent: false });
+      }
+    }
+
+    const max = target.maxLength;
+    if (max > 0 && target.value.length >= max) {
+      this.showMaxLenWarning[name] = true;
+      if (this.warningTimeouts[name]) clearTimeout(this.warningTimeouts[name]);
+      this.warningTimeouts[name] = setTimeout(() => this.showMaxLenWarning[name] = false, 3000);
+    } else {
+      this.showMaxLenWarning[name] = false;
+    }
+  }
 
   copyDplctCodes = ['COPY', 'CODU', 'DUPL'];
   priorityCodes = ['HIGH', 'NORM'];
@@ -168,7 +198,7 @@ export class Camt055Component implements OnInit, OnDestroy {
       head_msgDefIdr: ['camt.055.001.08', Validators.required],
       head_bizSvc: ['swift.cbprplus.02', Validators.required],
       head_mktPrctcRegy: ['', [Validators.maxLength(35)]],
-      head_mktPrctcId: ['', [Validators.required, Validators.maxLength(35)]],
+      head_mktPrctcId: ['', [Validators.maxLength(35)]],
       head_creDt: [this.isoNow(), Validators.required],
       head_cpyDplct: [''],
       head_pssblDplct: [false],
@@ -202,16 +232,16 @@ export class Camt055Component implements OnInit, OnDestroy {
 
       // TxInf
       cxlId: ['CXLID-' + Date.now(), [Validators.required, Validators.maxLength(35)]],
-      case_id: ['', Validators.maxLength(35)],
+      case_id: ['CASE-' + Date.now().toString().slice(-10), [Validators.required, Validators.maxLength(16)]],
 
-      // Original References
+      // Original References (OrgnlEndToEndId required before OrgnlUETR per schema)
       orgnlInstrId: ['', Validators.maxLength(35)],
-      orgnlEndToEndId: ['', Validators.maxLength(35)],
+      orgnlEndToEndId: ['E2E-' + Date.now().toString().slice(-10), [Validators.required, Validators.maxLength(35)]],
       orgnlUETR: [this.uetrService.generate(), UETR_PATTERN],
 
-      // Amount
+      // Amount (OrgnlInstdAmt required before OrgnlReqdExctnDt per schema)
       orgnlInstdAmt_ccy: ['USD', CCY],
-      orgnlInstdAmt_val: ['', [Validators.pattern(/^\d+(\.\d+)?$/)]],
+      orgnlInstdAmt_val: ['1000.00', [Validators.required, Validators.pattern(/^\d+(\.\d+)?$/)]],
 
       // Dates
       orgnlReqdExctnDt: [new Date().toISOString().split('T')[0], [Validators.pattern(/^\d{4}-\d{2}-\d{2}$/)]],
@@ -497,9 +527,9 @@ export class Camt055Component implements OnInit, OnDestroy {
     appHdr += this.leaf('BizMsgIdr', v.head_bizMsgIdr, 2);
     appHdr += this.leaf('MsgDefIdr', v.head_msgDefIdr, 2);
     appHdr += this.leaf('BizSvc', v.head_bizSvc, 2);
-    if (v.head_mktPrctcId) {
-        let mkt = '';
-        if (v.head_mktPrctcRegy) mkt += this.leaf('Regy', v.head_mktPrctcRegy, 3);
+    // MktPrctc requires Regy before Id per schema — only emit when both are present
+    if (v.head_mktPrctcId && v.head_mktPrctcRegy) {
+        let mkt = this.leaf('Regy', v.head_mktPrctcRegy, 3);
         mkt += this.leaf('Id', v.head_mktPrctcId, 3);
         appHdr += this.branch('MktPrctc', mkt, 2);
     }
@@ -528,11 +558,14 @@ export class Camt055Component implements OnInit, OnDestroy {
     let assgnmt = '';
     assgnmt += this.leaf('Id', v.assgnmt_id, 4);
     // Assgnr and Assgne are mandatory in camt.055
+    // BAH "From"/"To" BIC must match Assgnr/Assgne BIC when CopyDuplicate is absent
+    const assgnrBic = (v.head_fromBic || '').trim().toUpperCase() || 'SNKRBEBB';
+    const assgneBic = (v.head_toBic || '').trim().toUpperCase() || 'ASGNBEBB';
     const assgnrXml = this.partyAgentXml('Assgnr', 'assgnr', v, 4, true);
-    assgnmt += assgnrXml || this.branch('Assgnr', this.branch('Agt', this.branch('FinInstnId', this.leaf('BICFI', 'SNKRBEBB', 7), 6), 5), 4);
-    
+    assgnmt += assgnrXml || this.branch('Assgnr', this.branch('Agt', this.branch('FinInstnId', this.leaf('BICFI', assgnrBic, 7), 6), 5), 4);
+
     const assgneXml = this.partyAgentXml('Assgne', 'assgne', v, 4, true);
-    assgnmt += assgneXml || this.branch('Assgne', this.branch('Agt', this.branch('FinInstnId', this.leaf('BICFI', 'ASGNBEBB', 7), 6), 5), 4);
+    assgnmt += assgneXml || this.branch('Assgne', this.branch('Agt', this.branch('FinInstnId', this.leaf('BICFI', assgneBic, 7), 6), 5), 4);
     
     assgnmt += this.leaf('CreDtTm', this.fdt(v.assgnmt_creDtTm), 4);
 
@@ -546,13 +579,23 @@ export class Camt055Component implements OnInit, OnDestroy {
     let txInf = '';
     txInf += this.leaf('CxlId', v.cxlId, 6);
     
-    // Case is strongly required for camt.055
-    let caseIdVal = v.case_id || 'CASE-' + Date.now();
+    // Case is strongly required for camt.055 (schema limit: max 16 chars)
+    let caseIdVal = (v.case_id || 'CASE-' + Date.now().toString().slice(-10)).substring(0, 16);
     let caseInner = this.leaf('Id', caseIdVal, 7);
     // Cretr must contain ONLY Pty (Agt is NOT allowed under Cretr per ISO 20022)
     // Ensure only ONE <Id> at this level (Case/Id) — party Id is nested deeper in Cretr/Pty/Id
+    // Nm + PstlAdr (with TwnNm, Ctry, AdrLine x2) must always be present together per CBPR+ rule
     let cretrPty = this.partyAgentXml('Pty', 'cretr', v, 8);
-    caseInner += this.branch('Cretr', cretrPty || this.branch('Pty', this.leaf('Nm', 'UNKNOWN', 10), 9), 7);
+    const cretrFallback = this.branch('Pty',
+      this.leaf('Nm', 'UNKNOWN', 10) +
+      this.branch('PstlAdr',
+        this.leaf('TwnNm', 'Brussels', 11) +
+        this.leaf('Ctry', 'BE', 11) +
+        this.leaf('AdrLine', 'Address Line 1', 11) +
+        this.leaf('AdrLine', 'Address Line 2', 11),
+        10),
+      9);
+    caseInner += this.branch('Cretr', cretrPty || cretrFallback, 7);
     txInf += this.branch('Case', caseInner.trimEnd(), 6);
 
     // Original References
@@ -1080,103 +1123,74 @@ ${txInf.trimEnd()}
     }
   }
 
-  err(f: string): string | null {
+  err(f: string, group?: any): string | null {
+    // camt055-specific form-level business rules (preserved, emojis removed)
     if (f === 'orgnlReqdExctnDt' || f === 'orgnlReqdExctnDtTm') {
       if (this.form.errors?.['orgnlReqdExctnDt_duplicate']) {
-        return '⚠️ Only one of Date (Dt) or DateTime (DtTm) is allowed';
+        return 'Only one of Date (Dt) or DateTime (DtTm) is allowed.';
       }
     }
     if (f === 'orgnlReqdExctnDt' || f === 'orgnlReqdExctnDtTm' || f === 'orgnlReqdColltnDt') {
       if (this.form.errors?.['date_choice_conflict']) {
-        return '⚠️ Only ONE of Execution Date or Collection Date is allowed in camt.055 (schema choice)';
+        return 'Only ONE of Execution Date or Collection Date is allowed (schema choice).';
       }
     }
     if (this.form.errors) {
-      if (this.form.errors[f + '_required']) return '⚠️ Other ID (Id) is required when a Scheme Code is selected.';
-      if (this.form.errors[f + '_lei']) return '⚠️ LEI must be exactly 20 characters.';
-      if (this.form.errors[f + '_duns']) return '⚠️ DUNS must be exactly 9 digits.';
+      if (this.form.errors[f + '_required']) return 'Other ID is required when a Scheme Code is selected.';
+      if (this.form.errors[f + '_lei']) return 'LEI must be exactly 20 characters.';
+      if (this.form.errors[f + '_duns']) return 'DUNS must be exactly 9 digits.';
     }
 
-    const c = this.form.get(f);
+    const c = group ? group.get(f) : this.form.get(f);
     if (!c) {
       if (f.startsWith('head_from') || f.startsWith('head_to') || f.startsWith('head_rltd')) {
-        const prefix = f.startsWith('head_from') ? 'head_from' : 
+        const prefix = f.startsWith('head_from') ? 'head_from' :
                        f.startsWith('head_to') ? 'head_to' : 'head_rltd';
-        
         if (this.form.errors?.[prefix + '_missing_identity']) {
-          return '⚠️ At least one of BIC, Clearing System, or LEI is required.';
+          return 'At least one of BIC, Clearing System, or LEI is required.';
         }
         if (this.form.errors?.[prefix + '_incomplete_clrsys']) {
-          return '⚠️ Both Clearing System Code and Member ID are mandatory if either is present.';
+          return 'Both Clearing System Code and Member ID are mandatory if either is present.';
         }
         if (prefix === 'head_rltd' && this.form.get('head_rltd_enabled')?.value) {
-            const v = this.form.value;
-            if (!v.head_rltd_bizMsgIdr) return '⚠️ Business Message Identifier is required when Rltd is enabled.';
-            if (!v.head_rltd_msgDefIdr) return '⚠️ Message Definition Identifier is required when Rltd is enabled.';
-            if (!v.head_rltd_bizSvc) return '⚠️ Business Service is required when Rltd is enabled.';
-            if (!v.head_rltd_creDt) return '⚠️ Creation Date is required when Rltd is enabled.';
+          const v = this.form.value;
+          if (!v.head_rltd_bizMsgIdr) return 'Business Message Identifier is required when Rltd is enabled.';
+          if (!v.head_rltd_msgDefIdr) return 'Message Definition Identifier is required when Rltd is enabled.';
+          if (!v.head_rltd_bizSvc) return 'Business Service is required when Rltd is enabled.';
+          if (!v.head_rltd_creDt) return 'Creation Date is required when Rltd is enabled.';
         }
       }
       return null;
     }
-    if (c.valid) return null;
-    if (c.errors?.['maxlength']) return `⚠️ Max length ${c.errors['maxlength'].requiredLength} characters.`;
-    if (c.errors?.['future_date']) return '⚠️ Birth date cannot be in the future.';
-    if (!c.touched && !c.dirty) return null;
-    if (c.errors?.['required']) return this.getRequiredMessage(f);
-    if (c.errors?.['pattern']) return this.getPatternMessage(f);
-    return '⚠️ Invalid value.';
+    if (!c.touched || c.valid) return null;
+    if (c.errors?.['required']) return 'Required field.';
+    if (c.errors?.['maxlength']) return `Max ${c.errors['maxlength'].requiredLength} chars.`;
+    if (c.errors?.['future_date']) return 'Date cannot be in the future.';
+    if (c.errors?.['pattern']) {
+      const fl = f.toLowerCase();
+      if (fl.includes('bic')) return 'Valid 8 or 11-char BIC required.';
+      if (fl.includes('iban')) return 'Valid 34-char IBAN required.';
+      if (fl.includes('uetr')) return 'Invalid UETR format.';
+      if (fl.includes('lei')) return 'Must be 20-char LEI.';
+      if (fl.includes('ctry') || fl.includes('country')) return '2-letter ISO code required.';
+      if (fl.includes('ccy')) return '3-letter ISO 4217 code required.';
+      if (fl.includes('amount') || fl.includes('amt') || f === 'orgnlInstdAmt_val') return 'Max 18 digits, up to 5 decimals.';
+      if (fl.includes('bldgnb') || fl.includes('pstcd') || fl.includes('pstbx')) return 'Invalid character. Only ISO 20022 MX allowed characters permitted.';
+      if (fl.includes('name') || fl.includes('nm') || fl.includes('strtnm') || fl.includes('twnnm') || fl.includes('dept') || fl.includes('flr') || fl.includes('room') || fl.includes('adrline')) return 'Invalid characters. Only ISO 20022 MX allowed characters permitted.';
+      if (fl.includes('dttm') || fl === 'head_credt' || fl === 'assgnmt_credttm' || fl === 'orgnlcredttm') return 'Invalid DateTime format. Use YYYY-MM-DDThh:mm:ss±hh:mm.';
+      if (fl.includes('dt')) return 'Invalid Date format. Use YYYY-MM-DD.';
+      return 'Invalid format.';
+    }
+    return 'Invalid value.';
   }
 
-  private getRequiredMessage(f: string): string {
-    const fieldNames: Record<string, string> = {
-      'head_bizMsgIdr': 'Business Message ID',
-      'head_creDt': 'Creation DateTime',
-      'head_mktPrctcId': 'Market Practice ID',
-      'assgnmt_id': 'Assignment ID',
-      'assgnmt_creDtTm': 'Assignment DateTime',
-      'orgnlMsgId': 'Original Message ID',
-      'orgnlMsgNmId': 'Original Message Name',
-      'orgnlCreDtTm': 'Original Creation DateTime',
-      'cxlId': 'Cancellation ID',
-      'orgnlUETR': 'Original UETR',
-      'orgnlInstdAmt_ccy': 'Currency',
-      'cxlRsnCd': 'Cancellation Reason Code'
-    };
-    const name = fieldNames[f] || f;
-    return `⚠️ ${name} is required and must not be empty.`;
-  }
-
-  private getPatternMessage(f: string): string {
-    if (f.includes('Bic') || f.includes('BICFI') || f === 'head_fromBic' || f === 'head_toBic' ||
-        f.includes('rltd_fromBic') || f.includes('rltd_toBic') || f.includes('OrgAnyBIC')) {
-      return '⚠️ Invalid BIC format. Must be 8 or 11 uppercase characters (e.g. HDFCINBB or HDFCINBBXXX).';
-    }
-    if (f === 'orgnlUETR') {
-      return '⚠️ Invalid UETR. Must be a valid UUID v4 format (e.g. 550e8400-e29b-41d4-a716-446655440000).';
-    }
-    if (f === 'orgnlInstdAmt_ccy') {
-      return '⚠️ Invalid currency. Must be a 3-letter ISO 4217 code (e.g. USD, EUR, INR).';
-    }
-    if (f === 'orgnlInstdAmt_val') {
-      return '⚠️ Invalid amount. Use numeric value with up to 2 decimal places (e.g. 1000.00).';
-    }
-    if (f.includes('Lei') || f.includes('LEI')) {
-       return '⚠️ Invalid LEI format. Must be 20 alphanumeric characters.';
-    }
-    if (f.includes('DtTm') || f === 'head_creDt' || f === 'assgnmt_creDtTm' || f === 'orgnlCreDtTm') {
-      return '⚠️ Invalid DateTime format. Use YYYY-MM-DDThh:mm:ss±hh:mm.';
-    }
-    if (f.includes('Dt')) {
-      return '⚠️ Invalid Date format. Use YYYY-MM-DD.';
-    }
-    return '⚠️ Invalid format.';
-  }
-
-  hint(f: string, max: number): string | null {
-    if (this.err(f)) return null;
-    const v = this.form.get(f)?.value || '';
-    if (v.length >= max) return `${v.length}/${max} (at limit)`;
+  hint(f: string, maxLen: number, group?: any): string | null {
+    if (!this.showMaxLenWarning[f]) return null;
+    if (this.err(f, group)) return null;
+    const c = group ? group.get(f) : this.form.get(f);
+    if (!c || !c.value) return null;
+    const len = c.value.toString().length;
+    if (len >= maxLen) return `Maximum ${maxLen} characters reached (${len}/${maxLen})`;
     return null;
   }
 
@@ -1209,6 +1223,7 @@ ${txInf.trimEnd()}
       { key: 'cxlId', label: 'Cancellation ID' },
       { key: 'orgnlUETR', label: 'Original UETR' },
       { key: 'orgnlInstdAmt_ccy', label: 'Currency' },
+      { key: 'orgnlInstdAmt_val', label: 'Original Amount' },
       { key: 'cxlRsnCd', label: 'Cancellation Reason Code' }
     ];
 

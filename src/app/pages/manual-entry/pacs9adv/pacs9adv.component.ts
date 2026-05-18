@@ -315,8 +315,13 @@ export class Pacs9AdvComponent implements OnInit, OnDestroy {
             rmtInfStrdAddtlRmtInf: ['', [Validators.maxLength(140), ADDR_PATTERN]]
         };
         // Address prefixes for agents
+        // Only the mandatory parties that ship with full address data default to 'hybrid'.
+        // Optional agents (previous/intermediary) default to 'none' so users don't get
+        // spurious "Town/Country required" errors on unused agents.
         this.agentPrefixes.forEach(p => {
-            if (!c[p + 'AddrType']) c[p + 'AddrType'] = (p === 'instgAgt' || p === 'instdAgt') ? 'none' : 'hybrid';
+            if (!c[p + 'AddrType']) {
+                c[p + 'AddrType'] = ['dbtrFi', 'cdtrFi', 'dbtrAgt', 'cdtrAgt'].includes(p) ? 'hybrid' : 'none';
+            }
             if (!c[p + 'AdrLine1']) c[p + 'AdrLine1'] = ['', [Validators.maxLength(70), ADDR_PATTERN]];
             if (!c[p + 'AdrLine2']) c[p + 'AdrLine2'] = ['', [Validators.maxLength(70), ADDR_PATTERN]];
             if (!c[p + 'Dept']) c[p + 'Dept'] = ['', [Validators.maxLength(70), ADDR_PATTERN]];

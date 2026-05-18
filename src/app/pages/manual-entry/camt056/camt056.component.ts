@@ -53,6 +53,7 @@ export class Camt056Component implements OnInit, OnDestroy {
   validationExpandedIssue: any = null;
 
   showMaxLenWarning: { [key: string]: boolean } = {};
+  warningTimeouts: { [key: string]: ReturnType<typeof setTimeout> } = {};
 
   private readonly DRAFT_KEY = 'draft_camt056';
   private draftSaveTimer: ReturnType<typeof setTimeout> | null = null;
@@ -148,7 +149,7 @@ export class Camt056Component implements OnInit, OnDestroy {
       rltdPrty: [''],
 
       // Assignment
-      assgnmtId: ['ASG' + Date.now(), [Validators.required, Validators.maxLength(16)]],
+      assgnmtId: ['ASG' + Date.now().toString().slice(-10), [Validators.required, Validators.maxLength(16)]],
       assgnrBic: ['SNDRBEBBXXX', [Validators.required, Validators.pattern(BIC_REG)]],
       assgnrClrSysId: [''],
       assgnrMmbId: ['', [Validators.maxLength(35)]],
@@ -161,10 +162,10 @@ export class Camt056Component implements OnInit, OnDestroy {
 
       // Underlying Transaction (Strictly 1 for CBPR+)
       txInf: this.fb.group({
-        cxlId: ['CXL' + Date.now(), [Validators.maxLength(16)]],
-        
+        cxlId: ['CXL' + Date.now().toString().slice(-10), [Validators.maxLength(16)]],
+
         // Case (Required)
-        caseId: ['CAS' + Date.now(), [Validators.required, Validators.maxLength(16)]],
+        caseId: ['CAS' + Date.now().toString().slice(-10), [Validators.required, Validators.maxLength(16)]],
         caseCretrType: ['AGENT'], // AGENT or PARTY
         caseCretrAgtBic: ['SNDRBEBBXXX', [Validators.pattern(BIC_REG)]],
         caseCretrAgtClrSysId: [''],
@@ -557,11 +558,20 @@ export class Camt056Component implements OnInit, OnDestroy {
         if (control) control.patchValue(up, { emitEvent: false });
       }
     }
+
+    const max = target.maxLength;
+    if (max > 0 && target.value.length >= max) {
+      this.showMaxLenWarning[name] = true;
+      if (this.warningTimeouts[name]) clearTimeout(this.warningTimeouts[name]);
+      this.warningTimeouts[name] = setTimeout(() => this.showMaxLenWarning[name] = false, 3000);
+    } else {
+      this.showMaxLenWarning[name] = false;
+    }
   }
 
   err(f: string, group?: any): string | null {
     const c = group ? group.get(f) : this.form.get(f);
-    if (!c || c.valid) return null;
+    if (!c || !c.touched || c.valid) return null;
     if (c.errors?.['required']) return 'Required field.';
     if (c.errors?.['maxlength']) return `Max ${c.errors['maxlength'].requiredLength} chars.`;
     if (c.errors?.['pattern']) {
@@ -580,6 +590,7 @@ export class Camt056Component implements OnInit, OnDestroy {
   }
 
   hint(f: string, maxLen: number, group?: any): string | null {
+    if (!this.showMaxLenWarning[f]) return null;
     if (this.err(f, group)) return null;
     const c = group ? group.get(f) : this.form.get(f);
     if (!c || !c.value) return null;

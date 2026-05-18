@@ -205,7 +205,7 @@
             </div>
 
             <!-- Expanded Row Details -->
-            <div class="row-details" *ngIf="expandedFile === f">
+            <div class="row-details" *ngIf="expandedFile === f" (click)="$event.stopPropagation()">
               <div class="details-inner" *ngIf="f.report; else noReport">
 
                 <!-- Layer Summary (L1, L2, L3) at the top -->
@@ -229,7 +229,7 @@
 
                 <!-- Issues details grouping below -->
                 <div class="layer-detail-item" *ngFor="let l of getGroupedIssues(f.report)">
-                  <div class="layer-title" (click)="toggleLayer(f, l.name); $event.stopPropagation()"
+                  <div class="layer-title" (click)="toggleLayer(f, l.name, $event)"
                     [class.layer-expanded]="isLayerExpanded(f, l.name)">
                     <mat-icon class="layer-chevron"
                       [style.transform]="isLayerExpanded(f, l.name) ? 'rotate(90deg)' : 'rotate(0deg)'">chevron_right</mat-icon>

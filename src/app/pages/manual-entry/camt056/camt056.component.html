@@ -19,12 +19,9 @@
                     </div>
 
                     <!-- Business Application Header -->
-                    <div class="section-title" (click)="toggleSection('appHdr')" style="cursor:pointer">
-                        Business Application Header (AppHdr)
-                        <mat-icon>{{expandedSections['appHdr'] ? 'expand_less' : 'expand_more'}}</mat-icon>
-                    </div>
-                    
-                    <div class="party-group" *ngIf="expandedSections['appHdr']">
+                    <div class="section-title">Business Application Header (AppHdr)</div>
+
+                    <div class="party-group">
                         <div class="party-group-title">Header Details</div>
                         <div class="party-grid">
                             <div class="form-group">
@@ -251,11 +248,8 @@
                     </div>
 
                     <!-- Case Assignment -->
-                    <div class="section-title" (click)="toggleSection('assgnmt')" style="cursor:pointer">
-                        Case Assignment
-                        <mat-icon>{{expandedSections['assgnmt'] ? 'expand_less' : 'expand_more'}}</mat-icon>
-                    </div>
-                    <div class="party-group" *ngIf="expandedSections['assgnmt']">
+                    <div class="section-title">Case Assignment</div>
+                    <div class="party-group">
                         <div class="party-grid">
                             <div class="form-group">
                                 <label>Assignment ID <span class="req">*</span></label>
@@ -332,11 +326,8 @@
                     </div>
 
                     <!-- Underlying Transaction -->
-                    <div class="section-title" (click)="toggleSection('underlying')" style="cursor:pointer">
-                        Underlying Transaction Information
-                        <mat-icon>{{expandedSections['underlying'] ? 'expand_less' : 'expand_more'}}</mat-icon>
-                    </div>
-                    <div formGroupName="txInf" class="party-group" *ngIf="expandedSections['underlying']">
+                    <div class="section-title">Underlying Transaction Information</div>
+                    <div formGroupName="txInf" class="party-group">
                         <div class="party-group-title" style="background: var(--accent-light); padding: 8px 1rem;">Transaction Details & Underlying Reference</div>
                         <div class="party-grid">
                             <div class="form-group">

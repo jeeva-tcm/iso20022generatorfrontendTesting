@@ -543,7 +543,12 @@ export class Pacs3Component implements OnInit, OnDestroy {
 
     [...this.agentPrefixes, ...this.partyPrefixes].forEach(p => {
       // Common fields for all agents and parties (used in partyForm template)
-      if (!c[p + 'AddrType']) c[p + 'AddrType'] = (p === 'instgAgt' || p === 'instdAgt') ? 'none' : 'hybrid';
+      // Only the mandatory parties that ship with full address data default to 'hybrid'.
+      // Everyone else defaults to 'none' so the address section is hidden until the user
+      // explicitly opts in — avoids spurious "Town/Country required" errors on unused agents.
+      if (!c[p + 'AddrType']) {
+        c[p + 'AddrType'] = ['dbtr', 'cdtr', 'dbtrAgt', 'cdtrAgt'].includes(p) ? 'hybrid' : 'none';
+      }
       if (!c[p + 'AdrLine1']) c[p + 'AdrLine1'] = ['', [Validators.maxLength(70), ADDR_PATTERN]];
       if (!c[p + 'AdrLine2']) c[p + 'AdrLine2'] = ['', [Validators.maxLength(70), ADDR_PATTERN]];
       if (!c[p + 'Dept']) c[p + 'Dept'] = ['', [Validators.maxLength(70), ADDR_PATTERN]];

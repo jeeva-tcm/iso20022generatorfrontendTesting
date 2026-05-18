@@ -167,22 +167,38 @@ export class ValidateComponent implements OnInit {
   }
 
   toggleFileRow(f: FileEntry) {
-    if (this.expandedFile !== f) {
-      this.expandedIssue = null;
+    if (this.expandedFile === f) {
+      this.expandedFile = null;
+      return;
     }
-    this.expandedFile = this.expandedFile === f ? null : f;
+    this.expandedIssue = null;
+    this.expandedFile = f;
+    if (f.report?.details) {
+      const layerSet = new Set<string>();
+      f.report.details.forEach((x: any) => {
+        layerSet.add(this.getLayerName(String(x.layer)));
+      });
+      layerSet.forEach(name => this.expandedLayers.add(f.id + '_' + name));
+    }
   }
 
-  expandedLayers: { [key: string]: boolean } = {};
+  expandedLayers: Set<string> = new Set<string>();
 
-  toggleLayer(f: FileEntry, layerName: string) {
+  toggleLayer(f: FileEntry, layerName: string, event?: Event) {
+    if (event) {
+      event.stopPropagation();
+      event.preventDefault();
+    }
     const key = f.id + '_' + layerName;
-    this.expandedLayers = { ...this.expandedLayers, [key]: !this.expandedLayers[key] };
+    if (this.expandedLayers.has(key)) {
+      this.expandedLayers.delete(key);
+    } else {
+      this.expandedLayers.add(key);
+    }
   }
 
   isLayerExpanded(f: FileEntry, layerName: string): boolean {
-    const key = f.id + '_' + layerName;
-    return !!this.expandedLayers[key];
+    return this.expandedLayers.has(f.id + '_' + layerName);
   }
 
   issueFilters: { [key: string]: 'ERROR' | 'WARNING' | 'ALL' } = {};
@@ -195,7 +211,7 @@ export class ValidateComponent implements OnInit {
       this.issueFilters[key] = 'ALL';
     } else {
       this.issueFilters[key] = type;
-      this.expandedLayers = { ...this.expandedLayers, [key]: true };
+      this.expandedLayers.add(key);
     }
   }
 
