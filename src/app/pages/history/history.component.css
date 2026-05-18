@@ -447,6 +447,7 @@ body.light-theme .val-id {
     display: flex;
     gap: 15px;
     align-items: center;
+    justify-content: center;
 }
 
 .metrics span {
@@ -1190,15 +1191,17 @@ mat-card {
     color: var(--text-main) !important;
 }
 
-::ng-deep .history-container .mat-mdc-header-cell {
+::ng-deep .history-container .mat-mdc-header-cell:not(.mat-column-actions) {
     color: var(--text-muted) !important;
     border-bottom: 1px solid var(--border-light) !important;
     font-weight: 600;
+    text-align: center !important;
 }
 
-::ng-deep .history-container .mat-mdc-cell {
+::ng-deep .history-container .mat-mdc-cell:not(.mat-column-actions):not(.mat-column-expandedDetail) {
     color: var(--text-main) !important;
     border-bottom: 1px solid var(--border-light) !important;
+    text-align: center !important;
 }
 
 ::ng-deep .history-container .mat-mdc-paginator {
@@ -1285,10 +1288,16 @@ mat-card {
     border: 1px solid rgba(59, 130, 246, 0.2);
 }
 
-.origin-badge.generated-via-manual-entry {
+.origin-badge.manual-entry {
     background: rgba(16, 185, 129, 0.1);
     color: #34d399;
     border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.origin-badge.mt-to-mx {
+    background: rgba(245, 158, 11, 0.1);
+    color: #fbbf24;
+    border: 1px solid rgba(245, 158, 11, 0.2);
 }
 
 /* Light theme support */
@@ -1304,10 +1313,16 @@ mat-card {
     border-color: rgba(29, 78, 216, 0.15);
 }
 
-:host-context(.light-theme) .origin-badge.generated-via-manual-entry {
+:host-context(.light-theme) .origin-badge.manual-entry {
     background: rgba(4, 120, 87, 0.08);
     color: #047857;
     border-color: rgba(4, 120, 87, 0.15);
+}
+
+:host-context(.light-theme) .origin-badge.mt-to-mx {
+    background: rgba(180, 83, 9, 0.08);
+    color: #b45309;
+    border-color: rgba(180, 83, 9, 0.15);
 }
 
 .origin-filter {

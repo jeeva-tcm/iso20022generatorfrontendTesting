@@ -46,7 +46,7 @@ export class HistoryComponent implements OnInit {
     currentFilter: 'ALL' | 'PASSED' | 'FAILED' = 'ALL';
     messageTypeFilter: string = 'ALL';
     originFilter: string = 'ALL';
-    availableOrigins: string[] = ['ALL', 'Pasted', 'Uploaded', 'Generated via Manual Entry'];
+    availableOrigins: string[] = ['ALL', 'Pasted', 'Uploaded', 'Manual Entry', 'MT to MX'];
     readonly ALL_MESSAGE_TYPES: string[] = [
         'camt.052.001.08',
         'camt.053.001.08',
@@ -249,13 +249,22 @@ export class HistoryComponent implements OnInit {
         this.originDropdownOpen = false;
     }
 
+    getAllFilesCount(): number {
+        return this.dataSource.data.reduce((sum, r) => sum + (r.no_of_files || 1), 0);
+    }
+
     getPassedCount(): number {
-        // Includes both clean passes and warnings
-        return this.dataSource.data.filter(r => r.status === 'PASSED' || r.status === 'WARNING').length;
+        // Includes both clean passes and warnings, sum up their no_of_files
+        return this.dataSource.data
+            .filter(r => r.status === 'PASSED' || r.status === 'WARNING')
+            .reduce((sum, r) => sum + (r.no_of_files || 1), 0);
     }
 
     getFailedCount(): number {
-        return this.dataSource.data.filter(r => r.status === 'FAILED').length;
+        // Sum up no_of_files of FAILED rows
+        return this.dataSource.data
+            .filter(r => r.status === 'FAILED')
+            .reduce((sum, r) => sum + (r.no_of_files || 1), 0);
     }
 
     getStatusClass(status: string) {

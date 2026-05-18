@@ -711,7 +711,7 @@ export class Pain008Component implements OnInit, OnDestroy {
           }
           strd += this.tag('RfrdDocInf',
             this.tag('Tp', (tx.rmtInfStrdRfrdDocCd ? this.tag('CdOrPrtry', this.el('Cd', tx.rmtInfStrdRfrdDocCd, 9), 8) : this.tag('CdOrPrtry', this.el('Prtry', tx.rmtInfStrdRfrdDocPrtry, 9), 8)) + this.el('Issr', tx.rmtInfStrdRfrdDocIssr, 8), 7)
-            + this.el('Nb', tx.rmtInfStrdRfrdDocNb, 7) + (tx.rmtInfStrdRfrdDocRltdDt ? this.tag('RltdDt', this.tag('Tp', this.el('Cd', 'ISDT', 9), 8) + this.el('Dt', tx.rmtInfStrdRfrdDocRltdDt, 8), 7) : '') + rfrdLineDtls, 6);
+            + this.el('Nb', tx.rmtInfStrdRfrdDocNb, 7) + this.el('RltdDt', tx.rmtInfStrdRfrdDocRltdDt, 7) + rfrdLineDtls, 6);
         }
         // RfrdDocAmt
         if (tx.rmtInfStrdRfrdDocAmtDuePyblAmt || tx.rmtInfStrdRfrdDocAmtCdtNoteAmt || tx.rmtInfStrdRfrdDocAmtRmtdAmt || tx.rmtInfStrdRfrdDocAmtDscntApldAmt || tx.rmtInfStrdRfrdDocAmtTaxAmt || tx.rmtInfStrdRfrdDocAmtAdjAmt) {

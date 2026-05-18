@@ -23,7 +23,7 @@ export interface FileEntry {
   report: any;
   messageType: string;
   handle?: any;
-  origin?: 'Pasted' | 'Uploaded' | 'Generated via Manual Entry';
+  origin?: 'Pasted' | 'Uploaded' | 'Manual Entry' | 'MT to MX';
 }
 
 @Component({

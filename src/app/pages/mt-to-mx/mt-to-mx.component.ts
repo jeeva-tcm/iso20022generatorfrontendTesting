@@ -1034,7 +1034,8 @@ export class MtToMxComponent implements OnInit {
             xml_content: this.mxOutput,
             mode: 'Full 1-3',
             message_type: this.mappedMxType || 'Auto-detect',
-            store_in_history: true
+            store_in_history: true,
+            origin: 'MT to MX'
         }).subscribe({
             next: (data: any) => {
                 this.validationReport = data;
