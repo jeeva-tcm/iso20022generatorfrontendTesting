@@ -40,10 +40,18 @@
           style="position: absolute; width: 0; height: 0; opacity: 0; z-index: -1;">
       </div>
 
-      <!-- Paste XML Button -->
-      <button class="btn-paste-xml" (click)="showPasteModal = true">
-        <mat-icon>content_paste</mat-icon> Paste XML
-      </button>
+      <!-- Action Row Container (Paste XML, Run, Clear) -->
+      <div class="action-row-container" style="display: flex; gap: 8px; margin-top: 10px; align-items: center; width: 100%;">
+        <button class="btn-paste-xml" (click)="showPasteModal = true" [style.flex]="files.length > 0 ? '1.5' : '1'" style="margin-top: 0; justify-content: center; height: 38px; padding: 0 12px;">
+          <mat-icon style="margin: 0; font-size: 16px; width: 16px; height: 16px;">content_paste</mat-icon> Paste XML
+        </button>
+        <button class="btn-run-all" (click)="validateAll()" *ngIf="files.length > 0" style="margin-top: 0; flex: 1.5; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 0 12px; height: 38px;">
+          <mat-icon style="margin: 0; font-size: 16px; width: 16px; height: 16px;">play_circle</mat-icon> Run All
+        </button>
+        <button class="btn-clear-all" (click)="clearAll()" matTooltip="Empty Workspace" *ngIf="files.length > 0" style="margin-top: 0; height: 38px; width: 38px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; padding: 0;">
+          <mat-icon style="margin: 0; font-size: 18px; width: 18px; height: 18px;">delete_sweep</mat-icon>
+        </button>
+      </div>
 
       <!-- File List -->
       <div class="file-list-wrap" *ngIf="files.length > 0">
@@ -66,13 +74,7 @@
           </div>
         </div>
 
-        <div style="display: flex; gap: 8px; margin-top: 10px;">
-          <button class="btn-run-all" style="flex: 2;" (click)="validateAll()"><mat-icon>play_circle</mat-icon> Run
-            All</button>
-          <button class="btn-clear-all" style="flex: 1;" (click)="clearAll()" matTooltip="Empty Workspace">
-            <mat-icon>delete_sweep</mat-icon>
-          </button>
-        </div>
+
       </div>
 
       <!-- Empty State -->

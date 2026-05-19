@@ -4,9 +4,8 @@ import { initializeApp } from "firebase/app";
 export const environment = {
     production: false,
     apiBaseUrl: 'http://localhost:8001',
-    firebaseConfig: {
-        
-       apiKey: "AIzaSyAPTEMlCYttDUBpUm9-cz0rOQGZMJgZEuQ",
+    firebaseConfig: { 
+  apiKey: "AIzaSyAPTEMlCYttDUBpUm9-cz0rOQGZMJgZEuQ",
   authDomain: "isovalidatior-19may.firebaseapp.com",
   projectId: "isovalidatior-19may",
   storageBucket: "isovalidatior-19may.firebasestorage.app",
