@@ -321,7 +321,7 @@ ${txInf.trimEnd()}
 \t</Document>
 </BusMsgEnvlp>`;
     this.generatedXml = xml;
-    this.refreshLineCount();
+    this.formatXml(false);
   }
 
   buildStsRsnInf(v: any): string {
@@ -499,7 +499,7 @@ ${txInf.trimEnd()}
   syncScroll(editor: HTMLTextAreaElement, gutter: HTMLDivElement) {
     gutter.scrollTop = editor.scrollTop;
   }
-  formatXml() {
+  formatXml(showToast = true) {
     if (!this.generatedXml?.trim()) return;
     this.pushHistory();
 
@@ -532,7 +532,7 @@ ${txInf.trimEnd()}
       });
       this.generatedXml = formatted.trim();
       this.refreshLineCount();
-      this.snackBar.open('XML Formatted', '', { duration: 1500 });
+      if (showToast) { this.snackBar.open('XML Formatted', '', { duration: 1500 }); }
     } catch (e) {
       this.snackBar.open('Unable to format XML', '', { duration: 3000 });
     }
@@ -888,8 +888,10 @@ ${txInf.trimEnd()}
 
     dialogRef.afterClosed().subscribe(result => {
       if (result && result.bic) {
-        group.get(controlName)?.patchValue(result.bic);
-        group.get(controlName)?.markAsDirty();
+        const targetGroup = group || this.form;
+
+        targetGroup.get(controlName)?.patchValue(result.bic);
+        targetGroup.get(controlName)?.markAsDirty();
       }
     });
   }

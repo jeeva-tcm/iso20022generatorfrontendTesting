@@ -651,7 +651,7 @@ ${txInf.trimEnd()}
 </BusMsgEnvlp>`;
 
     this.generatedXml = xml;
-    this.refreshLineCount();
+    this.formatXml(false);
   }
 
   buildFIId(tag: string, bic: string, clrSysId: string, mmbId: string, lei: string, indent: number): string {
@@ -1104,7 +1104,7 @@ ${txInf.trimEnd()}
     gutter.scrollTop = editor.scrollTop;
   }
 
-  formatXml() {
+  formatXml(showToast = true) {
     if (!this.generatedXml?.trim()) return;
     try {
       let formatted = '';
@@ -1367,8 +1367,10 @@ ${txInf.trimEnd()}
 
     dialogRef.afterClosed().subscribe(result => {
       if (result && result.bic) {
-        group.get(controlName)?.patchValue(result.bic);
-        group.get(controlName)?.markAsDirty();
+        const targetGroup = group || this.form;
+
+        targetGroup.get(controlName)?.patchValue(result.bic);
+        targetGroup.get(controlName)?.markAsDirty();
       }
     });
   }

@@ -897,6 +897,7 @@ export class Camt053Component implements OnInit, OnDestroy {
             + t(1) + '</Document>\n'
             + '</BusMsgEnvlp>';
 
+        this.formatXml(false);
         this.onEditorChange(this.generatedXml, true);
     }
 
@@ -946,7 +947,7 @@ export class Camt053Component implements OnInit, OnDestroy {
         this.editorLineCount = Array.from({ length: lines }, (_, i) => i + 1);
     }
 
-    formatXml() {
+    formatXml(showToast = true) {
         if (!this.generatedXml?.trim()) return;
         this.pushHistory();
         try {
@@ -954,27 +955,26 @@ export class Camt053Component implements OnInit, OnDestroy {
             let formatted = '';
             let indent = '';
             let xml = this.generatedXml.replace(/>\s+</g, '><').trim();
-            const regStr = '(<[^>]+>[^<]*<\\/([^>]+)>)|(<[^>]+\\/>)|(<[^>]+>)|(<!--[\\s\\S]*?-->)|([^<]+)';
-            const reg = new RegExp(regStr, 'g');
+            const reg = /(<[^/!?][^>]*>[^<]*<\/[^>]+>)|(<[^>]+\/>)|(<[^>]+>)|(<!--[\s\S]*?-->)|([^<]+)/g;
             const nodes = xml.match(reg) || [];
             nodes.forEach(node => {
                 const trimmed = node.trim();
                 if (!trimmed) return;
-                if ((trimmed.startsWith('<') && trimmed.includes('</')) || trimmed.endsWith('/>')) {
-                    formatted += indent + trimmed + '\r\n';
-                } else if (trimmed.startsWith('</')) {
+                if (trimmed.startsWith('</')) {
                     if (indent.length >= tab.length) indent = indent.substring(tab.length);
+                    formatted += indent + trimmed + '\r\n';
+                } else if ((trimmed.startsWith('<') && trimmed.includes('</')) || trimmed.endsWith('/>')) {
                     formatted += indent + trimmed + '\r\n';
                 } else if (trimmed.startsWith('<') && !trimmed.startsWith('<?')) {
                     formatted += indent + trimmed + '\r\n';
-                    if (!trimmed.endsWith('/>')) indent += tab;
+                    indent += tab;
                 } else {
                     formatted += indent + trimmed + '\r\n';
                 }
             });
             this.generatedXml = formatted.trim();
             this.refreshLineCount();
-            this.snackBar.open('XML Formatted', '', { duration: 1500 });
+            if (showToast) { this.snackBar.open('XML Formatted', '', { duration: 1500 }); }
         } catch (e) {
             this.snackBar.open('Unable to format XML', '', { duration: 3000 });
         }
@@ -1450,8 +1450,10 @@ export class Camt053Component implements OnInit, OnDestroy {
     const dialogRef = this.dialog.open(BicSearchDialogComponent, { width: '800px', disableClose: true });
     dialogRef.afterClosed().subscribe(result => {
         if (result && result.bic) {
-            group.get(controlName)?.patchValue(result.bic);
-            group.get(controlName)?.markAsDirty();
+            const targetGroup = group || this.form;
+
+            targetGroup.get(controlName)?.patchValue(result.bic);
+            targetGroup.get(controlName)?.markAsDirty();
         }
     });
   }

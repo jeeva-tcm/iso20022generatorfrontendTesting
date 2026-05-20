@@ -304,6 +304,11 @@ export class Pain001Component implements OnInit, OnDestroy {
     }
   }
 
+  refreshUetr(tx: any) {
+    const uuid = crypto.randomUUID ? crypto.randomUUID() : '550e8400-e29b-41d4-a716-446655440000';
+    tx.patchValue({ uetr: uuid });
+  }
+
   private updateTotals() {
     const count = this.transactions.length;
     let sum = 0;
@@ -501,6 +506,7 @@ ${grpHdr}${pmtInf}\t\t</CstmrCdtTrfInitn>
 \t</Document>
 </BusMsgEnvlp>`;
 
+    this.formatXml(false);
     this.onEditorChange(this.generatedXml, true);
   }
 
@@ -918,8 +924,10 @@ ${grpHdr}${pmtInf}\t\t</CstmrCdtTrfInitn>
 
     dialogRef.afterClosed().subscribe(result => {
       if (result && result.bic) {
-        group.get(controlName)?.patchValue(result.bic);
-        group.get(controlName)?.markAsDirty();
+        const targetGroup = group || this.form;
+
+        targetGroup.get(controlName)?.patchValue(result.bic);
+        targetGroup.get(controlName)?.markAsDirty();
       }
     });
   }
@@ -940,7 +948,7 @@ ${grpHdr}${pmtInf}\t\t</CstmrCdtTrfInitn>
             return;
           case 's':
             event.preventDefault();
-            this.formatXml();
+            this.formatXml(false);
             return;
           case '/':
             event.preventDefault();
@@ -1131,7 +1139,7 @@ ${grpHdr}${pmtInf}\t\t</CstmrCdtTrfInitn>
     this.editorLineCount = Array.from({ length: lines }, (_, i) => i + 1);
   }
 
-  formatXml() {
+  formatXml(showToast = true) {
     if (!this.generatedXml?.trim()) return;
     this.pushHistory();
 
@@ -1165,7 +1173,7 @@ ${grpHdr}${pmtInf}\t\t</CstmrCdtTrfInitn>
       
       this.generatedXml = formatted.trim();
       this.refreshLineCount();
-      this.snackBar.open('XML Formatted', '', { duration: 1500 });
+      if (showToast) { this.snackBar.open('XML Formatted', '', { duration: 1500 }); }
     } catch (e) {
       this.snackBar.open('Unable to format XML', '', { duration: 3000 });
     }

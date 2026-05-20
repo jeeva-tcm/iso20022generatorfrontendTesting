@@ -157,8 +157,10 @@ export class Pacs4Component implements OnInit, OnDestroy {
 
         dialogRef.afterClosed().subscribe(result => {
             if (result && result.bic) {
-                group.get(controlName)?.patchValue(result.bic);
-                group.get(controlName)?.markAsDirty();
+                const targetGroup = group || this.form;
+
+                targetGroup.get(controlName)?.patchValue(result.bic);
+                targetGroup.get(controlName)?.markAsDirty();
             }
         });
     }
@@ -434,6 +436,7 @@ ${tx}\t\t\t</TxInf>
 \t</Document>
 </BusMsgEnvlp>`;
 
+        this.formatXml(false);
         this.onEditorChange(this.generatedXml, true);
     }
 
@@ -724,7 +727,7 @@ ${tx}\t\t\t</TxInf>
     validateManualUetr() { /* Optional logic if service available */ }
     onUetrPaste(e: any) { /* Optional logic */ }
 
-    formatXml() {
+    formatXml(showToast = true) {
         if (!this.generatedXml?.trim()) return;
         try {
             this.pushHistory();
@@ -764,7 +767,7 @@ ${tx}\t\t\t</TxInf>
             this.isInternalChange = true;
             this.generatedXml = formatted.trim();
             setTimeout(() => this.isInternalChange = false, 10);
-            this.snackBar.open('XML Formatted', 'Close', { duration: 2000 });
+            if (showToast) { this.snackBar.open('XML Formatted', 'Close', { duration: 2000 }); }
         } catch (e) {
             this.snackBar.open('Format Error', 'Close', { duration: 2000 });
         }

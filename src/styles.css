@@ -354,6 +354,54 @@ body.light-theme .section-title {
     color: #475569;
 }
 
+.btn-add-tx {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    background: var(--accent-light, rgba(99, 102, 241, 0.15));
+    border: 1px solid var(--accent-color, #6366f1);
+    color: var(--accent-text, #818cf8);
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+}
+
+.btn-add-tx mat-icon {
+    font-size: 14px !important;
+    width: 14px !important;
+    height: 14px !important;
+    margin: 0 !important;
+}
+
+.btn-add-tx:hover {
+    background: var(--accent-color, #6366f1);
+    color: #ffffff;
+    box-shadow: 0 0 10px rgba(99, 102, 241, 0.4);
+    transform: translateY(-1px);
+}
+
+.btn-add-tx:active {
+    transform: translateY(0);
+}
+
+body.light-theme .btn-add-tx {
+    background: rgba(99, 102, 241, 0.1);
+    color: #4f46e5;
+    border-color: rgba(99, 102, 241, 0.4);
+}
+
+body.light-theme .btn-add-tx:hover {
+    background: #4f46e5;
+    color: #ffffff;
+    border-color: #4f46e5;
+}
+
 /* ── Party Group (one agent/party section) ── */
 .party-group {
     grid-column: 1 / -1;
@@ -411,8 +459,26 @@ body.light-theme .party-group-title {
 
 /* Ensure UETR control row doesn't take full width and wrap in party grid */
 .party-grid .uetr-control-row {
-    flex: 1;
+    flex: 1 !important;
     width: auto !important;
+    min-width: 0 !important;
+    display: flex !important;
+    gap: 8px !important;
+}
+
+.party-grid .uetr-control-row input {
+    flex: 1 !important;
+    width: 100% !important;
+    min-width: 0 !important;
+}
+
+.party-grid .uetr-refresh-btn {
+    height: 28px !important;
+    padding: 0 12px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin: 0 !important;
 }
 
 body.light-theme .party-grid {
@@ -427,10 +493,13 @@ body.light-theme .party-grid {
     /* To allow validation msg to wrap below */
     align-items: flex-start;
     /* Changed from center to prevent vertical overlap when wrapping */
-    padding: 5px 20px;
+    padding: 12px 20px;
     border-bottom: 1px solid var(--border-light);
     width: 100%;
     overflow: visible;
+    box-sizing: border-box;
+    gap: 0px;
+    margin: 0;
 }
 
 body.light-theme .party-grid .form-group {
@@ -442,10 +511,12 @@ body.light-theme .party-grid .form-group {
 }
 
 /* Field labels — right aligned on the left */
-.party-grid label {
-    flex: 0 0 160px;
+.party-grid label:not(:has(input[type="radio"])):not(:has(input[type="checkbox"])) {
+    flex: 0 0 200px !important;
     margin: 0;
     padding-right: 15px;
+    display: flex;
+    align-items: center;
     justify-content: flex-end;
     text-align: right;
     font-weight: 700;
@@ -453,16 +524,19 @@ body.light-theme .party-grid .form-group {
     font-size: 0.68rem;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    height: 28px;
+    box-sizing: border-box;
 }
 
-body.light-theme .party-grid label {
+body.light-theme .party-grid label:not(:has(input[type="radio"])):not(:has(input[type="checkbox"])) {
     color: #64748b;
 }
 
 /* Inputs and selects - taking the rest of the space */
-.party-grid input,
+.party-grid input:not([type="checkbox"]):not([type="radio"]),
 .party-grid select {
     flex: 1;
+    min-width: 200px;
     height: 28px;
     background: var(--bg-card);
     border: 1px solid var(--border-light);
@@ -470,47 +544,63 @@ body.light-theme .party-grid label {
     box-shadow: none;
     font-size: 0.82rem;
     color: var(--text-main);
+    padding: 0 10px;
+    box-sizing: border-box;
+    transition: border-color 0.3s ease;
 }
 
-body.light-theme .party-grid input,
+body.light-theme .party-grid input:not([type="checkbox"]):not([type="radio"]),
 body.light-theme .party-grid select {
     background: #ffffff;
     border: 1px solid #cbd5e1;
     color: #0f172a;
 }
 
+/* Focus outline for inputs and selects */
+.party-grid input:not([type="checkbox"]):not([type="radio"]):focus,
+.party-grid select:focus {
+    border-color: var(--accent-color);
+    outline: none;
+}
+
+body.light-theme .party-grid input:not([type="checkbox"]):not([type="radio"]):focus,
+body.light-theme .party-grid select:focus {
+    border-color: #4f46e5;
+}
+
 /* Validation msg below the input */
 .party-grid .validation-msg {
-    flex: 0 0 100%;
-    margin-left: 160px;
+    flex: 0 0 calc(100% - 200px) !important;
+    margin-left: 200px !important;
     /* Aligned exactly with input start (after 160px label) */
-    padding-top: 4px;
+    padding-top: 4px !important;
     /* Added padding to prevent overlapping input border */
-    padding-bottom: 4px;
-    font-size: 10px;
-    line-height: 1.2;
-    color: #dc2626;
+    padding-bottom: 4px !important;
+    font-size: 10px !important;
+    line-height: 1.2 !important;
+    color: #dc2626 !important;
     /* Vibrant standard red (Red 600) */
-    font-weight: 600;
-    white-space: normal;
-    word-break: break-word;
-    overflow: visible;
-    width: 100%;
-    clear: both;
+    font-weight: 600 !important;
+    white-space: normal !important;
+    word-break: break-word !important;
+    overflow: visible !important;
+    width: auto !important;
+    clear: both !important;
+    display: block !important;
 }
 
 /* Field limit hints */
 .party-grid .field-hint,
 .party-grid .field-hint.at-limit {
-    flex: 0 0 100%;
-    margin-left: 160px;
-    margin-top: 1px;
-    margin-bottom: 3px;
-    font-size: 9px;
-    font-weight: 500;
+    flex: 0 0 calc(100% - 200px) !important;
+    margin-left: 200px !important;
+    font-size: 10px !important;
     color: #f59e0b;
     /* Amber for hint */
-    display: block;
+    padding-top: 2px !important;
+    width: auto !important;
+    clear: both !important;
+    display: block !important;
 }
 
 .party-grid .field-hint.at-limit {
@@ -535,13 +625,93 @@ body.light-theme .address-subgrid {
 }
 
 .address-subgrid .form-group {
-    padding-left: 40px;
-    /* Indent address fields */
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    align-items: flex-start !important;
+    padding: 12px 20px 12px 40px !important; /* Keep indent */
+    border-bottom: 1px solid var(--border-light) !important;
+    width: 100% !important;
+    overflow: visible !important;
+    box-sizing: border-box !important;
+    gap: 0px !important;
+    margin: 0 !important;
 }
 
-.address-subgrid .form-group label {
-    flex: 0 0 140px;
-    /* Slightly narrower label for subgrid to account for padding */
+body.light-theme .address-subgrid .form-group {
+    border-bottom: 1px solid #f1f5f9 !important;
+}
+
+.address-subgrid .form-group:last-child {
+    border-bottom: none !important;
+}
+
+.address-subgrid .form-group label:not(:has(input[type="radio"])):not(:has(input[type="checkbox"])) {
+    height: 32px !important;
+    line-height: 32px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    padding-right: 15px !important;
+    flex: 0 0 160px !important; /* Slightly narrower label for subgrid to account for padding */
+    margin: 0 !important;
+    text-align: right !important;
+    box-sizing: border-box !important;
+    font-weight: 700 !important;
+    font-size: 0.65rem !important;
+    color: var(--text-muted) !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.8px !important;
+}
+
+body.light-theme .address-subgrid .form-group label:not(:has(input[type="radio"])):not(:has(input[type="checkbox"])) {
+    color: #64748b !important;
+}
+
+.address-subgrid .form-group input:not([type="checkbox"]):not([type="radio"]),
+.address-subgrid .form-group select,
+.address-subgrid .form-group textarea {
+    flex: 1 !important;
+    width: auto !important;
+    min-width: 200px !important;
+    height: 32px !important;
+    font-size: 0.82rem !important;
+    padding: 0 12px !important;
+    background: var(--bg-card) !important;
+    border: 1px solid var(--border-light) !important;
+    color: var(--text-main) !important;
+    border-radius: 4px !important;
+    box-sizing: border-box !important;
+    transition: all 0.2s ease !important;
+}
+
+body.light-theme .address-subgrid .form-group input:not([type="checkbox"]):not([type="radio"]),
+body.light-theme .address-subgrid .form-group select,
+body.light-theme .address-subgrid .form-group textarea {
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #0f172a !important;
+}
+
+.address-subgrid .form-group input:not([type="checkbox"]):not([type="radio"]):focus,
+.address-subgrid .form-group select:focus,
+.address-subgrid .form-group textarea:focus {
+    border-color: var(--accent-color) !important;
+    outline: none !important;
+    box-shadow: 0 0 0 3px var(--accent-light) !important;
+    background: var(--bg-card-hover) !important;
+}
+
+body.light-theme .address-subgrid .form-group input:not([type="checkbox"]):not([type="radio"]):focus,
+body.light-theme .address-subgrid .form-group select:focus,
+body.light-theme .address-subgrid .form-group textarea:focus {
+    border-color: #4f46e5 !important;
+    background: #ffffff !important;
+}
+
+.address-subgrid .validation-msg,
+.address-subgrid .field-hint {
+    margin-left: 160px !important;
 }
 
 /* Hide material icons in simple headers */
@@ -1306,3 +1476,655 @@ textarea.code-editor {
     tab-size: 4 !important;
     -moz-tab-size: 4 !important;
 }
+
+/* ==========================================================================
+   ENTERPRISE-GRADE UNIFIED FORM FIELD STYLING (GLOBAL OVERRIDES)
+   Ensures 100% consistent spacing, alignment, colors, and heights across all 
+   Manual Entry forms (camt, pacs, pain, etc.) in both light and dark themes.
+   ========================================================================== */
+
+/* 1. Global Container Spacing for form fields */
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 1.25rem;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.grid .form-group {
+    margin-bottom: 0 !important; /* Managed cleanly by grid's gap */
+}
+
+/* 2. Universal Input, Select, Textarea Aesthetics */
+input:not([type="checkbox"]):not([type="radio"]),
+select,
+textarea,
+.party-grid input:not([type="checkbox"]):not([type="radio"]),
+.party-grid select,
+.tx-grid input:not([type="checkbox"]):not([type="radio"]),
+.tx-grid select,
+.tx-grid .form-group input:not([type="checkbox"]):not([type="radio"]),
+.tx-grid .form-group select {
+    height: 32px !important;
+    font-size: 0.82rem !important;
+    padding: 0 12px !important;
+    background: var(--bg-card) !important;
+    border: 1px solid var(--border-light) !important;
+    border-radius: 6px !important;
+    color: var(--text-main) !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    box-sizing: border-box !important;
+    width: 100%;
+}
+
+/* 3. Textarea layout reset */
+textarea,
+textarea.code-editor {
+    height: auto !important;
+    padding: 10px 12px !important;
+    min-height: 80px;
+}
+
+/* 4. Unified Select arrow spacing */
+select,
+.party-grid select,
+.tx-grid select,
+.tx-grid .form-group select {
+    padding-right: 32px !important;
+    cursor: pointer !important;
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%2394a3b8' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10z'/%3E%3C/svg%3E") !important;
+    background-repeat: no-repeat !important;
+    background-position: right 12px center !important;
+}
+
+/* 5. Unified Focus Glow & Active States */
+input:not([type="checkbox"]):not([type="radio"]):focus,
+select:focus,
+textarea:focus,
+.party-grid input:not([type="checkbox"]):not([type="radio"]):focus,
+.party-grid select:focus,
+.tx-grid input:not([type="checkbox"]):not([type="radio"]):focus,
+.tx-grid select:focus,
+.tx-grid .form-group input:not([type="checkbox"]):not([type="radio"]):focus,
+.tx-grid .form-group select:focus {
+    outline: none !important;
+    border-color: var(--accent-color) !important;
+    box-shadow: 0 0 0 3px var(--accent-light) !important;
+    background: var(--bg-card-hover) !important;
+}
+
+/* 6. Unify Form Field Labels */
+label,
+.party-grid label,
+.tx-grid label,
+.tx-grid .form-group label {
+    font-weight: 700 !important;
+    font-size: 0.65rem !important;
+    color: var(--text-muted) !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.8px !important;
+    box-sizing: border-box !important;
+}
+
+/* Ensure horizontal labels inside table-like views (party-grid, tx-grid) are perfectly aligned */
+.party-grid label:not(:has(input[type="radio"])):not(:has(input[type="checkbox"])),
+.tx-grid label:not(:has(input[type="radio"])):not(:has(input[type="checkbox"])),
+.tx-grid .form-group label:not(:has(input[type="radio"])):not(:has(input[type="checkbox"])) {
+    height: 32px !important;
+    line-height: 32px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    padding-right: 15px !important;
+    flex: 0 0 200px !important;
+    margin: 0 !important;
+    text-align: right !important;
+}
+
+/* Narrower subgrid labels override */
+.address-subgrid .form-group label {
+    flex: 0 0 160px !important;
+}
+
+/* 7. Unify Control Buttons (e.g. BIC Search, UETR refresh) heights */
+.uetr-refresh-btn,
+.party-grid .uetr-refresh-btn,
+.tx-grid .uetr-refresh-btn,
+.tx-grid .form-group .uetr-refresh-btn {
+    height: 32px !important;
+    border-radius: 6px !important;
+    background: var(--accent-light) !important;
+    border: 1px solid var(--accent-color) !important;
+    color: var(--accent-text) !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 12px !important;
+    cursor: pointer !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    margin: 0 !important;
+}
+
+.uetr-refresh-btn:hover,
+.party-grid .uetr-refresh-btn:hover,
+.tx-grid .uetr-refresh-btn:hover {
+    background: var(--accent-color) !important;
+    color: #ffffff !important;
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.3) !important;
+}
+
+/* 8. Unify Validation Messages position and typography */
+.validation-msg,
+.party-grid .validation-msg,
+.tx-grid .validation-msg,
+.tx-grid .form-group .validation-msg {
+    display: block !important;
+    color: #ef4444 !important;
+    font-size: 0.72rem !important;
+    font-weight: 600 !important;
+    margin-top: 4px !important;
+    padding: 0 !important;
+    line-height: 1.35 !important;
+    width: auto !important;
+    text-align: left !important;
+    box-sizing: border-box !important;
+}
+
+/* Indent in horizontal layout forms */
+.party-grid .validation-msg,
+.tx-grid .validation-msg,
+.tx-grid .form-group .validation-msg {
+    flex: 0 0 calc(100% - 200px) !important;
+    margin-left: 200px !important;
+    padding-top: 4px !important;
+}
+
+.address-subgrid .validation-msg {
+    flex: 0 0 calc(100% - 160px) !important;
+    margin-left: 160px !important;
+}
+
+/* 9. Unify Hints typography */
+.field-hint,
+.party-grid .field-hint,
+.tx-grid .field-hint,
+.tx-grid .form-group .field-hint {
+    display: block !important;
+    font-size: 0.7rem !important;
+    color: var(--text-muted) !important;
+    margin-top: 3px !important;
+    font-weight: 500 !important;
+}
+
+.field-hint.at-limit,
+.party-grid .field-hint.at-limit,
+.tx-grid .field-hint.at-limit,
+.tx-grid .form-group .field-hint.at-limit {
+    color: #ff3b30 !important; /* Warning/Danger red */
+}
+
+/* Indent in horizontal layouts */
+.party-grid .field-hint,
+.tx-grid .field-hint,
+.tx-grid .form-group .field-hint {
+    flex: 0 0 calc(100% - 200px) !important;
+    margin-left: 200px !important;
+    padding-top: 2px !important;
+}
+
+.address-subgrid .field-hint {
+    flex: 0 0 calc(100% - 160px) !important;
+    margin-left: 160px !important;
+}
+
+/* ==========================================================================
+   DYNAMIC FORM FIELD UNIFICATION WITH ENTERPRISE STANDARDS
+   Ensures the dynamic (schema-based) manual entry form matches the exact
+   spacing, heights, fonts, borders, and margins of the static pages.
+   ========================================================================== */
+
+/* 1. Unify dynamic form inputs and selects (.form-input and .select-input) */
+.form-input,
+.select-input,
+.input-with-action .form-input {
+    height: 32px !important;
+    font-size: 0.82rem !important;
+    padding: 0 12px !important;
+    background: var(--bg-card) !important;
+    border: 1px solid var(--border-light) !important;
+    border-radius: 6px !important;
+    color: var(--text-main) !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
+}
+
+/* Unified Focus Glow & Active States for Dynamic Form */
+.form-input:focus,
+.select-input:focus {
+    outline: none !important;
+    border-color: var(--accent-color) !important;
+    box-shadow: 0 0 0 3px var(--accent-light) !important;
+    background: var(--bg-card-hover) !important;
+}
+
+/* Force-remove browser autofill yellow background in dynamic fields */
+.form-input:-webkit-autofill,
+.form-input:-webkit-autofill:hover, 
+.form-input:-webkit-autofill:focus, 
+.form-input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 30px var(--bg-card) inset !important;
+    -webkit-text-fill-color: var(--text-main) !important;
+    transition: background-color 5000s ease-in-out 0s !important;
+}
+
+/* 2. Unify dynamic select chevron and right-side spacing */
+.select-input {
+    padding-right: 32px !important;
+    cursor: pointer !important;
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%2394a3b8' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10z'/%3E%3C/svg%3E") !important;
+    background-repeat: no-repeat !important;
+    background-position: right 12px center !important;
+}
+
+/* Clean select option backgrounds for dark theme context */
+.select-input option {
+    background: var(--bg-card) !important;
+    color: var(--text-main) !important;
+}
+
+/* 3. Unify Dynamic Form Labels (.field-label) with Standard label */
+.field-label {
+    font-weight: 700 !important;
+    font-size: 0.65rem !important;
+    color: var(--text-muted) !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.8px !important;
+    margin-bottom: 6px !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    box-sizing: border-box !important;
+}
+
+/* 4. Align Dynamic Spacing & Grid Gap (.field-item, .grid-layout) */
+.field-item {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 6px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+.grid-layout {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)) !important;
+    gap: 1.25rem 1.5rem !important; /* Uniform gap matching .grid */
+    padding: 0 !important;
+    margin-bottom: 1.25rem !important;
+    align-items: start !important;
+}
+
+/* Deeper groups should span full width in the grid */
+.group-wrapper {
+    grid-column: 1 / -1 !important;
+    margin-top: 0.5rem !important;
+}
+
+/* 5. Unify Dynamic Collapsible Headers to match static Section Titles */
+.group-section-header {
+    background: transparent !important;
+    border-left: none !important;
+    border-bottom: 1px solid var(--border-light) !important;
+    border-radius: 0 !important;
+    padding: 0 0 10px 0 !important;
+    margin: 2.5rem 0 1rem !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    cursor: pointer !important;
+    grid-column: 1 / -1 !important; /* Ensures the header spans full width in any grid layout */
+}
+
+body.light-theme .group-section-header {
+    border-bottom: 1px solid #cbd5e1 !important;
+}
+
+.group-title {
+    font-size: 0.75rem !important;
+    font-weight: 800 !important;
+    color: var(--accent-color) !important;
+    text-transform: uppercase !important;
+    letter-spacing: 2px !important;
+}
+
+body.light-theme .group-title {
+    color: #475569 !important;
+}
+
+.group-tag {
+    font-family: 'JetBrains Mono', monospace !important;
+    font-size: 0.7rem !important;
+    color: var(--text-muted) !important;
+    opacity: 0.7 !important;
+    margin-left: auto !important;
+    font-weight: 500 !important;
+    text-transform: uppercase !important;
+}
+
+/* Adjust expand/collapse toggle icon style */
+.toggle-icon {
+    color: var(--accent-color) !important;
+    font-size: 18px !important;
+    width: 18px !important;
+    height: 18px !important;
+}
+
+/* 6. Prevent BIC input action button overlap and adjust input padding */
+.input-with-action {
+    display: flex !important;
+    align-items: center !important;
+    position: relative !important;
+    width: 100% !important;
+}
+
+/* Extend input right padding to accommodate both the search button and the XSD tag */
+.input-with-action .form-input {
+    padding-right: 76px !important;
+}
+
+/* Reposition BIC search button cleanly inside input field */
+.btn-input-action {
+    position: absolute !important;
+    right: 46px !important;
+    background: transparent !important;
+    border: none !important;
+    color: var(--accent-color) !important;
+    cursor: pointer !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 26px !important;
+    height: 26px !important;
+    border-radius: 4px !important;
+    transition: all 0.2s !important;
+    z-index: 2 !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+}
+
+.btn-input-action:hover {
+    background: var(--accent-light) !important;
+    color: var(--accent-color) !important;
+}
+
+.btn-input-action mat-icon {
+    font-size: 16px !important;
+    width: 16px !important;
+    height: 16px !important;
+}
+
+/* Dynamic XML tag positioning next to input value */
+.input-tag {
+    position: absolute !important;
+    right: 12px !important;
+    font-family: 'JetBrains Mono', monospace !important;
+    font-size: 10px !important;
+    color: var(--text-muted) !important;
+    opacity: 0.6 !important;
+    pointer-events: none !important;
+    z-index: 2 !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+}
+
+/* Ensure radio and checkbox labels inside party-grid and tx-grid display beautifully as inline-flex items */
+.party-grid label:has(input[type="radio"]),
+.party-grid label:has(input[type="checkbox"]),
+.tx-grid label:has(input[type="radio"]),
+.tx-grid label:has(input[type="checkbox"]),
+.tx-grid .form-group label:has(input[type="radio"]),
+.tx-grid .form-group label:has(input[type="checkbox"]) {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    height: auto !important;
+    line-height: normal !important;
+    flex: none !important;
+    padding-right: 0 !important;
+    margin: 0 !important;
+    width: auto !important;
+    text-align: left !important;
+    font-size: 0.72rem !important;
+    text-transform: uppercase !important;
+    letter-spacing: normal !important;
+    font-weight: 500 !important;
+    gap: 6px !important;
+    cursor: pointer !important;
+}
+
+/* Prevent horizontal scrolling on left and right split panels globally */
+.left-panel, .right-panel {
+    overflow-x: hidden !important;
+}
+
+/* Ensure the BIC / UETR control rows never wrap or split from their labels across all templates */
+.party-grid .uetr-control-row,
+.tx-grid .uetr-control-row,
+.tx-grid .form-group .uetr-control-row,
+.mandate-grid .uetr-control-row {
+    flex: 1 !important;
+    width: auto !important;
+    min-width: 0 !important;
+    display: flex !important;
+    gap: 8px !important;
+}
+
+.party-grid .uetr-control-row input,
+.tx-grid .uetr-control-row input,
+.tx-grid .form-group .uetr-control-row input,
+.mandate-grid .uetr-control-row input {
+    flex: 1 !important;
+    width: 100% !important;
+    min-width: 0 !important;
+}
+
+/* Mandate Related Information Grid Layout Harmonization */
+.mandate-grid {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    background: transparent !important;
+    overflow: visible !important;
+}
+
+body.light-theme .mandate-grid {
+    background: #ffffff !important;
+}
+
+.mandate-grid .form-group {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    align-items: flex-start !important;
+    padding: 12px 20px !important;
+    border-bottom: 1px solid var(--border-light) !important;
+    width: 100% !important;
+    overflow: visible !important;
+    box-sizing: border-box !important;
+    gap: 0px !important;
+    margin: 0 !important;
+}
+
+body.light-theme .mandate-grid .form-group {
+    border-bottom: 1px solid #f1f5f9 !important;
+}
+
+.mandate-grid .form-group:last-child {
+    border-bottom: none !important;
+}
+
+.mandate-grid .form-group label:not(:has(input[type="radio"])):not(:has(input[type="checkbox"])) {
+    height: 32px !important;
+    line-height: 32px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    padding-right: 15px !important;
+    flex: 0 0 200px !important;
+    margin: 0 !important;
+    text-align: right !important;
+    box-sizing: border-box !important;
+    font-weight: 700 !important;
+    font-size: 0.65rem !important;
+    color: var(--text-muted) !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.8px !important;
+}
+
+body.light-theme .mandate-grid .form-group label:not(:has(input[type="radio"])):not(:has(input[type="checkbox"])) {
+    color: #64748b !important;
+}
+
+.mandate-grid .form-group input:not([type="checkbox"]):not([type="radio"]),
+.mandate-grid .form-group select,
+.mandate-grid .form-group textarea {
+    flex: 1 !important;
+    width: auto !important;
+    min-width: 200px !important;
+    height: 32px !important;
+    font-size: 0.82rem !important;
+    padding: 0 12px !important;
+    background: var(--bg-card) !important;
+    border: 1px solid var(--border-light) !important;
+    color: var(--text-main) !important;
+    border-radius: 4px !important;
+    box-sizing: border-box !important;
+    transition: all 0.2s ease !important;
+}
+
+body.light-theme .mandate-grid .form-group input:not([type="checkbox"]):not([type="radio"]),
+body.light-theme .mandate-grid .form-group select,
+body.light-theme .mandate-grid .form-group textarea {
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #0f172a !important;
+}
+
+.mandate-grid .form-group input:not([type="checkbox"]):not([type="radio"]):focus,
+.mandate-grid .form-group select:focus,
+.mandate-grid .form-group textarea:focus {
+    border-color: var(--accent-color) !important;
+    outline: none !important;
+    box-shadow: 0 0 0 3px var(--accent-light) !important;
+    background: var(--bg-card-hover) !important;
+}
+
+body.light-theme .mandate-grid .form-group input:not([type="checkbox"]):not([type="radio"]):focus,
+body.light-theme .mandate-grid .form-group select:focus,
+body.light-theme .mandate-grid .form-group textarea:focus {
+    border-color: #4f46e5 !important;
+    background: #ffffff !important;
+}
+
+.mandate-grid .validation-msg,
+.mandate-grid .field-hint {
+    flex: 0 0 calc(100% - 200px) !important;
+    margin-left: 200px !important;
+}
+
+/* ==========================================================================
+   UNIFIED HORIZONTAL ALIGNMENT FOR ALL BIC & UETR SEARCH FIELDS
+   Ensures that every BIC search input + button is positioned next to its
+   label in a single horizontal row ONLY within horizontal layouts (.party-grid,
+   .tx-grid, .mandate-grid). For vertical layouts, the label stays on top,
+   matching all neighboring fields perfectly.
+   ========================================================================== */
+
+/* 1. Global Side-by-Side styling for the BIC/UETR control row itself.
+   Ensures input + button are always on the same row in any form. */
+.uetr-control-row {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 8px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+.uetr-control-row input {
+    flex: 1 !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    height: 32px !important;
+}
+
+.uetr-control-row .uetr-refresh-btn,
+.uetr-control-row button {
+    height: 32px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-sizing: border-box !important;
+}
+
+/* 2. Global Horizontal layout override for ALL BIC/UETR fields anywhere */
+.form-group:has(.uetr-control-row) {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    align-items: flex-start !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    gap: 0px !important;
+}
+
+.form-group:has(.uetr-control-row) label:not(:has(input[type="radio"])):not(:has(input[type="checkbox"])) {
+    height: 32px !important;
+    line-height: 32px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    padding-right: 15px !important;
+    flex: 0 0 200px !important;
+    margin: 0 !important;
+    text-align: right !important;
+    box-sizing: border-box !important;
+    font-weight: 700 !important;
+    font-size: 0.65rem !important;
+    color: var(--text-muted) !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.8px !important;
+}
+
+body.light-theme .form-group:has(.uetr-control-row) label:not(:has(input[type="radio"])):not(:has(input[type="checkbox"])) {
+    color: #64748b !important;
+}
+
+.form-group:has(.uetr-control-row) .uetr-control-row {
+    flex: 1 !important;
+    width: auto !important;
+    min-width: 0 !important;
+    display: flex !important;
+    gap: 8px !important;
+    height: 32px !important;
+    align-items: center !important;
+    box-sizing: border-box !important;
+}
+
+/* Perfect alignment for validation messages and hints under horizontal UETR/BIC fields */
+.form-group:has(.uetr-control-row) .validation-msg,
+.form-group:has(.uetr-control-row) .field-hint {
+    flex: 0 0 calc(100% - 200px) !important;
+    margin-left: 200px !important;
+    box-sizing: border-box !important;
+}
+
+

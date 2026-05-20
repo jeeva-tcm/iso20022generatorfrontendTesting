@@ -833,6 +833,7 @@ export class Camt052Component implements OnInit, OnDestroy {
             + t(2) + '</BkToCstmrAcctRpt>\n'
             + t(1) + '</Document>\n'
             + '</BusMsgEnvlp>';
+        this.formatXml(false);
         this.onEditorChange(this.generatedXml, true);
     }
 
@@ -910,7 +911,7 @@ export class Camt052Component implements OnInit, OnDestroy {
         });
     }
 
-    formatXml() {
+    formatXml(showToast = true) {
         if (!this.generatedXml?.trim()) return;
         this.pushHistory();
         try {
@@ -937,7 +938,7 @@ export class Camt052Component implements OnInit, OnDestroy {
             });
             this.generatedXml = formatted.trim();
             this.refreshLineCount();
-            this.snackBar.open('XML Formatted', '', { duration: 1500 });
+            if (showToast) { this.snackBar.open('XML Formatted', '', { duration: 1500 }); }
         } catch (e) {
             this.snackBar.open('Unable to format XML', '', { duration: 3000 });
         }

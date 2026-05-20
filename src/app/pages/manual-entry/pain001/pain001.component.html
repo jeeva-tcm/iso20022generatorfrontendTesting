@@ -664,7 +664,12 @@
                                 </div>
                                 <div class="form-group">
                                     <label>UETR <span class="req">*</span></label>
-                                    <input formControlName="uetr" maxlength="36" placeholder="UUID Format">
+                                    <div class="uetr-control-row">
+                                        <input formControlName="uetr" maxlength="36" placeholder="UUID Format" class="auto-uppercase">
+                                        <button type="button" class="uetr-refresh-btn" (click)="refreshUetr(tx)" title="Generate UETR">
+                                            <mat-icon>refresh</mat-icon>
+                                        </button>
+                                    </div>
                                     <div class="validation-msg" *ngIf="err('uetr', tx) as e">{{e}}</div>
                                     <div class="field-hint at-limit" *ngIf="hint('uetr', 36, tx) as h">{{h}}</div>
                                 </div>
@@ -996,7 +1001,7 @@
                                                 XML</button>
                                         <button type="button" class="action-btn" (click)="downloadXml()"><mat-icon>download</mat-icon>
                                                 Download XML</button>
-                                        <button type="button" class="action-btn validate-btn" (click)="validateMessage()" [disabled]="form.invalid">
+                                        <button type="button" class="action-btn validate-btn" (click)="validateMessage()" >
                                                 <mat-icon>verified</mat-icon> Validate Message
                                         </button>
                                 </div>
