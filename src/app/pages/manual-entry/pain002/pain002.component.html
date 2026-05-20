@@ -524,12 +524,12 @@
         <div class="form-group full-width" style="margin-top: 10px; background: rgba(0,0,0,0.01); padding: 12px; border-radius: 8px; border: 1px solid var(--border-light);">
             <label style="font-weight: bold; margin-bottom: 8px;">Identification Type</label>
             <div style="display: flex; gap: 20px;">
-                <label style="cursor: pointer; display: flex; align-items: center; gap: 6px; font-size: 0.72rem; text-transform: uppercase;">
-                    <input type="radio" formControlName="idType" value="org" (change)="onIdTypeChange(group)" style="width: 16px; height: 16px;">
+                <label style="cursor: pointer; display: inline-flex !important; align-items: center !important; justify-content: flex-start !important; flex: 0 0 auto !important; width: auto !important; margin-right: 15px !important; gap: 6px; font-size: 0.72rem; text-transform: uppercase;">
+                    <input type="radio" formControlName="idType" value="org" (change)="onIdTypeChange(group)" style="width: 16px; height: 16px; flex: none !important; margin: 0 !important;">
                     Organisation
                 </label>
-                <label style="cursor: pointer; display: flex; align-items: center; gap: 6px; font-size: 0.72rem; text-transform: uppercase;">
-                    <input type="radio" formControlName="idType" value="prvt" (change)="onIdTypeChange(group)" style="width: 16px; height: 16px;">
+                <label style="cursor: pointer; display: inline-flex !important; align-items: center !important; justify-content: flex-start !important; flex: 0 0 auto !important; width: auto !important; gap: 6px; font-size: 0.72rem; text-transform: uppercase;">
+                    <input type="radio" formControlName="idType" value="prvt" (change)="onIdTypeChange(group)" style="width: 16px; height: 16px; flex: none !important; margin: 0 !important;">
                     Private Person
                 </label>
             </div>

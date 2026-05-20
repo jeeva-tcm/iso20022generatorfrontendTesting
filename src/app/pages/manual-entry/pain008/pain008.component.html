@@ -1538,7 +1538,6 @@
                                                 <option *ngFor="let c of countries" [value]="c">{{c}}</option>
                                         </select>
                                         <div class="validation-msg" *ngIf="err(prefix + 'Ctry') as e">{{e}}</div>
-                                        <div class="validation-msg" *ngIf="err(prefix+'Ctry') as e">{{e}}</div>
                                 </div>
                                 <ng-container
                                         *ngIf="['unstructured','hybrid'].includes(form.get(prefix+'AddrType')?.value)">

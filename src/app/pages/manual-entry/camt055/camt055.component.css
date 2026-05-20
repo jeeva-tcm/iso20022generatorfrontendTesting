@@ -158,7 +158,7 @@ input,
 select,
 textarea {
     box-sizing: border-box;
-    padding-left: 10px;
+    padding-left: 6px;
 }
 
 /* Address */
@@ -1273,6 +1273,7 @@ textarea.code-editor {
 .uetr-control-row input {
     flex: 1;
     min-width: 0;
+    padding-left: 6px;
 }
 
 .uetr-refresh-btn {

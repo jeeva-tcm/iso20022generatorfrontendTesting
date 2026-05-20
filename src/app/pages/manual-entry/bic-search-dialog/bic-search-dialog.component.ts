@@ -85,8 +85,8 @@ import { BicSearchService, BicRecord } from '../../../services/bic-search.servic
 
     .close-btn {
         position: absolute;
-        right: -8px;
-        top: -8px;
+        right: 0;
+        top: 0;
         background: transparent;
         border: none;
         cursor: pointer;
@@ -121,9 +121,9 @@ import { BicSearchService, BicRecord } from '../../../services/bic-search.servic
         color: #94a3b8;
     }
 
-    .search-input {
+    div.search-input-wrapper input.search-input {
         width: 100%;
-        padding: 12px 12px 12px 42px;
+        padding: 12px 12px 12px 42px !important;
         border: 2px solid #e2e8f0;
         border-radius: 8px;
         font-size: 1rem;

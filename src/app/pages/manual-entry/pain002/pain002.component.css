@@ -163,7 +163,7 @@ input,
 select,
 textarea {
     box-sizing: border-box;
-    padding-left: 10px;
+    padding-left: 6px;
 }
 
 /* Address */
@@ -1278,6 +1278,7 @@ textarea.code-editor {
 .uetr-control-row input {
     flex: 1;
     min-width: 0;
+    padding-left: 6px;
 }
 
 .uetr-refresh-btn {
@@ -1625,5 +1626,38 @@ body.light-theme .tx-grid .form-group select:focus {
     flex: 1 !important;
     width: 100% !important;
     min-width: 320px !important;
+}
+
+.tx-grid .form-group {
+    flex-direction: column !important;
+    flex-wrap: nowrap !important;
+    align-items: stretch !important;
+    gap: 6px !important;
+}
+
+.tx-grid .form-group label {
+    flex: 0 0 auto !important;
+    width: 100% !important;
+    height: auto !important;
+    line-height: 1.25 !important;
+    justify-content: flex-start !important;
+    text-align: left !important;
+    padding-right: 0 !important;
+}
+
+.tx-grid .form-group input,
+.tx-grid .form-group select,
+.tx-grid .uetr-control-row,
+.tx-grid .uetr-control-row input {
+    flex: 0 0 auto !important;
+    width: 100% !important;
+    min-width: 0 !important;
+}
+
+.tx-grid .form-group .validation-msg,
+.tx-grid .form-group .field-hint {
+    flex: 0 0 auto !important;
+    margin-left: 0 !important;
+    width: 100% !important;
 }
 
