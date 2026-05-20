@@ -316,7 +316,7 @@ export class Camt057Component implements OnInit, OnDestroy {
             this.form.addControl(p + 'Name', this.fb.control('', [Validators.maxLength(140), SAFE_NAME]));
             this.form.addControl(p + 'Bic', this.fb.control('', BIC_OPT));
             this.form.addControl(p + 'Lei', this.fb.control('', Validators.pattern(/^[A-Z0-9]{18}[0-9]{2}$/)));
-            this.form.addControl(p + 'ClrSysCd', this.fb.control('', Validators.maxLength(4)));
+            this.form.addControl(p + 'ClrSysCd', this.fb.control('', Validators.maxLength(5)));
             this.form.addControl(p + 'ClrSysMmbId', this.fb.control('', Validators.maxLength(35)));
             this.form.addControl(p + 'Acct', this.fb.control('', Validators.maxLength(34)));
 

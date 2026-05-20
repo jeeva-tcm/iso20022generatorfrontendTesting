@@ -381,10 +381,10 @@ export class Pacs3Component implements OnInit, OnDestroy {
         clrMmb?.setValidators([Validators.maxLength(35)]);
       }
       if (clrMmb?.value?.trim()) {
-        clrCd?.setValidators([Validators.required, Validators.maxLength(4)]);
+        clrCd?.setValidators([Validators.required, Validators.maxLength(5)]);
       } else {
         clrCd?.clearValidators();
-        clrCd?.setValidators([Validators.maxLength(4)]);
+        clrCd?.setValidators([Validators.maxLength(5)]);
       }
 
       clrCd?.updateValueAndValidity({ emitEvent: false });
@@ -574,14 +574,14 @@ export class Pacs3Component implements OnInit, OnDestroy {
       // Agent-specific fields
       if (!c[p + 'Bic']) c[p + 'Bic'] = ['', BIC_OPT];
       if (!c[p + 'Lei']) c[p + 'Lei'] = ['', [Validators.pattern(/^[A-Z0-9]{18}[0-9]{2}$/)]];
-      if (!c[p + 'ClrSysCd']) c[p + 'ClrSysCd'] = ['', Validators.maxLength(4)];
+      if (!c[p + 'ClrSysCd']) c[p + 'ClrSysCd'] = ['', Validators.maxLength(5)];
       if (!c[p + 'ClrSysMmbId']) c[p + 'ClrSysMmbId'] = ['', Validators.maxLength(35)];
 
       // Party-specific fields
       if (!c[p + 'IdType']) c[p + 'IdType'] = 'none';
       if (!c[p + 'OrgAnyBIC']) c[p + 'OrgAnyBIC'] = ['', BIC_OPT];
       if (!c[p + 'OrgLEI']) c[p + 'OrgLEI'] = ['', [Validators.pattern(/^[A-Z0-9]{18}[0-9]{2}$/)]];
-      if (!c[p + 'OrgClrSysCd']) c[p + 'OrgClrSysCd'] = ['', Validators.maxLength(4)];
+      if (!c[p + 'OrgClrSysCd']) c[p + 'OrgClrSysCd'] = ['', Validators.maxLength(5)];
       if (!c[p + 'OrgClrSysMmbId']) c[p + 'OrgClrSysMmbId'] = ['', Validators.maxLength(35)];
       if (!c[p + 'OrgOthrId']) c[p + 'OrgOthrId'] = ['', Validators.maxLength(35)];
       if (!c[p + 'OrgOthrSchmeNmCd']) c[p + 'OrgOthrSchmeNmCd'] = ['', Validators.maxLength(4)];

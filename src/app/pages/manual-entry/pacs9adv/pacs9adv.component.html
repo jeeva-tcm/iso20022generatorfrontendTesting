@@ -842,12 +842,12 @@
                 <!-- Clearing System Code -->
                 <div class="form-group">
                         <label>{{title}} Clearing System Code</label>
-                        <input [formControlName]="isAgent ? prefix+'ClrSysCd' : prefix+'OrgClrSysCd'" maxlength="4"
+                        <input [formControlName]="isAgent ? prefix+'ClrSysCd' : prefix+'OrgClrSysCd'" maxlength="5"
                                 placeholder="e.g. USABA, CHAPS, T2">
                         <div class="validation-msg"
                                 *ngIf="err(isAgent ? prefix+'ClrSysCd' : prefix+'OrgClrSysCd') as e">{{e}}</div>
                         <div class="field-hint at-limit"
-                                *ngIf="hint(isAgent ? prefix+'ClrSysCd' : prefix+'OrgClrSysCd', 4) as h">{{h}}</div>
+                                *ngIf="hint(isAgent ? prefix+'ClrSysCd' : prefix+'OrgClrSysCd', 5) as h">{{h}}</div>
                 </div>
 
                 <!-- LEI -->
