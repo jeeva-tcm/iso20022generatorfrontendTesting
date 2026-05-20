@@ -22,9 +22,9 @@
                                                  <div class="validation-msg" *ngIf="err('fromMmbId') as e">{{e}}</div>
                                                  <div class="field-hint at-limit" *ngIf="hint('fromMmbId', 35) as h">{{h}}</div>
                                           </div>
-                                          <div class="form-group"><label>Sender Clr Sys Code</label><input formControlName="fromClrSysId" maxlength="4">
+                                          <div class="form-group"><label>Sender Clr Sys Code</label><input formControlName="fromClrSysId" maxlength="5">
                                                  <div class="validation-msg" *ngIf="err('fromClrSysId') as e">{{e}}</div>
-                                                 <div class="field-hint at-limit" *ngIf="hint('fromClrSysId', 4) as h">{{h}}</div>
+                                                 <div class="field-hint at-limit" *ngIf="hint('fromClrSysId', 5) as h">{{h}}</div>
                                           </div>
                                           <div class="form-group"><label>Sender LEI</label><input formControlName="fromLei" maxlength="20" (blur)="validateLei('fromLei')">
                                                  <div class="validation-msg" *ngIf="err('fromLei') as e">{{e}}</div>
@@ -72,9 +72,9 @@
                                                  <div class="validation-msg" *ngIf="err('toMmbId') as e">{{e}}</div>
                                                  <div class="field-hint at-limit" *ngIf="hint('toMmbId', 35) as h">{{h}}</div>
                                          </div>
-                                         <div class="form-group"><label>Receiver Clr Sys Code</label><input formControlName="toClrSysId" maxlength="4">
+                                         <div class="form-group"><label>Receiver Clr Sys Code</label><input formControlName="toClrSysId" maxlength="5">
                                                  <div class="validation-msg" *ngIf="err('toClrSysId') as e">{{e}}</div>
-                                                 <div class="field-hint at-limit" *ngIf="hint('toClrSysId', 4) as h">{{h}}</div>
+                                                 <div class="field-hint at-limit" *ngIf="hint('toClrSysId', 5) as h">{{h}}</div>
                                          </div>
                                          <div class="form-group"><label>Receiver LEI</label><input formControlName="toLei" maxlength="20" (blur)="validateLei('toLei')">
                                                  <div class="validation-msg" *ngIf="err('toLei') as e">{{e}}</div>
@@ -1148,12 +1148,12 @@
                 <!-- Clearing System Code -->
                 <div class="form-group">
                         <label>{{title}} Clearing System Code</label>
-                        <input [formControlName]="isAgent ? prefix+'ClrSysCd' : prefix+'OrgClrSysCd'" maxlength="4"
+                        <input [formControlName]="isAgent ? prefix+'ClrSysCd' : prefix+'OrgClrSysCd'" maxlength="5"
                                 placeholder="e.g. USABA, CHAPS, T2">
                         <div class="validation-msg"
                                 *ngIf="err(isAgent ? prefix+'ClrSysCd' : prefix+'OrgClrSysCd') as e">{{e}}</div>
                         <div class="field-hint at-limit"
-                                *ngIf="hint(isAgent ? prefix+'ClrSysCd' : prefix+'OrgClrSysCd', 4) as h">{{h}}</div>
+                                *ngIf="hint(isAgent ? prefix+'ClrSysCd' : prefix+'OrgClrSysCd', 5) as h">{{h}}</div>
                 </div>
 
                 <!-- LEI -->

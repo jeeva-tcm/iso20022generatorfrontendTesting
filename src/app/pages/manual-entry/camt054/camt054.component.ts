@@ -115,11 +115,11 @@ export class Camt054Component implements OnInit, OnDestroy {
     this.form = this.fb.group({
       // 3. BUSINESS APPLICATION HEADER
       fromBIC: ['SNDRBEBBXXX', [Validators.required, Validators.pattern(BIC_REG)]],
-      fromClrSysIdCd: ['', [Validators.maxLength(35)]],
+      fromClrSysIdCd: ['', [Validators.maxLength(5)]],
       fromMmbId: ['', [Validators.maxLength(35)]],
       fromLEI: ['', [Validators.maxLength(20)]],
       toBIC: ['RCVRBEBBXXX', [Validators.required, Validators.pattern(BIC_REG)]],
-      toClrSysIdCd: ['', [Validators.maxLength(35)]],
+      toClrSysIdCd: ['', [Validators.maxLength(5)]],
       toMmbId: ['', [Validators.maxLength(35)]],
       toLEI: ['', [Validators.maxLength(20)]],
       businessMsgId: ['B' + Date.now().toString().slice(-13), [Validators.required, Validators.maxLength(16)]],

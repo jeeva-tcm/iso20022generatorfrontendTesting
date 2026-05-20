@@ -36,9 +36,9 @@
                             </div>
                             <div class="form-group">
                                 <label>From Clearing Sys ID</label>
-                                <input type="text" formControlName="fromClrSysId" maxlength="35">
+                                <input type="text" formControlName="fromClrSysId" maxlength="5">
                                 <div class="validation-msg" *ngIf="err('fromClrSysId') as e">{{e}}</div>
-                                <div class="field-hint at-limit" *ngIf="hint('fromClrSysId', 35) as h">{{h}}</div>
+                                <div class="field-hint at-limit" *ngIf="hint('fromClrSysId', 5) as h">{{h}}</div>
                             </div>
                             <div class="form-group">
                                 <label>From Member ID</label>
@@ -65,9 +65,9 @@
                             </div>
                             <div class="form-group">
                                 <label>To Clearing Sys ID</label>
-                                <input type="text" formControlName="toClrSysId" maxlength="35">
+                                <input type="text" formControlName="toClrSysId" maxlength="5">
                                 <div class="validation-msg" *ngIf="err('toClrSysId') as e">{{e}}</div>
-                                <div class="field-hint at-limit" *ngIf="hint('toClrSysId', 35) as h">{{h}}</div>
+                                <div class="field-hint at-limit" *ngIf="hint('toClrSysId', 5) as h">{{h}}</div>
                             </div>
                             <div class="form-group">
                                 <label>To Member ID</label>
@@ -157,9 +157,9 @@
                             </div>
                             <div class="form-group">
                                 <label>Related From Clr Sys ID</label>
-                                <input type="text" formControlName="rltdFromClrSysId" maxlength="35">
+                                <input type="text" formControlName="rltdFromClrSysId" maxlength="5">
                                 <div class="validation-msg" *ngIf="err('rltdFromClrSysId') as e">{{e}}</div>
-                                <div class="field-hint at-limit" *ngIf="hint('rltdFromClrSysId', 35) as h">{{h}}</div>
+                                <div class="field-hint at-limit" *ngIf="hint('rltdFromClrSysId', 5) as h">{{h}}</div>
                             </div>
                             <div class="form-group">
                                 <label>Related From Member ID</label>
@@ -186,9 +186,9 @@
                             </div>
                             <div class="form-group">
                                 <label>Related To Clr Sys ID</label>
-                                <input type="text" formControlName="rltdToClrSysId" maxlength="35">
+                                <input type="text" formControlName="rltdToClrSysId" maxlength="5">
                                 <div class="validation-msg" *ngIf="err('rltdToClrSysId') as e">{{e}}</div>
-                                <div class="field-hint at-limit" *ngIf="hint('rltdToClrSysId', 35) as h">{{h}}</div>
+                                <div class="field-hint at-limit" *ngIf="hint('rltdToClrSysId', 5) as h">{{h}}</div>
                             </div>
                             <div class="form-group">
                                 <label>Related To Member ID</label>
@@ -276,9 +276,9 @@
                             </div>
                             <div class="form-group">
                                 <label>Assigner Clr Sys ID</label>
-                                <input type="text" formControlName="assgnrClrSysId" maxlength="35">
+                                <input type="text" formControlName="assgnrClrSysId" maxlength="5">
                                 <div class="validation-msg" *ngIf="err('assgnrClrSysId') as e">{{e}}</div>
-                                <div class="field-hint at-limit" *ngIf="hint('assgnrClrSysId', 35) as h">{{h}}</div>
+                                <div class="field-hint at-limit" *ngIf="hint('assgnrClrSysId', 5) as h">{{h}}</div>
                             </div>
                             <div class="form-group">
                                 <label>Assigner Member ID</label>
@@ -306,9 +306,9 @@
                             </div>
                             <div class="form-group">
                                 <label>Assignee Clr Sys ID</label>
-                                <input type="text" formControlName="assgneClrSysId" maxlength="35">
+                                <input type="text" formControlName="assgneClrSysId" maxlength="5">
                                 <div class="validation-msg" *ngIf="err('assgneClrSysId') as e">{{e}}</div>
-                                <div class="field-hint at-limit" *ngIf="hint('assgneClrSysId', 35) as h">{{h}}</div>
+                                <div class="field-hint at-limit" *ngIf="hint('assgneClrSysId', 5) as h">{{h}}</div>
                             </div>
                             <div class="form-group">
                                 <label>Assignee Member ID</label>
@@ -376,9 +376,9 @@
                                 </div>
                                 <div class="form-group">
                                     <label>Case Creator Clr Sys ID</label>
-                                    <input type="text" formControlName="caseCretrAgtClrSysId" maxlength="35">
+                                    <input type="text" formControlName="caseCretrAgtClrSysId" maxlength="5">
                                     <div class="validation-msg" *ngIf="err('caseCretrAgtClrSysId', form.get('txInf')) as e">{{e}}</div>
-                                    <div class="field-hint at-limit" *ngIf="hint('caseCretrAgtClrSysId', 35) as h">{{h}}</div>
+                                    <div class="field-hint at-limit" *ngIf="hint('caseCretrAgtClrSysId', 5) as h">{{h}}</div>
                                 </div>
                                 <div class="form-group">
                                     <label>Case Creator Agent Member ID</label>
@@ -1001,12 +1001,12 @@
                 <!-- Clearing System Code -->
                 <div class="form-group">
                         <label>{{title}} Clearing System Code</label>
-                        <input [formControlName]="isAgent ? prefix+'ClrSysCd' : prefix+'OrgClrSysCd'" maxlength="4"
+                        <input [formControlName]="isAgent ? prefix+'ClrSysCd' : prefix+'OrgClrSysCd'" maxlength="5"
                                 placeholder="e.g. USABA, CHAPS, T2">
                         <div class="validation-msg"
                                 *ngIf="err(isAgent ? prefix+'ClrSysCd' : prefix+'OrgClrSysCd') as e">{{e}}</div>
                         <div class="field-hint at-limit"
-                                *ngIf="hint(isAgent ? prefix+'ClrSysCd' : prefix+'OrgClrSysCd', 4) as h">{{h}}</div>
+                                *ngIf="hint(isAgent ? prefix+'ClrSysCd' : prefix+'OrgClrSysCd', 5) as h">{{h}}</div>
                 </div>
 
                 <!-- LEI -->
