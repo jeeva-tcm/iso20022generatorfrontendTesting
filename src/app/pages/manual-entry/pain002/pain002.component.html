@@ -537,7 +537,7 @@
 
         <!-- Organisation Fields -->
         <ng-container *ngIf="group.get('idType')?.value === 'org'">
-            <div class="form-group">
+            <div class="form-group" [class.full-width]="title === 'Initiating Party'">
                 <label>BICFI / AnyBIC</label>
                 <div class="uetr-control-row">
                     <input formControlName="orgAnyBic" class="auto-uppercase" maxlength="11" placeholder="8 or 11 characters">
@@ -547,7 +547,7 @@
                 <div class="field-hint at-limit" *ngIf="hint(prefix + '.orgAnyBic', 11) as h">{{h}}</div>
             </div>
 
-            <div class="form-group">
+            <div class="form-group" [class.full-width]="title === 'Initiating Party'">
                 <label>LEI</label>
                 <input formControlName="orgLei" class="auto-uppercase" maxlength="20" placeholder="20-character LEI" (blur)="checkLei($event, prefix + '.orgLei')">
                 <div class="validation-msg" *ngIf="err(prefix + '.orgLei') as e">{{e}}</div>

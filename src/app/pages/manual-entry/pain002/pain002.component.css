@@ -141,6 +141,14 @@ header p {
     box-shadow: var(--shadow-md);
 }
 
+.party-grid,
+.party-grid .form-group,
+.party-grid input,
+.party-grid select,
+.party-grid textarea {
+    min-width: 0;
+}
+
 .preview-box {
     flex: 1;
     min-height: 0;

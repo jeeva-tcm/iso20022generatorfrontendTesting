@@ -656,7 +656,7 @@ export class Pacs10Component implements OnInit, OnDestroy {
 
         let appHdr = `\t\t<Fr><FIId><FinInstnId><BICFI>${this.e(v.fromBic)}</BICFI></FinInstnId></FIId></Fr>\n`;
         appHdr += `\t\t<To><FIId><FinInstnId><BICFI>${this.e(v.toBic)}</BICFI></FinInstnId></FIId></To>\n`;
-        appHdr += `\t\t<BizMsgIdr>${this.e(v.bizMsgId)}</BizMsgIdr>\n\t\t<MsgDefIdr>pacs.010.001.03</MsgDefIdr>\n\t\t<BizSvc>swift.cbprplus.02</BizSvc>\n`;
+        appHdr += `\t\t<BizMsgIdr>${this.e(v.bizMsgId)}</BizMsgIdr>\n\t\t<MsgDefIdr>pacs.010.001.10</MsgDefIdr>\n\t\t<BizSvc>swift.cbprplus.02</BizSvc>\n`;
         
         appHdr += `\t\t<CreDt>${creDtTm}</CreDt>\n`;
         if (v.copyDplct) appHdr += this.el('CpyDplct', v.copyDplct, 2);
@@ -669,7 +669,7 @@ export class Pacs10Component implements OnInit, OnDestroy {
 <BusMsgEnvlp xmlns="urn:swift:xsd:envelope">
 \t<AppHdr xmlns="urn:iso:std:iso:20022:tech:xsd:head.001.001.02">
 ${appHdr}\t</AppHdr>
-\t<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pacs.010.001.03">
+\t<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pacs.010.001.10">
 \t\t<FIDrctDbt>
 \t\t\t<GrpHdr>
 \t\t\t\t<MsgId>${this.e(v.msgId)}</MsgId>
@@ -1193,7 +1193,7 @@ ${this.rmtInf(v)}
         this.http.post(this.config.getApiUrl('/validate'), {
             xml_content: this.generatedXml,
             mode: 'Full 1-3',
-            message_type: 'pacs.010.001.03',
+            message_type: 'pacs.010.001.10',
             store_in_history: true
         }).subscribe({
             next: (data: any) => {
@@ -1204,7 +1204,7 @@ ${this.rmtInf(v)}
             error: (err) => {
                 this.validationReport = {
                     status: 'FAIL', errors: 1, warnings: 0,
-                    message: 'pacs.010.001.03', total_time_ms: 0,
+                    message: 'pacs.010.001.10', total_time_ms: 0,
                     layer_status: {},
                     details: [{
                         severity: 'ERROR', layer: 0, code: 'BACKEND_ERROR',
