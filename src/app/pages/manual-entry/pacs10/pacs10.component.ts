@@ -704,7 +704,7 @@ ${this.rmtInf(v)}
 \t</Document>
 </BusMsgEnvlp>`;
         this.generatedXml = xml;
-        this.formatXml();
+        this.formatXml(false);
     }
 
     private sttlmTmReq(v: any) {
@@ -975,7 +975,7 @@ ${this.rmtInf(v)}
         this.editorLineCount = Array.from({ length: lines }, (_, i) => i + 1);
     }
 
-    formatXml() {
+    formatXml(showToast = true) {
         if (!this.generatedXml?.trim()) return;
         this.pushHistory();
 
@@ -1014,7 +1014,7 @@ ${this.rmtInf(v)}
 
             this.generatedXml = formatted.trim();
             this.refreshLineCount();
-            this.snackBar.open('XML Formatted', '', { duration: 1500 });
+            if (showToast) { this.snackBar.open('XML Formatted', '', { duration: 1500 }); }
         } catch (e) {
             this.snackBar.open('Unable to format XML', '', { duration: 3000 });
         }
@@ -1435,8 +1435,10 @@ ${this.rmtInf(v)}
     const dialogRef = this.dialog.open(BicSearchDialogComponent, { width: '800px', disableClose: true });
     dialogRef.afterClosed().subscribe(result => {
         if (result && result.bic) {
-            group.get(controlName)?.patchValue(result.bic);
-            group.get(controlName)?.markAsDirty();
+            const targetGroup = group || this.form;
+
+            targetGroup.get(controlName)?.patchValue(result.bic);
+            targetGroup.get(controlName)?.markAsDirty();
         }
     });
   }

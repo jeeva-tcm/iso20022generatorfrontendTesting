@@ -8,6 +8,7 @@
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
+    margin-top:-30px;
     gap: 20px;
     animation: db-enter 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
 }

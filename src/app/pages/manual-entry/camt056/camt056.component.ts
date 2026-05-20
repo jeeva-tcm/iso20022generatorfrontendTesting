@@ -530,7 +530,7 @@ export class Camt056Component implements OnInit, OnDestroy {
     xml += `</BusMsgEnvlp>`;
 
     this.generatedXml = xml;
-    this.refreshLineCount();
+    this.formatXml(false);
   }
 
   private e(v: any): string {
@@ -701,7 +701,7 @@ export class Camt056Component implements OnInit, OnDestroy {
     }
   }
 
-  formatXml() {
+  formatXml(showToast = true) {
     if (!this.generatedXml?.trim()) return;
     this.pushHistory();
     try {
@@ -728,7 +728,7 @@ export class Camt056Component implements OnInit, OnDestroy {
       });
       this.generatedXml = formatted.trim();
       this.refreshLineCount();
-      this.snackBar.open('XML Formatted', '', { duration: 1500 });
+      if (showToast) { this.snackBar.open('XML Formatted', '', { duration: 1500 }); }
     } catch (e) {
       this.snackBar.open('Format Error', '', { duration: 3000 });
     }
@@ -764,8 +764,10 @@ export class Camt056Component implements OnInit, OnDestroy {
 
     dialogRef.afterClosed().subscribe(result => {
       if (result && result.bic) {
-        group.get(controlName)?.patchValue(result.bic);
-        group.get(controlName)?.markAsDirty();
+        const targetGroup = group || this.form;
+
+        targetGroup.get(controlName)?.patchValue(result.bic);
+        targetGroup.get(controlName)?.markAsDirty();
       }
     });
   }

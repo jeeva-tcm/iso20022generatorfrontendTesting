@@ -752,7 +752,7 @@ ${doc.trimEnd()}
   toggleValidationIssue(issue: any) { this.validationExpandedIssue = this.validationExpandedIssue === issue ? null : issue; }
   closeValidationModal() { this.showValidationModal = false; this.validationReport = null; this.validationStatus = 'idle'; this.validationExpandedIssue = null; }
   copyFix(text: string, e: MouseEvent) { e.stopPropagation(); navigator.clipboard.writeText(text).then(() => this.snackBar.open('Copied!', '', { duration: 1500 })); }
-  formatXml() { this.generateXml(); }
+  formatXml(showToast = true) { this.generateXml(); }
   viewXmlModal() { this.closeValidationModal(); }
   editXmlModal() { this.closeValidationModal(); }
   runValidationModal() { this.validateMessage(); }
@@ -777,7 +777,9 @@ ${doc.trimEnd()}
     const dialogRef = this.dialog.open(BicSearchDialogComponent, { width: '800px', disableClose: true });
     dialogRef.afterClosed().subscribe(result => {
       if (result && result.bic) {
-        group.patchValue({ [controlName]: result.bic });
+        const targetGroup = group || this.form;
+
+        targetGroup.patchValue({ [controlName]: result.bic });
         group.get(controlName)?.markAsDirty();
       }
     });

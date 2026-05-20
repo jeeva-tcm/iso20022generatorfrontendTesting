@@ -60,11 +60,14 @@
                     </div> -->
                     <div class="form-group intermediary-field"><label>Settlement Method <span class="req">*</span></label>
                         <select formControlName="sttlmMtd" [attr.formControlName]="'sttlmMtd'">
-                            <option value="INDA">INDA (Individual)</option>
-                            <option value="INGD">INGD (Individual with Gvt)</option>
-                            <option value="CLRG">CLRG (Clearing System)</option>
+                            <option *ngFor="let m of sttlmMethods" [value]="m">{{m}} ({{m === 'INDA' ? 'Individual' : 'Agent'}})</option>
                         </select>
                         <div class="validation-msg" *ngIf="err('sttlmMtd') as e">{{e}}</div>
+                    </div>
+                    <div class="form-group intermediary-field"><label>Settlement Account <span class="opt">Optional</span></label>
+                        <input formControlName="sttlmAcct" [attr.formControlName]="'sttlmAcct'" placeholder="e.g. DE89370400440532013000" maxlength="34">
+                        <div class="validation-msg" *ngIf="err('sttlmAcct') as e">{{e}}</div>
+                        <div class="field-hint at-limit" *ngIf="hint('sttlmAcct', 34) as h">{{h}}</div>
                     </div>
 
                     <div class="section-title">Transaction Details</div>
@@ -516,7 +519,7 @@
                                                 XML</button>
                                         <button type="button" class="action-btn" (click)="downloadXml()"><mat-icon>download</mat-icon>
                                                 Download XML</button>
-                                        <button type="button" class="action-btn validate-btn" (click)="validateMessage()" [disabled]="form.invalid">
+                                        <button type="button" class="action-btn validate-btn" (click)="validateMessage()" >
                                                 <mat-icon>verified</mat-icon> Validate Message
                                         </button>
                                 </div>

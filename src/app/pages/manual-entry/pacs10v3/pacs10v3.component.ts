@@ -1,4 +1,4 @@
-﻿import { CommonModule } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -798,13 +798,13 @@ ${this.rmtInf(v)}
         }
     }
 
-    formatXml() {
+    formatXml(showToast = true) {
         if (!this.generatedXml) return;
         this.isInternalChange = true;
         this.pushHistory();
         this.generatedXml = this.prettyPrintXml(this.generatedXml);
         this.refreshLineCount();
-        this.snackBar.open('XML Formatted', '', { duration: 1500 });
+        if (showToast) { this.snackBar.open('XML Formatted', '', { duration: 1500 }); }
         setTimeout(() => this.isInternalChange = false, 0);
     }
 
@@ -1097,8 +1097,10 @@ ${this.rmtInf(v)}
     const dialogRef = this.dialog.open(BicSearchDialogComponent, { width: '800px', disableClose: true });
     dialogRef.afterClosed().subscribe(result => {
         if (result && result.bic) {
-            group.get(controlName)?.patchValue(result.bic);
-            group.get(controlName)?.markAsDirty();
+            const targetGroup = group || this.form;
+
+            targetGroup.get(controlName)?.patchValue(result.bic);
+            targetGroup.get(controlName)?.markAsDirty();
         }
     });
   }

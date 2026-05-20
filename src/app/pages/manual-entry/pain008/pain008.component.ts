@@ -484,6 +484,11 @@ export class Pain008Component implements OnInit, OnDestroy {
     }
   }
 
+  refreshUetr(tx: any) {
+    const uuid = crypto.randomUUID ? crypto.randomUUID() : '550e8400-e29b-41d4-a716-446655440000';
+    tx.patchValue({ uetr: uuid });
+  }
+
   private updateTotals() {
     const count = this.transactions.length;
     let sum = 0;
@@ -790,6 +795,7 @@ ${grpHdr}${pmtInf}\t\t</CstmrDrctDbtInitn>
 \t</Document>
 </BusMsgEnvlp>`;
 
+    this.formatXml(false);
     this.onEditorChange(this.generatedXml, true);
   }
 
@@ -1057,7 +1063,7 @@ ${grpHdr}${pmtInf}\t\t</CstmrDrctDbtInitn>
   canRedoXml(): boolean { return this.xmlHistoryIdx < this.xmlHistory.length - 1; }
   private refreshLineCount() { const l = (this.generatedXml || '').split('\n').length; this.editorLineCount = Array.from({ length: l }, (_, i) => i + 1); }
 
-  formatXml() {
+  formatXml(showToast = true) {
     if (!this.generatedXml?.trim()) return;
     this.pushHistory();
     try {
@@ -1077,7 +1083,7 @@ ${grpHdr}${pmtInf}\t\t</CstmrDrctDbtInitn>
       });
       this.generatedXml = formatted.trim();
       this.refreshLineCount();
-      this.snackBar.open('XML Formatted', '', { duration: 1500 });
+      if (showToast) { this.snackBar.open('XML Formatted', '', { duration: 1500 }); }
     } catch (e) { this.snackBar.open('Unable to format XML', '', { duration: 3000 }); }
   }
 
@@ -1106,8 +1112,10 @@ ${grpHdr}${pmtInf}\t\t</CstmrDrctDbtInitn>
 
     dialogRef.afterClosed().subscribe(result => {
       if (result && result.bic) {
-        group.get(controlName)?.patchValue(result.bic);
-        group.get(controlName)?.markAsDirty();
+        const targetGroup = group || this.form;
+
+        targetGroup.get(controlName)?.patchValue(result.bic);
+        targetGroup.get(controlName)?.markAsDirty();
       }
     });
   }

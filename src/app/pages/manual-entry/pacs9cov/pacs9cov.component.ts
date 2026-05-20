@@ -288,31 +288,27 @@ export class Pacs9CovComponent implements OnInit, OnDestroy {
             const addrType = this.form.get(p + 'AddrType')?.value;
             const ctryCtrl = this.form.get(p + 'Ctry');
             const twnNmCtrl = this.form.get(p + 'TwnNm');
+            const adrLine1 = this.form.get(p + 'AdrLine1')?.value || '';
+            const adrLine2 = this.form.get(p + 'AdrLine2')?.value || '';
+            const hasAdrLine = !!(adrLine1.trim() || adrLine2.trim());
 
-            if (addrType && addrType !== 'none') {
+            if (addrType && addrType !== 'none' && !hasAdrLine) {
                 if (!ctryCtrl?.hasValidator(Validators.required)) {
                     ctryCtrl?.setValidators([Validators.required, Validators.pattern(/^[A-Z]{2,2}$/)]);
                     ctryCtrl?.updateValueAndValidity({ emitEvent: false });
                 }
-            } else {
-                if (ctryCtrl?.hasValidator(Validators.required)) {
-                    ctryCtrl?.clearValidators();
-                    ctryCtrl?.setValidators([Validators.pattern(/^[A-Z]{2,2}$/)]);
-                    ctryCtrl?.updateValueAndValidity({ emitEvent: false });
-                }
-            }
-
-            if (addrType && addrType !== 'none') {
                 if (!twnNmCtrl?.hasValidator(Validators.required)) {
                     twnNmCtrl?.setValidators([Validators.required, Validators.maxLength(35), ADDR_PATTERN]);
                     twnNmCtrl?.updateValueAndValidity({ emitEvent: false });
                 }
             } else {
-                if (twnNmCtrl?.hasValidator(Validators.required)) {
-                    twnNmCtrl?.clearValidators();
-                    twnNmCtrl?.setValidators([Validators.maxLength(35), ADDR_PATTERN]);
-                    twnNmCtrl?.updateValueAndValidity({ emitEvent: false });
-                }
+                ctryCtrl?.clearValidators();
+                ctryCtrl?.setValidators([Validators.pattern(/^[A-Z]{2,2}$/)]);
+                ctryCtrl?.updateValueAndValidity({ emitEvent: false });
+
+                twnNmCtrl?.clearValidators();
+                twnNmCtrl?.setValidators([Validators.maxLength(35), ADDR_PATTERN]);
+                twnNmCtrl?.updateValueAndValidity({ emitEvent: false });
             }
         });
     }
@@ -368,6 +364,7 @@ export class Pacs9CovComponent implements OnInit, OnDestroy {
             msgId: ['pacs9bizmsgidr01', Validators.required], creDtTm: [this.isoNow(), Validators.required],
             sttlmPrty: ['', [Validators.pattern(/^(HIGH|NORM)$/)]],
             nbOfTxs: ['1', [Validators.required, Validators.maxLength(15), Validators.pattern(/^[1-9]\d{0,14}$/)]], sttlmMtd: ['INDA', Validators.required],
+            sttlmAcct: ['', [Validators.maxLength(34), Validators.pattern(/^[A-Z0-9]{5,34}$/)]],
             instgAgtBic: ['RBOSGB2L', BIC], instdAgtBic: ['NDEAFIHH', BIC],
             instrId: ['pacs9bizmsgidr01', Validators.required], endToEndId: ['pacs8bizmsgidr01', Validators.required],
             uetr: ['8a562c67-ca16-48ba-b074-65581be6f001', [Validators.required, Validators.pattern(/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/)]],
@@ -736,6 +733,7 @@ export class Pacs9CovComponent implements OnInit, OnDestroy {
         // Stop generation if TARGET2 rule is violated
         if (this.form.get('currency')?.hasError('target2')) {
             this.generatedXml = '<!-- TARGET2 VALIDATION ERROR: TARGET2 payments must use EUR as the settlement currency. -->';
+            this.formatXml(false);
             this.onEditorChange(this.generatedXml, true);
             return;
         }
@@ -743,15 +741,38 @@ export class Pacs9CovComponent implements OnInit, OnDestroy {
         // Stop generation if CHIPS rule is violated
         if (this.form.get('currency')?.hasError('chips')) {
             this.generatedXml = '<!-- CHIPS VALIDATION ERROR: CHIPS allows only USD currency. -->';
+            this.formatXml(false);
             this.onEditorChange(this.generatedXml, true);
             return;
         }
 
         // Stop generation if FED rule is violated
-        if (this.form.get('currency')?.hasError('fed')) {
+        if (this.form.get('fed')?.hasError('fed') || this.form.get('currency')?.hasError('fed')) {
             this.generatedXml = '<!-- FED VALIDATION ERROR: FED allows only USD currency. -->';
+            this.formatXml(false);
             this.onEditorChange(this.generatedXml, true);
             return;
+        }
+
+        // Pre-generation check: If Postal Address is present but Address Line is absent, Town Name and Country are required
+        const allPrefixes = [...this.agentPrefixes, ...this.covPartyPrefixes];
+        for (const p of allPrefixes) {
+            const addrType = this.form.get(p + 'AddrType')?.value;
+            if (addrType && addrType !== 'none') {
+                const adrLine1 = this.form.get(p + 'AdrLine1')?.value || '';
+                const adrLine2 = this.form.get(p + 'AdrLine2')?.value || '';
+                const hasAdrLine = !!(adrLine1.trim() || adrLine2.trim());
+
+                const twnNm = this.form.get(p + 'TwnNm')?.value || '';
+                const ctry = this.form.get(p + 'Ctry')?.value || '';
+                const hasTwnNmAndCtry = !!(twnNm.trim() && ctry.trim());
+
+                if (!hasAdrLine && !hasTwnNmAndCtry) {
+                    this.generatedXml = `<!-- VALIDATION ERROR: Party/Agent '${p}' has an invalid Postal Address. If Address Line is absent, then Town Name and Country must be present. -->`;
+                    this.onEditorChange(this.generatedXml, true);
+                    return;
+                }
+            }
         }
 
         const v = this.form.value;
@@ -841,7 +862,7 @@ export class Pacs9CovComponent implements OnInit, OnDestroy {
 				<CreDtTm>${creDtTm}</CreDtTm>
 				<NbOfTxs>${v.nbOfTxs}</NbOfTxs>
 				<SttlmInf>
-					<SttlmMtd>${this.e(v.sttlmMtd)}</SttlmMtd>
+					<SttlmMtd>${this.e(v.sttlmMtd)}</SttlmMtd>${v.sttlmAcct?.trim() ? `\n\t\t\t\t\t<SttlmAcct>\n\t\t\t\t\t\t<Id>\n\t\t\t\t\t\t\t<IBAN>${this.e(v.sttlmAcct)}</IBAN>\n\t\t\t\t\t\t</Id>\n\t\t\t\t\t</SttlmAcct>` : ''}
 				</SttlmInf>
 			</GrpHdr>
 			<CdtTrfTxInf>
@@ -849,7 +870,8 @@ ${tx}\t\t\t</CdtTrfTxInf>
 		</FICdtTrf>
 	</Document>
 </BusMsgEnvlp>`;
-        this.onEditorChange(this.generatedXml, true);
+        this.formatXml(false);
+            this.onEditorChange(this.generatedXml, true);
     }
 
     // Prefix all XML element tags with pacs: namespace (Deprecated - using default namespaces now)
@@ -879,8 +901,10 @@ ${tx}\t\t\t</CdtTrfTxInf>
 
         dialogRef.afterClosed().subscribe(result => {
             if (result && result.bic) {
-                group.get(controlName)?.patchValue(result.bic);
-                group.get(controlName)?.markAsDirty();
+                const targetGroup = group || this.form;
+
+                targetGroup.get(controlName)?.patchValue(result.bic);
+                targetGroup.get(controlName)?.markAsDirty();
             }
         });
     }
@@ -1260,7 +1284,7 @@ ${tx}\t\t\t</CdtTrfTxInf>
         this.editorLineCount = Array.from({ length: lines }, (_, i) => i + 1);
     }
 
-    formatXml() {
+    formatXml(showToast = true) {
         if (!this.generatedXml?.trim()) return;
         this.pushHistory();
 
@@ -1295,7 +1319,7 @@ ${tx}\t\t\t</CdtTrfTxInf>
 
             this.generatedXml = formatted.trim();
             this.refreshLineCount();
-            this.snackBar.open('XML Formatted', '', { duration: 1500 });
+            if (showToast) { this.snackBar.open('XML Formatted', '', { duration: 1500 }); }
         } catch (e) {
             this.snackBar.open('Unable to format XML', '', { duration: 3000 });
         }
@@ -1405,7 +1429,14 @@ ${tx}\t\t\t</CdtTrfTxInf>
                 patch.msgId = tval('MsgId', grpHdr);
                 patch.creDtTm = tval('CreDtTm', grpHdr);
                 patch.nbOfTxs = tval('NbOfTxs', grpHdr);
-                patch.sttlmMtd = tval('SttlmMtd', getT('SttlmInf', grpHdr) || grpHdr);
+                const sttlmInf = getT('SttlmInf', grpHdr);
+                if (sttlmInf) {
+                    patch.sttlmMtd = tval('SttlmMtd', sttlmInf);
+                    const sttlmAcct = getT('SttlmAcct', sttlmInf);
+                    if (sttlmAcct) {
+                        patch.sttlmAcct = tval('IBAN', getT('Id', sttlmAcct) || sttlmAcct);
+                    }
+                }
             }
 
             const tx = getT('CdtTrfTxInf');

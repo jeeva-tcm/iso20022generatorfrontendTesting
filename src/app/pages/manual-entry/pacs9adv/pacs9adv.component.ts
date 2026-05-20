@@ -557,6 +557,7 @@ export class Pacs9AdvComponent implements OnInit, OnDestroy {
         // Stop generation if CHIPS rule is violated
         if (this.form.get('currency')?.hasError('chips')) {
             this.generatedXml = '<!-- CHIPS VALIDATION ERROR: CHIPS allows only USD currency. -->';
+            this.formatXml(false);
             this.onEditorChange(this.generatedXml, true);
             return;
         }
@@ -564,6 +565,7 @@ export class Pacs9AdvComponent implements OnInit, OnDestroy {
         // Stop generation if FED rule is violated
         if (this.form.get('currency')?.hasError('fed')) {
             this.generatedXml = '<!-- FED VALIDATION ERROR: FED allows only USD currency. -->';
+            this.formatXml(false);
             this.onEditorChange(this.generatedXml, true);
             return;
         }
@@ -571,6 +573,7 @@ export class Pacs9AdvComponent implements OnInit, OnDestroy {
         // Stop generation if target2 rule is violated
         if (this.form.get('currency')?.hasError('target2')) {
             this.generatedXml = '<!-- TARGET2 VALIDATION ERROR: T2 allows only EUR currency. -->';
+            this.formatXml(false);
             this.onEditorChange(this.generatedXml, true);
             return;
         }
@@ -578,6 +581,7 @@ export class Pacs9AdvComponent implements OnInit, OnDestroy {
         // Stop generation if CHAPS rule is violated
         if (this.form.get('currency')?.hasError('chaps')) {
             this.generatedXml = '<!-- CHAPS VALIDATION ERROR: Invalid Currency for CHAPS clearing system. When ClrSysId/Cd = CHAPS, the transaction currency must be GBP. -->';
+            this.formatXml(false);
             this.onEditorChange(this.generatedXml, true);
             return;
         }
@@ -585,6 +589,7 @@ export class Pacs9AdvComponent implements OnInit, OnDestroy {
         // Stop generation if COVE is selected but no reimbursement agent is provided
         if (this.coveReimburseError) {
             this.generatedXml = '<!-- COVE VALIDATION ERROR: When SettlementMethod is COVE, InstructedReimbursementAgent or InstructingReimbursementAgent must be present. Please provide at least one Reimbursement Agent BIC. -->';
+            this.formatXml(false);
             this.onEditorChange(this.generatedXml, true);
             return;
         }
@@ -592,6 +597,7 @@ export class Pacs9AdvComponent implements OnInit, OnDestroy {
         // Stop generation if ClrSysRef is forbidden
         if (this.form.get('clrSysRef')?.hasError('forbidden')) {
             this.generatedXml = '<!-- CLEARING SYSTEM REFERENCE VALIDATION ERROR: Clearing System Reference must NOT be sent if no active standard clearing system is used. -->';
+            this.formatXml(false);
             this.onEditorChange(this.generatedXml, true);
             return;
         }
@@ -751,7 +757,8 @@ ${tx}\t\t\t</CdtTrfTxInf>
 \t\t</FICdtTrf>
 \t</Document>
 </BusMsgEnvlp>`;
-        this.onEditorChange(this.generatedXml, true);
+        this.formatXml(false);
+            this.onEditorChange(this.generatedXml, true);
     }
 
     openBicSearch(controlName: string) {
@@ -776,8 +783,10 @@ ${tx}\t\t\t</CdtTrfTxInf>
 
         dialogRef.afterClosed().subscribe(result => {
             if (result && result.bic) {
-                group.get(controlName)?.patchValue(result.bic);
-                group.get(controlName)?.markAsDirty();
+                const targetGroup = group || this.form;
+
+                targetGroup.get(controlName)?.patchValue(result.bic);
+                targetGroup.get(controlName)?.markAsDirty();
             }
         });
     }
@@ -995,7 +1004,7 @@ ${tx}\t\t\t</CdtTrfTxInf>
         this.editorLineCount = Array.from({ length: lines }, (_, i) => i + 1);
     }
 
-    formatXml() {
+    formatXml(showToast = true) {
         if (!this.generatedXml?.trim()) return;
         this.pushHistory();
 
@@ -1029,7 +1038,7 @@ ${tx}\t\t\t</CdtTrfTxInf>
             
             this.generatedXml = formatted.trim();
             this.refreshLineCount();
-            this.snackBar.open('XML Formatted', '', { duration: 1500 });
+            if (showToast) { this.snackBar.open('XML Formatted', '', { duration: 1500 }); }
         } catch (e) {
             this.snackBar.open('Unable to format XML', '', { duration: 3000 });
         }
