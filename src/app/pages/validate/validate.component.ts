@@ -432,39 +432,127 @@ export class ValidateComponent implements OnInit {
 
   @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
 
+  dragCounter = 0;
+  private readonly supportedFileExtensions = ['.xml', '.xsd', '.txt', '.zip'];
+
   // ── Drag-and-drop ──────────────────────────────────────────────────────────
-  @HostListener('dragover', ['$event']) onDragOver(e: DragEvent) {
+  @HostListener('window:dragover', ['$event'])
+  onWindowDragOver(e: DragEvent) {
+    if (!this.hasDraggedFiles(e)) return;
     e.preventDefault();
+    if (e.dataTransfer) {
+      e.dataTransfer.dropEffect = this.editingEntry ? 'none' : 'copy';
+    }
+  }
+
+  @HostListener('window:drop', ['$event'])
+  onWindowDrop(e: DragEvent) {
+    if (!this.hasDraggedFiles(e)) return;
+    e.preventDefault();
+    this.resetDragState();
+  }
+
+  onDropZoneDragEnter(e: DragEvent) {
+    if (!this.hasDraggedFiles(e)) return;
+    this.prepareDropEvent(e);
+    if (this.editingEntry) return;
+    this.dragCounter++;
+    this.isDragging = true;
+  }
+
+  onDropZoneDragOver(e: DragEvent) {
+    if (!this.hasDraggedFiles(e)) return;
+    this.prepareDropEvent(e);
     if (this.editingEntry) return;
     this.isDragging = true;
   }
-  @HostListener('dragleave', ['$event']) onDragLeave(e: DragEvent) {
+
+  onDropZoneDragLeave(e: DragEvent) {
+    if (!this.hasDraggedFiles(e)) return;
+    this.prepareDropEvent(e);
+    this.dragCounter--;
+    if (this.dragCounter <= 0) {
+      this.resetDragState();
+    }
+  }
+
+  async onDropZoneDrop(e: DragEvent) {
+    if (!this.hasDraggedFiles(e)) return;
+    this.prepareDropEvent(e);
+    this.resetDragState();
+    if (this.editingEntry) return;
+
+    const droppedFiles = await this.getDroppedFiles(e);
+    if (droppedFiles.length === 0) {
+      this.snackBar.open('No supported files were dropped.', 'Dismiss', { duration: 3000 });
+      return;
+    }
+
+    await this.loadFiles(droppedFiles);
+  }
+
+  private prepareDropEvent(e: DragEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.dataTransfer) {
+      e.dataTransfer.dropEffect = this.editingEntry ? 'none' : 'copy';
+    }
+  }
+
+  private resetDragState() {
+    this.dragCounter = 0;
     this.isDragging = false;
   }
-  @HostListener('drop', ['$event']) async onDrop(e: DragEvent) {
-    e.preventDefault();
-    this.isDragging = false;
-    if (this.editingEntry) return;
-    const validFiles: File[] = [];
-    if (e.dataTransfer && e.dataTransfer.items) {
-      for (let i = 0; i < e.dataTransfer.items.length; i++) {
-        const item = e.dataTransfer.items[i];
-        if (item.kind === 'file') {
+
+  private hasDraggedFiles(e: DragEvent): boolean {
+    return Array.from(e.dataTransfer?.types ?? []).includes('Files');
+  }
+
+  private async getDroppedFiles(e: DragEvent): Promise<File[]> {
+    const dataTransfer = e.dataTransfer;
+    if (!dataTransfer) return [];
+
+    const droppedFiles = Array.from(dataTransfer.files ?? []);
+    if (droppedFiles.length > 0) {
+      const items = Array.from(dataTransfer.items ?? []).filter(item => item.kind === 'file');
+      await Promise.all(droppedFiles.map(async (file, index) => {
+        const item = items[index];
+        if (!item) return;
+        try {
           const handle = await (item as any).getAsFileSystemHandle?.();
+          if (handle) (file as any).fileHandle = handle;
+        } catch {
+          // File handles are optional; the uploaded content still works without one.
+        }
+      }));
+      return droppedFiles;
+    }
+
+    const itemFiles: File[] = [];
+    if (dataTransfer.items) {
+      for (let i = 0; i < dataTransfer.items.length; i++) {
+        const item = dataTransfer.items[i];
+        if (item.kind === 'file') {
           const file = item.getAsFile();
           if (file) {
+            let handle: any = null;
+            try {
+              handle = await (item as any).getAsFileSystemHandle?.();
+            } catch {
+              handle = null;
+            }
             if (handle) (file as any).fileHandle = handle;
-            validFiles.push(file);
+            itemFiles.push(file);
           }
         }
       }
-    } else if (e.dataTransfer?.files) {
-      validFiles.push(...Array.from(e.dataTransfer.files));
     }
-    await this.loadFiles(validFiles);
+
+    return itemFiles;
   }
 
   async triggerFilePicker() {
+    if (this.editingEntry) return;
     if ('showOpenFilePicker' in window) {
       try {
         const handles = await (window as any).showOpenFilePicker({
@@ -547,9 +635,8 @@ export class ValidateComponent implements OnInit {
       filesToProcess.splice(availableCount);
     }
 
-    const allowed = ['.xml', '.xsd', '.txt'];
     const validFiles = filesToProcess.filter(file => {
-      const isAllowed = allowed.some(ext => file.name.toLowerCase().endsWith(ext));
+      const isAllowed = this.supportedFileExtensions.some(ext => file.name.toLowerCase().endsWith(ext));
       if (!isAllowed) this.snackBar.open(`${file.name}: Invalid type. XML/XSD/TXT/ZIP only.`, 'Dismiss', { duration: 3000 });
 
       const isSizeOk = file.size <= 1024 * 1024 * 3;

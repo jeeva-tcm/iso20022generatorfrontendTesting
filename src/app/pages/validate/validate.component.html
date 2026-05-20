@@ -29,13 +29,28 @@
     <aside class="vp-left">
 
       <!-- Drop Zone -->
-      <div class="drop-zone" [class.dragging]="isDragging" (click)="triggerFilePicker()">
-        <div class="drop-icon">
+      <div class="drop-zone" [class.dragging]="isDragging" [class.drop-disabled]="editingEntry"
+        (click)="triggerFilePicker()"
+        (dragover)="onDropZoneDragOver($event)"
+        (dragenter)="onDropZoneDragEnter($event)"
+        (dragleave)="onDropZoneDragLeave($event)"
+        (drop)="onDropZoneDrop($event)"
+        (keydown.enter)="triggerFilePicker()"
+        (keydown.space)="triggerFilePicker(); $event.preventDefault()"
+        role="button"
+        tabindex="0"
+        aria-label="Upload validation files by browsing or dragging and dropping files">
+        <!-- Drag overlay shown when dragging over -->
+        <div class="drag-overlay" *ngIf="isDragging">
+          <mat-icon class="drag-overlay-icon">file_upload</mat-icon>
+          <p class="drag-overlay-text">Release to Upload Files</p>
+        </div>
+        <div class="drop-icon" [class.hidden-while-dragging]="isDragging">
           <mat-icon>add_circle_outline</mat-icon>
         </div>
-        <p class="drop-title">Drop Files Here (.xml, .zip)</p>
-        <p class="drop-sub">or click to browse · Supports .xml, .zip, .xsd, .txt files</p>
-        <p class="drop-limit">MAX 100KB PER FILE · NO FILE LIMIT</p>
+        <p class="drop-title" [class.hidden-while-dragging]="isDragging">Drop Files Here (.xml, .zip)</p>
+        <p class="drop-sub" [class.hidden-while-dragging]="isDragging">or click to browse · Supports .xml, .zip, .xsd, .txt files</p>
+        <p class="drop-limit" [class.hidden-while-dragging]="isDragging">MAX 100KB PER FILE · NO FILE LIMIT</p>
         <input #fileInput type="file" multiple accept=".xml,.xsd,.txt,.zip" (change)="onFileSelected($event)"
           style="position: absolute; width: 0; height: 0; opacity: 0; z-index: -1;">
       </div>
