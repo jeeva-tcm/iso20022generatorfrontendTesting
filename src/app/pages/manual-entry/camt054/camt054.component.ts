@@ -815,6 +815,9 @@ export class Camt054Component implements OnInit, OnDestroy {
       const tval = (t: string, p: any = doc) => getT(t, p)?.textContent?.trim() || '';
 
       const patch: any = {};
+      // Reset every form control to '' so any element the user removed from the XML
+      // clears its mirrored form value (prevents generateXml from re-inserting it).
+      Object.keys(this.form.controls).forEach(k => patch[k] = '');
       const setVal = (f: string, v: string) => { if (v) patch[f] = v; };
 
       // 1. AppHdr

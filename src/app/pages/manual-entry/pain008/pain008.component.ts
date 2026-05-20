@@ -888,6 +888,9 @@ ${grpHdr}${pmtInf}\t\t</CstmrDrctDbtInitn>
         return el ? el.textContent?.trim() || '' : '';
       };
       const patch: any = {};
+      // Reset every form control to '' so any element the user removed from the XML
+      // clears its mirrored form value (prevents generateXml from re-inserting it).
+      Object.keys(this.form.controls).forEach(k => patch[k] = '');
       const appHdr = findTag('AppHdr');
       if (appHdr) {
         const fr = findTag('Fr', appHdr);

@@ -696,7 +696,9 @@ ${doc.trimEnd()}
 
   validateMessage() {
     if (this.bicSameWarning) return;
-    this.generateXml();
+    // Do NOT regenerate XML here: generatedXml is already kept in sync with the editor via
+    // ngModel, and parseXmlToForm is not wired up for this message, so calling generateXml()
+    // would silently restore any tag the user just deleted (causing validation to falsely pass).
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       this.snackBar.open('Please fix the errors in the form before validating.', 'Close', { duration: 3000 });

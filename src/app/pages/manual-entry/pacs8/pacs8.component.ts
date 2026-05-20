@@ -1638,6 +1638,9 @@ ${tx}\t\t\t</CdtTrfTxInf>
       }
 
       const patch: any = {};
+      // Reset every form control to '' so any element the user removed from the XML
+      // clears its mirrored form value (prevents generateXml from re-inserting it).
+      Object.keys(this.form.controls).forEach(k => patch[k] = '');
       const getT = (t: string, p: any = doc): Element | null => {
         const els = p.getElementsByTagName(t);
         if (els.length > 0) return els[0];

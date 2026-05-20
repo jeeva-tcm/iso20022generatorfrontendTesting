@@ -912,6 +912,9 @@ ${ntfctnPartiesXml}${itmXml}
             }
 
             const patch: any = {};
+            // Reset every form control to '' so any element the user removed from the XML
+            // clears its mirrored form value (prevents generateXml from re-inserting it).
+            Object.keys(this.form.controls).forEach(k => patch[k] = '');
             const tval = (t: string) => doc.getElementsByTagName(t)[0]?.textContent || '';
             const setVal = (key: string, val: string) => { patch[key] = val; };
 

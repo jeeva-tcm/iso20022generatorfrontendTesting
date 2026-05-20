@@ -1392,6 +1392,9 @@ ${tx}\t\t\t</CdtTrfTxInf>
             const tval = (t: string, p: any = doc) => getT(t, p)?.textContent?.trim() || '';
 
             const patch: any = {};
+            // Reset every form control to '' so any element the user removed from the XML
+            // clears its mirrored form value (prevents generateXml from re-inserting it).
+            Object.keys(this.form.controls).forEach(k => patch[k] = '');
 
             // BAH
             const appHdr = getT('AppHdr');
