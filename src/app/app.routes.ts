@@ -29,4 +29,4 @@ export const routes: Routes = [
     { path: 'mt-to-mx', loadComponent: () => import('./pages/mt-to-mx/mt-to-mx.component').then(m => m.MtToMxComponent) },
     { path: 'bulk-generate', loadComponent: () => import('./pages/bulk-generate/bulk-generate.component').then(m => m.BulkGenerateComponent) },
     { path: '**', redirectTo: '' }
-];
+];

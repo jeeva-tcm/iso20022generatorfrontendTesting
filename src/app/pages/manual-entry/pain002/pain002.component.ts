@@ -2,7 +2,7 @@ import { BicSearchDialogComponent } from '../bic-search-dialog/bic-search-dialog
 import { MatDialog } from '@angular/material/dialog';
 import { Component, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, FormArray, ReactiveFormsModule, Validators, FormsModule } from '@angular/forms';
+import { AbstractControl, FormBuilder, FormGroup, FormArray, ReactiveFormsModule, Validators, FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { HttpClient } from '@angular/common/http';
 import { ConfigService } from '../../../services/config.service';
@@ -61,14 +61,11 @@ export class Pain002Component implements OnInit, OnDestroy {
   // Collapsible sections
   sections: Record<string, boolean> = {
     'bah': true,
-    'bahFrom': false,
-    'bahTo': false,
     'bahMktPrctc': false,
     'bahRltd': false,
     'grpHdr': true,
     'orgnlGrpInf': true,
-    'orgnlPmtInf': true,
-    'txInf': true
+    'orgnlPmtInf': true
   };
 
   countries: string[] = [];
@@ -191,25 +188,41 @@ export class Pain002Component implements OnInit, OnDestroy {
       return null;
     };
 
+    const checkFIIdentity = (prefix: string, errKey: string) => {
+      const bic = (g.get(`${prefix}Bic`)?.value || '').trim();
+      const mmb = (g.get(`${prefix}MmbId`)?.value || '').trim();
+      const lei = (g.get(`${prefix}Lei`)?.value || '').trim();
+      if (!bic && !mmb && !lei) return { [errKey]: true };
+      return null;
+    };
+
+    let errors: any = null;
+    const merge = (e: any) => { if (e) errors = { ...(errors || {}), ...e }; };
+
+    merge(checkFIIdentity('head_from', 'head_from_idRequired'));
+    merge(checkFIIdentity('head_to', 'head_to_idRequired'));
+
     const prefixes = ['head_from', 'head_to'];
     const rltdEnabled = g.get('head_rltd_enabled')?.value;
     if (rltdEnabled) {
       prefixes.push('head_rltd_from', 'head_rltd_to');
+      merge(checkFIIdentity('head_rltd_from', 'head_rltd_from_idRequired'));
+      merge(checkFIIdentity('head_rltd_to', 'head_rltd_to_idRequired'));
     }
-
-    let errors: any = null;
-    for (const p of prefixes) {
-      const err = checkClrSys(p);
-      if (err) errors = { ...(errors || {}), ...err };
-    }
+    for (const p of prefixes) merge(checkClrSys(p));
 
     const cpy = g.get('head_cpyDplct')?.value;
-    const rltd = g.get('head_rltd_enabled')?.value;
-    if (cpy && !rltd) errors = { ...(errors || {}), rltdHeaderMissing: true };
+    if (cpy && !rltdEnabled) merge({ rltdHeaderMissing: true });
 
-    const mktRegy = g.get('head_mktPrctcRegy')?.value;
-    const mktId = g.get('head_mktPrctcId')?.value;
-    if (mktRegy && !mktId) errors = { ...(errors || {}), mktPrctcIdMissing: true };
+    const mktRegy = (g.get('head_mktPrctcRegy')?.value || '').trim();
+    const mktId = (g.get('head_mktPrctcId')?.value || '').trim();
+    if (mktRegy && !mktId) merge({ mktPrctcIdMissing: true });
+    if (mktId && !mktRegy) merge({ mktPrctcRegyMissing: true });
+
+    const bicSame = ((g.get('head_fromBic')?.value || '').trim().toUpperCase()) ===
+                    ((g.get('head_toBic')?.value || '').trim().toUpperCase()) &&
+                    (g.get('head_fromBic')?.value || '').trim() !== '';
+    if (bicSame) merge({ bicSame: true });
 
     const initPty = g.get('initgPty');
     if (initPty) {
@@ -218,7 +231,11 @@ export class Pain002Component implements OnInit, OnDestroy {
         const bic = initPty.get('orgAnyBic')?.value;
         const lei = initPty.get('orgLei')?.value;
         const othr = initPty.get('orgId')?.value;
-        if (!bic && !lei && !othr) errors = { ...(errors || {}), initgPtyIdRequired: true };
+        if (!bic && !lei && !othr) merge({ initgPtyIdRequired: true });
+      } else if (type === 'prvt') {
+        const othr = initPty.get('prvtId')?.value;
+        const dob = initPty.get('prvtBirthDt')?.value;
+        if (!othr && !dob) merge({ initgPtyIdRequired: true });
       }
     }
 
@@ -227,7 +244,7 @@ export class Pain002Component implements OnInit, OnDestroy {
       const bic = fwd.get('bic')?.value;
       const mmb = fwd.get('mmbId')?.value;
       const lei = fwd.get('lei')?.value;
-      if (!bic && !mmb && !lei) errors = { ...(errors || {}), fwdgAgtIdRequired: true };
+      if (!bic && !mmb && !lei) merge({ fwdgAgtIdRequired: true });
     }
 
     const txArr = g.get('transactions') as FormArray;
@@ -235,7 +252,7 @@ export class Pain002Component implements OnInit, OnDestroy {
       txArr.controls.forEach((tx, i) => {
         const sts = tx.get('txSts')?.value;
         const rsn = tx.get('stsRsnCd')?.value;
-        if (sts === 'RJCT' && !rsn) errors = { ...(errors || {}), [`tx_${i}_rsnRequired`]: true };
+        if (sts === 'RJCT' && !rsn) merge({ [`tx_${i}_rsnRequired`]: true });
       });
     }
 
@@ -243,10 +260,13 @@ export class Pain002Component implements OnInit, OnDestroy {
   };
 
   buildForm() {
-    const BIC_OPT = [Validators.pattern(/^[A-Z]{6}[A-Z2-9][A-NP-Z0-9]([A-Z0-9]{3})?$/)];
-    const LEI_PATTERN = [Validators.pattern(/^[A-Z0-9]{20}$/)];
-    const CLEARING_CODE_PATTERN = [Validators.maxLength(5)];
+    const BIC_OPT = [Validators.pattern(/^[A-Z0-9]{4}[A-Z]{2}[A-Z0-9]{2}([A-Z0-9]{3})?$/)];
+    const LEI_PATTERN = [Validators.pattern(/^[A-Z0-9]{18}[0-9]{2}$/)];
+    const CLEARING_CODE_PATTERN = [Validators.minLength(1), Validators.maxLength(5)];
     const MMB_ID_PATTERN = [Validators.pattern(/^[A-Z0-9]{1,35}$/)];
+    const ISO_DT = Validators.pattern(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})$/);
+    const MSG_NM_ID = Validators.pattern(/^(pain|pacs|camt|head|admi|auth|tsmt|setr|sese|semt|seev|reda|colr)\.\d{3}\.\d{3}\.\d{2}$/);
+    const NON_EMPTY = [Validators.required, Validators.minLength(1)];
 
     this.form = this.fb.group({
       head_charSet: ['UTF-8'],
@@ -258,12 +278,12 @@ export class Pain002Component implements OnInit, OnDestroy {
       head_toClrSysCd: ['', CLEARING_CODE_PATTERN],
       head_toMmbId: ['', MMB_ID_PATTERN],
       head_toLei: ['', LEI_PATTERN],
-      head_bizMsgIdr: ['MSGID-' + this.dateStamp() + '-' + this.randomId(), [Validators.required, Validators.maxLength(35)]],
+      head_bizMsgIdr: ['MSGID-' + this.dateStamp() + '-' + this.randomId(), [...NON_EMPTY, Validators.maxLength(35)]],
       head_msgDefIdr: [{ value: 'pain.002.001.10', disabled: true }],
-      head_bizSvc: ['swift.cbprplus.02', [Validators.required, Validators.maxLength(35)]],
-      head_mktPrctcRegy: ['', [Validators.maxLength(35)]],
-      head_mktPrctcId: ['', [Validators.maxLength(35)]],
-      head_creDt: [this.isoNow(), Validators.required],
+      head_bizSvc: ['swift.cbprplus.02', [...NON_EMPTY, Validators.maxLength(35)]],
+      head_mktPrctcRegy: ['', [Validators.maxLength(350)]],
+      head_mktPrctcId: ['', [Validators.maxLength(2048)]],
+      head_creDt: [this.isoNow(), [Validators.required, ISO_DT]],
       head_cpyDplct: [''],
       head_pssblDplct: [false],
       head_prty: ['NORM'],
@@ -271,45 +291,41 @@ export class Pain002Component implements OnInit, OnDestroy {
       head_rltd_enabled: [false],
       head_rltd_charSet: ['UTF-8'],
       head_rltd_fromBic: ['', BIC_OPT],
-      head_rltd_fromClrSysCd: ['', [Validators.maxLength(5)]],
-      head_rltd_fromMmbId: ['', [Validators.maxLength(35)]],
+      head_rltd_fromClrSysCd: ['', CLEARING_CODE_PATTERN],
+      head_rltd_fromMmbId: ['', MMB_ID_PATTERN],
       head_rltd_fromLei: ['', LEI_PATTERN],
       head_rltd_toBic: ['', BIC_OPT],
-      head_rltd_toClrSysCd: ['', [Validators.maxLength(5)]],
-      head_rltd_toMmbId: ['', [Validators.maxLength(35)]],
+      head_rltd_toClrSysCd: ['', CLEARING_CODE_PATTERN],
+      head_rltd_toMmbId: ['', MMB_ID_PATTERN],
       head_rltd_toLei: ['', LEI_PATTERN],
       head_rltd_bizMsgIdr: ['', [Validators.maxLength(35)]],
-      head_rltd_msgDefIdr: [''],
+      head_rltd_msgDefIdr: ['', [MSG_NM_ID]],
       head_rltd_bizSvc: ['', [Validators.maxLength(35)]],
-      head_rltd_creDt: [''],
+      head_rltd_creDt: ['', [ISO_DT]],
       head_rltd_cpyDplct: [''],
       head_rltd_pssblDplct: [false],
       head_rltd_prty: [''],
 
-      grpHdr_msgId: ['PAIN002-' + this.dateStamp() + '-' + this.randomId(), [Validators.required, Validators.maxLength(35)]],
-      grpHdr_creDtTm: [this.isoNow(), Validators.required],
+      grpHdr_msgId: ['PAIN002-' + this.dateStamp() + '-' + this.randomId(), [...NON_EMPTY, Validators.maxLength(35)]],
+      grpHdr_creDtTm: [this.isoNow(), [Validators.required, ISO_DT]],
       initgPty: this.initPartyGroup(),
       fwdgAgt: this.initAgentGroup(),
 
-      orgnlMsgId: ['MSGID-' + this.dateStamp() + '-' + this.randomId(), [Validators.required, Validators.maxLength(35)]],
-      orgnlMsgNmId: ['pain.001.001.09', [Validators.required, Validators.maxLength(35)]],
-      orgnlCreDtTm: ['', [Validators.pattern(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})$/)]],
+      orgnlMsgId: ['MSGID-' + this.dateStamp() + '-' + this.randomId(), [...NON_EMPTY, Validators.maxLength(35)]],
+      orgnlMsgNmId: ['pain.001.001.09', [...NON_EMPTY, Validators.maxLength(35), MSG_NM_ID]],
+      orgnlCreDtTm: ['', [ISO_DT]],
+      orgnlGrpSts: [''],
 
-      orgnlPmtInfId: ['PMTINF-' + this.dateStamp() + '-001', [Validators.required, Validators.maxLength(35)]],
+      orgnlPmtInfId: ['PMTINF-' + this.dateStamp() + '-001', [...NON_EMPTY, Validators.maxLength(35)]],
       transactions: this.fb.array([this.initTransaction()])
     }, { validators: [this.bahValidator] });
 
     this.form.valueChanges.pipe(debounceTime(300)).subscribe(() => {
-      if (!this.isParsingXml && !this.isInternalChange) {
-        this.generateXml();
-        this.pushHistory();
-        this.scheduleDraftSave();
-      }
-    });
-
-    // Auto-uppercase all BIC, LEI, and ID fields across the entire form (main, parties, transactions)
-    this.form.valueChanges.pipe(debounceTime(300)).subscribe(() => {
-        this.applyAutoUppercase(this.form);
+      if (this.isParsingXml || this.isInternalChange) return;
+      this.applyAutoUppercase(this.form);
+      this.generateXml();
+      this.pushHistory();
+      this.scheduleDraftSave();
     });
 
     // Auto-enable Related Header when Copy/Duplicate is selected
@@ -368,19 +384,37 @@ export class Pain002Component implements OnInit, OnDestroy {
   }
 
   partyIdValidator = (g: any): any => {
+    let errors: any = null;
+    const merge = (e: any) => { if (e) errors = { ...(errors || {}), ...e }; };
     const type = g.get('idType')?.value;
+
     if (type === 'org') {
         const id = g.get('orgId')?.value;
         const sch = g.get('orgScheme')?.value;
         const prp = g.get('orgPrtry')?.value;
-        if (id && !sch && !prp) return { orgSchemeMissing: true };
+        const issr = g.get('orgIssr')?.value;
+        if (id && !sch && !prp) merge({ orgSchemeMissing: true });
+        if (issr && !id) merge({ orgIdRequiredForIssr: true });
     } else if (type === 'prvt') {
         const id = g.get('prvtId')?.value;
         const sch = g.get('prvtScheme')?.value;
         const prp = g.get('prvtPrtry')?.value;
-        if (id && !sch && !prp) return { prvtSchemeMissing: true };
+        const issr = g.get('prvtIssr')?.value;
+        if (id && !sch && !prp) merge({ prvtSchemeMissing: true });
+        if (issr && !id) merge({ prvtIdRequiredForIssr: true });
+
+        const birthDt = g.get('prvtBirthDt')?.value;
+        const city = g.get('prvtCity')?.value;
+        const ctry = g.get('prvtCtry')?.value;
+        const prov = g.get('prvtProv')?.value;
+        const anyDob = birthDt || city || ctry || prov;
+        if (anyDob) {
+          if (!birthDt) merge({ dobBirthDtRequired: true });
+          if (!city) merge({ dobCityRequired: true });
+          if (!ctry) merge({ dobCtryRequired: true });
+        }
     }
-    return null;
+    return errors;
   };
 
   initAgentGroup() {
@@ -442,8 +476,24 @@ export class Pain002Component implements OnInit, OnDestroy {
 
   onAddrTypeChange(group: any) {
     const type = group.get('postal.addrType')?.value;
-    const lines = group.get('postal.addrLines') as FormArray;
+    const postal = group.get('postal') as FormGroup;
+    const lines = postal.get('addrLines') as FormArray;
     while (lines.length) lines.removeAt(0);
+
+    // Clear structured fields when switching to a mode that doesn't render them.
+    if (type === 'none' || type === 'unstructured') {
+      const structuredKeys = ['dept', 'subDept', 'street', 'bldgNb', 'bldgNm', 'floor', 'pstBx', 'room', 'pstCd'];
+      const cleared: any = {};
+      structuredKeys.forEach(k => cleared[k] = '');
+      postal.patchValue(cleared, { emitEvent: false });
+    }
+    if (type === 'none') {
+      const allKeys = ['town', 'townLctn', 'district', 'ctrySub', 'ctry'];
+      const cleared: any = {};
+      allKeys.forEach(k => cleared[k] = '');
+      postal.patchValue(cleared, { emitEvent: false });
+    }
+
     let count = 0;
     if (type === 'unstructured') count = 3;
     else if (type === 'hybrid') count = 2;
@@ -506,6 +556,49 @@ export class Pain002Component implements OnInit, OnDestroy {
       : null;
   }
 
+  get bicSameRltdWarning(): string | null {
+    if (!this.form.get('head_rltd_enabled')?.value) return null;
+    const from = (this.form.get('head_rltd_fromBic')?.value || '').trim().toUpperCase();
+    const to = (this.form.get('head_rltd_toBic')?.value || '').trim().toUpperCase();
+    if (!from || !to) return null;
+    return from === to
+      ? 'Related Sender BIC and Related Receiver BIC are identical. They must represent different financial institutions.'
+      : null;
+  }
+
+  isTxInvalid(i: number): boolean {
+    const tx = this.transactions.at(i);
+    if (!tx) return false;
+    return tx.invalid || !!this.form.errors?.[`tx_${i}_rsnRequired`];
+  }
+
+  getFormErrorList(): string[] {
+    const out: string[] = [];
+    const errs = this.form.errors || {};
+    const labels: Record<string, string> = {
+      head_from_idRequired: 'Sender (From) requires at least one identifier (BIC, MmbId, or LEI).',
+      head_to_idRequired: 'Receiver (To) requires at least one identifier (BIC, MmbId, or LEI).',
+      head_rltd_from_idRequired: 'Related Sender requires at least one identifier.',
+      head_rltd_to_idRequired: 'Related Receiver requires at least one identifier.',
+      head_from_clrSysCdMissing: 'Sender Clearing System Code required when Member ID is present.',
+      head_to_clrSysCdMissing: 'Receiver Clearing System Code required when Member ID is present.',
+      head_rltd_from_clrSysCdMissing: 'Related Sender Clearing System Code required when Member ID is present.',
+      head_rltd_to_clrSysCdMissing: 'Related Receiver Clearing System Code required when Member ID is present.',
+      rltdHeaderMissing: 'Related Header must be enabled when Copy/Duplicate is selected.',
+      mktPrctcIdMissing: 'Market Practice ID required when Registry is filled.',
+      mktPrctcRegyMissing: 'Market Practice Registry required when ID is filled.',
+      initgPtyIdRequired: 'Initiating Party requires at least one identifier.',
+      fwdgAgtIdRequired: 'Forwarding Agent requires at least one identifier (BIC, MmbId, or LEI).',
+      bicSame: 'Sender BIC and Receiver BIC must differ.'
+    };
+    Object.keys(errs).forEach(k => {
+      if (labels[k]) { out.push(labels[k]); return; }
+      const m = k.match(/^tx_(\d+)_rsnRequired$/);
+      if (m) out.push(`Transaction #${+m[1] + 1}: Reason Code required when status is RJCT.`);
+    });
+    return out;
+  }
+
   generateXml() {
     const v = this.form.getRawValue();
     let bah = '';
@@ -545,6 +638,7 @@ export class Pain002Component implements OnInit, OnDestroy {
     orgnlGrp += this.leaf('OrgnlMsgId', v.orgnlMsgId, 4);
     orgnlGrp += this.leaf('OrgnlMsgNmId', v.orgnlMsgNmId, 4);
     if (v.orgnlCreDtTm) orgnlGrp += this.leaf('OrgnlCreDtTm', this.fdt(v.orgnlCreDtTm), 4);
+    if (v.orgnlGrpSts) orgnlGrp += this.leaf('GrpSts', v.orgnlGrpSts, 4);
     doc += this.branch('OrgnlGrpInfAndSts', orgnlGrp, 3);
     let orgnlPmt = '';
     orgnlPmt += this.leaf('OrgnlPmtInfId', v.orgnlPmtInfId, 4);
@@ -685,7 +779,15 @@ ${doc.trimEnd()}
 
   refreshLineCount() { this.editorLineCount = Array.from({ length: (this.generatedXml || '').split('\n').length }, (_, i) => i + 1); }
   syncScroll(e: any, g: any) { g.scrollTop = e.scrollTop; }
-  pushHistory() { this.xmlHistoryIdx++; this.xmlHistory[this.xmlHistoryIdx] = this.generatedXml; }
+  pushHistory() {
+    // Drop forward history when a new branch is created
+    this.xmlHistory = this.xmlHistory.slice(0, this.xmlHistoryIdx + 1);
+    this.xmlHistory.push(this.generatedXml);
+    if (this.xmlHistory.length > this.maxHistory) {
+      this.xmlHistory.shift();
+    }
+    this.xmlHistoryIdx = this.xmlHistory.length - 1;
+  }
   undoXml() { if (this.xmlHistoryIdx > 0) { this.xmlHistoryIdx--; this.generatedXml = this.xmlHistory[this.xmlHistoryIdx]; this.refreshLineCount(); } }
   redoXml() { if (this.xmlHistoryIdx < this.xmlHistory.length - 1) { this.xmlHistoryIdx++; this.generatedXml = this.xmlHistory[this.xmlHistoryIdx]; this.refreshLineCount(); } }
   canUndoXml() { return this.xmlHistoryIdx > 0; }
@@ -718,63 +820,71 @@ ${doc.trimEnd()}
       };
       const tval = (t: string, p: any = doc) => getT(t, p)?.textContent?.trim() || '';
       const patch: any = {};
-      Object.keys(this.form.controls).forEach(k => patch[k] = '');
+      const setIf = (key: string, value: any) => { if (value !== '' && value !== undefined && value !== null) patch[key] = value; };
 
       // AppHdr
       const head = getT('AppHdr');
       if (head) {
-        const parseFI = (tag: string, pfx: string) => {
-          const node = getT(tag, head);
+        const parseFI = (tag: string, pfx: string, parent: Element) => {
+          const node = getT(tag, parent);
           if (!node) return;
-          patch[pfx + 'Bic'] = tval('BICFI', node);
+          setIf(pfx + 'Bic', tval('BICFI', node));
           const clr = getT('ClrSysMmbId', node);
           if (clr) {
-            patch[pfx + 'ClrSysCd'] = tval('Cd', getT('ClrSysId', clr) || clr);
-            patch[pfx + 'MmbId'] = tval('MmbId', clr);
+            setIf(pfx + 'ClrSysCd', tval('Cd', getT('ClrSysId', clr) || clr));
+            setIf(pfx + 'MmbId', tval('MmbId', clr));
           }
-          patch[pfx + 'Lei'] = tval('LEI', node);
+          setIf(pfx + 'Lei', tval('LEI', node));
         };
-        parseFI('Fr', 'head_from');
-        parseFI('To', 'head_to');
-        patch['head_bizMsgIdr'] = tval('BizMsgIdr', head);
-        patch['head_bizSvc'] = tval('BizSvc', head);
-        patch['head_creDt'] = (tval('CreDt', head) || tval('CreDtTm', head)).substring(0, 25);
-        patch['head_cpyDplct'] = tval('CpyDplct', head);
+        parseFI('Fr', 'head_from', head);
+        parseFI('To', 'head_to', head);
+        setIf('head_bizMsgIdr', tval('BizMsgIdr', head));
+        setIf('head_bizSvc', tval('BizSvc', head));
+        const dt = (tval('CreDt', head) || tval('CreDtTm', head));
+        if (dt) patch['head_creDt'] = dt.substring(0, 25);
+        setIf('head_cpyDplct', tval('CpyDplct', head));
         patch['head_pssblDplct'] = tval('PssblDplct', head) === 'true';
-        patch['head_prty'] = tval('Prty', head);
+        setIf('head_prty', tval('Prty', head));
         const mkt = getT('MktPrctc', head);
-        if (mkt) { patch['head_mktPrctcRegy'] = tval('Regy', mkt); patch['head_mktPrctcId'] = tval('Id', mkt); }
+        if (mkt) { setIf('head_mktPrctcRegy', tval('Regy', mkt)); setIf('head_mktPrctcId', tval('Id', mkt)); }
         const rltd = getT('Rltd', head);
         if (rltd) {
           patch['head_rltd_enabled'] = true;
-          parseFI('Fr', 'head_rltd_from');
-          parseFI('To', 'head_rltd_to');
-          patch['head_rltd_bizMsgIdr'] = tval('BizMsgIdr', rltd);
-          patch['head_rltd_bizSvc'] = tval('BizSvc', rltd);
-          patch['head_rltd_creDt'] = tval('CreDt', rltd);
-          patch['head_rltd_cpyDplct'] = tval('CpyDplct', rltd);
+          parseFI('Fr', 'head_rltd_from', rltd);
+          parseFI('To', 'head_rltd_to', rltd);
+          setIf('head_rltd_bizMsgIdr', tval('BizMsgIdr', rltd));
+          setIf('head_rltd_bizSvc', tval('BizSvc', rltd));
+          setIf('head_rltd_creDt', tval('CreDt', rltd));
+          setIf('head_rltd_cpyDplct', tval('CpyDplct', rltd));
           patch['head_rltd_pssblDplct'] = tval('PssblDplct', rltd) === 'true';
-          patch['head_rltd_prty'] = tval('Prty', rltd);
+          setIf('head_rltd_prty', tval('Prty', rltd));
         }
       }
 
       // GrpHdr
       const grpHdr = getT('GrpHdr');
       if (grpHdr) {
-        patch['grpHdr_msgId'] = tval('MsgId', grpHdr);
-        patch['grpHdr_creDtTm'] = tval('CreDtTm', grpHdr);
+        setIf('grpHdr_msgId', tval('MsgId', grpHdr));
+        setIf('grpHdr_creDtTm', tval('CreDtTm', grpHdr));
         const initgPty = getT('InitgPty', grpHdr);
-        if (initgPty) this.parsePartyGroup(initgPty, 'initgPty', patch, getT, tval);
+        if (initgPty) this.parsePartyGroup(initgPty, this.form.get('initgPty'), getT, tval);
         const fwdgAgt = getT('FwdgAgt', grpHdr);
         if (fwdgAgt) {
           const fi = getT('FinInstnId', fwdgAgt);
           if (fi) {
-            (this.form.get('fwdgAgt') as any)?.patchValue({
-              bic: tval('BICFI', fi),
-              lei: tval('LEI', fi),
-              clrSys: fi.getElementsByTagName('ClrSysId')[0]?.getElementsByTagName('Cd')[0]?.textContent?.trim() || '',
-              mmbId: tval('MmbId', getT('ClrSysMmbId', fi) || fi)
-            }, { emitEvent: false });
+            const agentPatch: any = {};
+            const agtBic = tval('BICFI', fi);
+            const agtLei = tval('LEI', fi);
+            const clrNode = getT('ClrSysMmbId', fi);
+            const agtClr = clrNode ? tval('Cd', getT('ClrSysId', clrNode) || clrNode) : '';
+            const agtMmb = clrNode ? tval('MmbId', clrNode) : '';
+            if (agtBic) agentPatch.bic = agtBic;
+            if (agtLei) agentPatch.lei = agtLei;
+            if (agtClr) agentPatch.clrSys = agtClr;
+            if (agtMmb) agentPatch.mmbId = agtMmb;
+            if (Object.keys(agentPatch).length) {
+              (this.form.get('fwdgAgt') as any)?.patchValue(agentPatch, { emitEvent: false });
+            }
           }
         }
       }
@@ -782,37 +892,39 @@ ${doc.trimEnd()}
       // OrgnlGrpInfAndSts
       const orgnlGrp = getT('OrgnlGrpInfAndSts');
       if (orgnlGrp) {
-        patch['orgnlMsgId'] = tval('OrgnlMsgId', orgnlGrp);
-        patch['orgnlMsgNmId'] = tval('OrgnlMsgNmId', orgnlGrp);
-        patch['orgnlCreDtTm'] = tval('OrgnlCreDtTm', orgnlGrp);
+        setIf('orgnlMsgId', tval('OrgnlMsgId', orgnlGrp));
+        setIf('orgnlMsgNmId', tval('OrgnlMsgNmId', orgnlGrp));
+        setIf('orgnlCreDtTm', tval('OrgnlCreDtTm', orgnlGrp));
+        setIf('orgnlGrpSts', tval('GrpSts', orgnlGrp));
       }
 
       // OrgnlPmtInfAndSts / transactions
       const orgnlPmt = getT('OrgnlPmtInfAndSts');
       if (orgnlPmt) {
-        patch['orgnlPmtInfId'] = tval('OrgnlPmtInfId', orgnlPmt);
+        setIf('orgnlPmtInfId', tval('OrgnlPmtInfId', orgnlPmt));
         const txEls = orgnlPmt.getElementsByTagName('TxInfAndSts');
         if (txEls.length > 0) {
           while (this.transactions.length > txEls.length) this.transactions.removeAt(this.transactions.length - 1);
           while (this.transactions.length < txEls.length) this.transactions.push(this.initTransaction());
           Array.from(txEls).forEach((tx, idx) => {
-            const g = this.transactions.at(idx);
+            const g = this.transactions.at(idx) as FormGroup;
             const tp: any = {};
-            tp['orgnlInstrId'] = tval('OrgnlInstrId', tx);
-            tp['orgnlEndToEndId'] = tval('OrgnlEndToEndId', tx);
-            tp['orgnlUetr'] = tval('OrgnlUETR', tx);
-            tp['txSts'] = tval('TxSts', tx);
+            const setTx = (k: string, v: any) => { if (v !== '' && v !== undefined && v !== null) tp[k] = v; };
+            setTx('orgnlInstrId', tval('OrgnlInstrId', tx));
+            setTx('orgnlEndToEndId', tval('OrgnlEndToEndId', tx));
+            setTx('orgnlUetr', tval('OrgnlUETR', tx));
+            setTx('txSts', tval('TxSts', tx));
             const rsnInf = getT('StsRsnInf', tx);
             if (rsnInf) {
               const rsn = getT('Rsn', rsnInf);
-              if (rsn) tp['stsRsnCd'] = tval('Cd', rsn);
+              if (rsn) setTx('stsRsnCd', tval('Cd', rsn));
               const orgtr = getT('Orgtr', rsnInf);
-              if (orgtr) this.parsePartyGroup(orgtr, 'orgtr', tp, getT, tval);
+              if (orgtr) this.parsePartyGroup(orgtr, g.get('orgtr'), getT, tval);
               const addtlInfs = rsnInf.getElementsByTagName('AddtlInf');
-              const txAddtlArr = g.get('addtlInf') as any;
+              const txAddtlArr = g.get('addtlInf') as FormArray;
               if (addtlInfs.length > 0) {
                 while (txAddtlArr.length > addtlInfs.length) txAddtlArr.removeAt(txAddtlArr.length - 1);
-                while (txAddtlArr.length < addtlInfs.length) txAddtlArr.push(this.fb.control(''));
+                while (txAddtlArr.length < addtlInfs.length) txAddtlArr.push(this.fb.control('', [Validators.maxLength(105)]));
                 Array.from(addtlInfs).forEach((el: any, i: number) => txAddtlArr.at(i).setValue(el.textContent?.trim() || ''));
               }
             }
@@ -829,61 +941,75 @@ ${doc.trimEnd()}
     }
   }
 
-  private parsePartyGroup(node: Element, prefix: string, patch: any, getT: any, tval: any) {
-    if (!node) return;
-    patch[prefix + '.name'] = patch[prefix + '_name'] = tval('Nm', node);
+  private parsePartyGroup(node: Element, group: AbstractControl | null, getT: any, tval: any) {
+    if (!node || !group) return;
+    const partyPatch: any = {};
+    const setIf = (k: string, v: any) => { if (v !== '' && v !== undefined && v !== null) partyPatch[k] = v; };
+
+    setIf('name', tval('Nm', node));
+
     const pstl = getT('PstlAdr', node);
     if (pstl) {
       const adrLines = pstl.getElementsByTagName('AdrLine');
       const strtNm = tval('StrtNm', pstl);
       const addrType = adrLines.length > 0 ? (strtNm ? 'hybrid' : 'unstructured') : 'structured';
-      const postalPatch = {
-        addrType,
-        dept: tval('Dept', pstl), subDept: tval('SubDept', pstl),
-        street: tval('StrtNm', pstl), bldgNb: tval('BldgNb', pstl),
-        bldgNm: tval('BldgNm', pstl), floor: tval('Flr', pstl),
-        pstBx: tval('PstBx', pstl), room: tval('Room', pstl),
-        pstCd: tval('PstCd', pstl), town: tval('TwnNm', pstl),
-        townLctn: tval('TwnLctnNm', pstl), district: tval('DstrctNm', pstl),
-        ctrySub: tval('CtrySubDvsn', pstl), ctry: tval('Ctry', pstl)
-      };
-      try { (this.form.get(prefix) as any)?.get('postal')?.patchValue(postalPatch, { emitEvent: false }); } catch (_) {}
+      const postalPatch: any = { addrType };
+      const sp = (k: string, t: string) => { const v = tval(t, pstl); if (v) postalPatch[k] = v; };
+      sp('dept', 'Dept'); sp('subDept', 'SubDept'); sp('street', 'StrtNm');
+      sp('bldgNb', 'BldgNb'); sp('bldgNm', 'BldgNm'); sp('floor', 'Flr');
+      sp('pstBx', 'PstBx'); sp('room', 'Room'); sp('pstCd', 'PstCd');
+      sp('town', 'TwnNm'); sp('townLctn', 'TwnLctnNm'); sp('district', 'DstrctNm');
+      sp('ctrySub', 'CtrySubDvsn'); sp('ctry', 'Ctry');
+
+      const postalGroup = (group as FormGroup).get('postal') as FormGroup;
+      if (postalGroup) {
+        postalGroup.patchValue(postalPatch, { emitEvent: false });
+        if (adrLines.length > 0) {
+          const addrLinesArr = postalGroup.get('addrLines') as FormArray;
+          while (addrLinesArr.length > adrLines.length) addrLinesArr.removeAt(addrLinesArr.length - 1);
+          while (addrLinesArr.length < adrLines.length) addrLinesArr.push(this.fb.control('', [Validators.maxLength(70)]));
+          Array.from(adrLines).forEach((el: any, i: number) => addrLinesArr.at(i).setValue(el.textContent?.trim() || '', { emitEvent: false }));
+        }
+      }
     }
+
     const id = getT('Id', node);
     if (id) {
       const org = getT('OrgId', id);
       if (org) {
-        patch[prefix + '.idType'] = 'org';
-        patch[prefix + '.orgAnyBic'] = tval('AnyBIC', org);
-        patch[prefix + '.orgLei'] = tval('LEI', org);
+        partyPatch.idType = 'org';
+        setIf('orgAnyBic', tval('AnyBIC', org));
+        setIf('orgLei', tval('LEI', org));
         const othr = getT('Othr', org);
         if (othr) {
-          patch[prefix + '.orgId'] = tval('Id', othr);
+          setIf('orgId', tval('Id', othr));
           const sch = getT('SchmeNm', othr);
-          if (sch) { patch[prefix + '.orgScheme'] = tval('Cd', sch); patch[prefix + '.orgPrtry'] = tval('Prtry', sch); }
-          patch[prefix + '.orgIssr'] = tval('Issr', othr);
+          if (sch) { setIf('orgScheme', tval('Cd', sch)); setIf('orgPrtry', tval('Prtry', sch)); }
+          setIf('orgIssr', tval('Issr', othr));
         }
       }
       const prvt = getT('PrvtId', id);
       if (prvt) {
-        patch[prefix + '.idType'] = 'prvt';
+        partyPatch.idType = 'prvt';
         const dob = getT('DtAndPlcOfBirth', prvt);
         if (dob) {
-          patch[prefix + '.prvtBirthDt'] = tval('BirthDt', dob);
-          patch[prefix + '.prvtProv'] = tval('PrvcOfBirth', dob);
-          patch[prefix + '.prvtCity'] = tval('CityOfBirth', dob);
-          patch[prefix + '.prvtCtry'] = tval('CtryOfBirth', dob);
+          setIf('prvtBirthDt', tval('BirthDt', dob));
+          setIf('prvtProv', tval('PrvcOfBirth', dob));
+          setIf('prvtCity', tval('CityOfBirth', dob));
+          setIf('prvtCtry', tval('CtryOfBirth', dob));
         }
         const othr = getT('Othr', prvt);
         if (othr) {
-          patch[prefix + '.prvtId'] = tval('Id', othr);
+          setIf('prvtId', tval('Id', othr));
           const sch = getT('SchmeNm', othr);
-          if (sch) { patch[prefix + '.prvtScheme'] = tval('Cd', sch); patch[prefix + '.prvtPrtry'] = tval('Prtry', sch); }
-          patch[prefix + '.prvtIssr'] = tval('Issr', othr);
+          if (sch) { setIf('prvtScheme', tval('Cd', sch)); setIf('prvtPrtry', tval('Prtry', sch)); }
+          setIf('prvtIssr', tval('Issr', othr));
         }
       }
     }
-    patch[prefix + '.ctryOfRes'] = tval('CtryOfRes', node);
+    setIf('ctryOfRes', tval('CtryOfRes', node));
+
+    (group as FormGroup).patchValue(partyPatch, { emitEvent: false });
   }
 
   validateMessage() {
@@ -916,15 +1042,6 @@ ${doc.trimEnd()}
     return getValidationErrorMessage(c, path);
   }
 
-  hint(path: string, maxLen: number): string | null {
-    if (this.err(path)) return null;
-    const c = this.form.get(path);
-    if (!c || !c.value) return null;
-    const len = c.value.toString().length;
-    // Removed auto-showing warning when field is full by default
-    return null;
-  }
-
   charCount(path: string, max: number) { const v = this.form.get(path)?.value || ''; return `${v.length}/${max}`; }
   isNearLimit(path: string, max: number) { return (this.form.get(path)?.value || '').length > max * 0.8; }
   getValidationLayers() { return Object.keys(this.validationReport?.layer_status || {}).sort(); }
@@ -942,9 +1059,18 @@ ${doc.trimEnd()}
   closeValidationModal() { this.showValidationModal = false; this.validationReport = null; this.validationStatus = 'idle'; this.validationExpandedIssue = null; }
   copyFix(text: string, e: MouseEvent) { e.stopPropagation(); navigator.clipboard.writeText(text).then(() => this.snackBar.open('Copied!', '', { duration: 1500 })); }
   formatXml(showToast = true) { this.generateXml(); }
-  viewXmlModal() { this.closeValidationModal(); }
-  editXmlModal() { this.closeValidationModal(); }
-  runValidationModal() { this.validateMessage(); }
+  viewXmlModal() {
+    this.closeValidationModal();
+    setTimeout(() => this.xmlEditor?.nativeElement?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+  }
+  editXmlModal() {
+    this.closeValidationModal();
+    setTimeout(() => {
+      this.xmlEditor?.nativeElement?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      this.xmlEditor?.nativeElement?.focus();
+    }, 50);
+  }
+  runValidationModal() { this.closeValidationModal(); setTimeout(() => this.validateMessage(), 100); }
 
   openBicSearch(controlName: string, index?: number) {
     const dialogRef = this.dialog.open(BicSearchDialogComponent, { width: '800px', disableClose: true });
