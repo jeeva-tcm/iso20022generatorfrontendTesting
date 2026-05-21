@@ -85,8 +85,17 @@
                 </div>
             </div>
 
+            <!-- LOADING STATE -->
+            <div class="history-loading-container" *ngIf="isLoading">
+                <div class="spinner-box">
+                    <div class="premium-spinner"></div>
+                    <h3>Loading History Data</h3>
+                    <p>Fetching the latest message validation records...</p>
+                </div>
+            </div>
+
             <!-- DESKTOP TABLE VIEW -->
-            <div class="desktop-only">
+            <div class="desktop-only" *ngIf="!isLoading">
                 <table mat-table [dataSource]="dataSource" multiTemplateDataRows class="full-width">
                     <!-- Validation ID Column -->
                     <ng-container matColumnDef="validation_id">
@@ -299,7 +308,7 @@
             </div>
 
             <!-- MOBILE CARD VIEW -->
-            <div class="mobile-only mobile-history-list">
+            <div class="mobile-only mobile-history-list" *ngIf="!isLoading">
                 <div *ngFor="let element of dataSource.filteredData" class="history-mobile-card"
                     [class.is-expanded]="expandedElement === element">
                     <div class="card-main-info" (click)="onViewDetails(element)">

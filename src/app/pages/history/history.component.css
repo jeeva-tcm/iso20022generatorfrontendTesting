@@ -1340,3 +1340,92 @@ mat-card {
 .origin-filter {
     margin-left: 8px;
 }
+
+/* ========================================= */
+/* PREMIUM LOADING SPINNER                   */
+/* ========================================= */
+.history-loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 20px;
+    background: transparent;
+    animation: fadeIn 0.4s ease-out;
+}
+
+.spinner-box {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 16px;
+}
+
+.premium-spinner {
+    position: relative;
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: radial-gradient(farthest-side, var(--accent-color) 94%, #0000) top/8px 8px no-repeat,
+                conic-gradient(#0000 30%, var(--accent-color));
+    -webkit-mask: radial-gradient(farthest-side, #0000 calc(100% - 8px), #000 0);
+    animation: spin 1s infinite linear;
+}
+
+.spinner-box::before {
+    content: '';
+    position: absolute;
+    top: -8px;
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: var(--accent-color);
+    opacity: 0.15;
+    animation: pulse 2s infinite ease-in-out;
+    z-index: 0;
+    pointer-events: none;
+}
+
+@keyframes spin {
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(0.85);
+        opacity: 0.1;
+    }
+    50% {
+        transform: scale(1.15);
+        opacity: 0.25;
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.spinner-box h3 {
+    margin: 8px 0 0 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-main);
+    letter-spacing: -0.02em;
+}
+
+.spinner-box p {
+    margin: 0;
+    font-size: 14px;
+    color: var(--text-muted);
+}
