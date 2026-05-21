@@ -1023,13 +1023,12 @@ export class Camt054Component implements OnInit, OnDestroy {
     dialogRef.afterClosed().subscribe(result => {
       if (result && result.bic) {
         if (index !== undefined) {
-          const formArray = this.form.get(controlName) as any;
-          if (formArray && formArray.at) {
-            const arrCtrl = formArray.at(index);
-            arrCtrl.setValue(result.bic, { emitEvent: false });
-            arrCtrl.markAsTouched();
-            arrCtrl.markAsDirty();
-            arrCtrl.updateValueAndValidity({ emitEvent: false });
+          const ctrl = this.entries.at(index).get(controlName);
+          if (ctrl) {
+            ctrl.setValue(result.bic, { emitEvent: false });
+            ctrl.markAsTouched();
+            ctrl.markAsDirty();
+            ctrl.updateValueAndValidity({ emitEvent: false });
             this.generateXml();
           }
         } else {

@@ -1101,14 +1101,14 @@ ${tx}\t\t\t</CdtTrfTxInf>
         if (v.covDbtrAcct?.trim()) {
             b += `\t\t\t\t<DbtrAcct>\n\t\t\t\t\t<Id>${formatAcct(v.covDbtrAcct, 5)}\t\t\t\t\t</Id>\n\t\t\t\t</DbtrAcct>\n`;
         }
-        // DbtrAgt
-        if (v.covDbtrAgtBic?.trim()) b += `\t\t\t\t<DbtrAgt>\n\t\t\t\t\t<FinInstnId>\n\t\t\t\t\t\t<BICFI>${this.e(v.covDbtrAgtBic)}</BICFI>\n\t\t\t\t\t</FinInstnId>\n\t\t\t\t</DbtrAgt>\n`;
+        // DbtrAgt (uses agt() so address fields like covDbtrAgtAddrType are included)
+        b += this.agt('DbtrAgt', 'covDbtrAgt', v, 4);
         // DbtrAgtAcct
         if (v.covDbtrAgtAcct?.trim()) {
             b += `\t\t\t\t<DbtrAgtAcct>\n\t\t\t\t\t<Id>${formatAcct(v.covDbtrAgtAcct, 5)}\t\t\t\t\t</Id>\n\t\t\t\t</DbtrAgtAcct>\n`;
         }
-        // CdtrAgt
-        if (v.covCdtrAgtBic?.trim()) b += `\t\t\t\t<CdtrAgt>\n\t\t\t\t\t<FinInstnId>\n\t\t\t\t\t\t<BICFI>${this.e(v.covCdtrAgtBic)}</BICFI>\n\t\t\t\t\t</FinInstnId>\n\t\t\t\t</CdtrAgt>\n`;
+        // CdtrAgt (uses agt() so address fields like covCdtrAgtAddrType are included)
+        b += this.agt('CdtrAgt', 'covCdtrAgt', v, 4);
         // CdtrAgtAcct
         if (v.covCdtrAgtAcct?.trim()) {
             b += `\t\t\t\t<CdtrAgtAcct>\n\t\t\t\t\t<Id>${formatAcct(v.covCdtrAgtAcct, 5)}\t\t\t\t\t</Id>\n\t\t\t\t</CdtrAgtAcct>\n`;

@@ -243,8 +243,15 @@
                                                 <div class="party-group-title">Debtor Account</div>
                                                 <div [formGroup]="form" class="party-grid">
                                                         <div class="form-group intermediary-field">
+                                                                <label>Account Type</label>
+                                                                <select formControlName="dbtrFiAcctType">
+                                                                        <option value="other">Other (Othr/Id)</option>
+                                                                        <option value="iban">IBAN</option>
+                                                                </select>
+                                                        </div>
+                                                        <div class="form-group intermediary-field">
                                                                 <label>Debtor Account ID</label>
-                                                                <input formControlName="dbtrFiAcct" maxlength="34" placeholder="Account / IBAN">
+                                                                <input formControlName="dbtrFiAcct" maxlength="34" [placeholder]="form.get('dbtrFiAcctType')?.value === 'iban' ? 'e.g. GB29NWBK60161331926819' : 'Account ID'">
                                                                 <div class="validation-msg" *ngIf="err('dbtrFiAcct') as e">{{e}}</div>
                                                         </div>
                                                 </div>
@@ -297,8 +304,15 @@
                                                 <div class="party-group-title">Creditor Account</div>
                                                 <div [formGroup]="form" class="party-grid">
                                                         <div class="form-group intermediary-field">
+                                                                <label>Account Type</label>
+                                                                <select formControlName="cdtrFiAcctType">
+                                                                        <option value="other">Other (Othr/Id)</option>
+                                                                        <option value="iban">IBAN</option>
+                                                                </select>
+                                                        </div>
+                                                        <div class="form-group intermediary-field">
                                                                 <label>Creditor Account ID</label>
-                                                                <input formControlName="cdtrFiAcct" maxlength="34" placeholder="Account / IBAN">
+                                                                <input formControlName="cdtrFiAcct" maxlength="34" [placeholder]="form.get('cdtrFiAcctType')?.value === 'iban' ? 'e.g. GB29NWBK60161331926819' : 'Account ID'">
                                                                 <div class="validation-msg" *ngIf="err('cdtrFiAcct') as e">{{e}}</div>
                                                         </div>
                                                 </div>

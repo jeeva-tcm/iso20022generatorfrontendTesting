@@ -338,10 +338,12 @@ export class Camt057Component implements OnInit, OnDestroy {
             this.form.addControl(p + 'AdrLine2', this.fb.control('', [Validators.maxLength(70), ADDR_PATTERN]));
         });
 
+        // Add OrgAnyBIC for non-agent parties (partyForm template uses prefix+'OrgAnyBIC' for isAgent=false)
+        this.form.addControl('dbtrOrgAnyBIC', this.fb.control('', BIC_OPT));
+
         // Set Default Dbtr with hybrid address (Nm + PstlAdr must always be present together)
         this.form.patchValue({
             dbtrName: 'Debtor Bank FI',
-            dbtrBic: 'BBBBUS33XXX',
             dbtrAddrType: 'hybrid',
             dbtrStrtNm: '123 Business Street',
             dbtrTwnNm: 'New York',

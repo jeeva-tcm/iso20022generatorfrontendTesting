@@ -125,14 +125,23 @@ export class BulkGenerateComponent implements OnInit {
   groupedMessages: GroupedMessage[] = [];
   expandedIndex: number | null = null;
 
-  // generation stats from backend response
+  // generation stats from backend response (live during SSE, final after done)
   generationStats: {
     requested: number;
     produced: number;
     totalAttempts: number;
   } | null = null;
 
-  // preview / results view
+  // Live failure breakdown from SSE — { reason: count }
+  liveFailureTop: { reason: string; count: number }[] = [];
+
+  // Current message-type being streamed (when generating multiple types)
+  currentStreamingType: string | null = null;
+
+  // Active EventSource / fetch abort controller for the SSE stream
+  private streamAbortController: AbortController | null = null;
+
+  // preview / results view (strict state machine)
   view: 'select' | 'config' | 'results' = 'select';
 
   @ViewChild('loadingSection') loadingSection?: ElementRef;
@@ -675,63 +684,193 @@ export class BulkGenerateComponent implements OnInit {
   async generate() {
     if (!this.canGenerate) return;
 
+    // Strict state-machine transition: only config -> results is allowed here.
+    if (this.view !== 'config') return;
+
     this.isGenerating = true;
     this.generatedMessages = [];
-    this.generationStats = { requested: 0, produced: 0, totalAttempts: 0 };
+    this.groupedMessages = [];
+    this.liveFailureTop = [];
+    this.currentStreamingType = null;
+    this.generationStats = {
+      requested: this.messageCount * this.selectedConfigs.length,
+      produced: 0,
+      totalAttempts: 0,
+    };
 
-    const totalRequested = this.messageCount * this.selectedConfigs.length;
-    this.generationStats.requested = totalRequested;
-
-    // Scroll to loading section
     setTimeout(() => this.scrollToLoading(), 50);
 
     let globalIndex = 1;
-    let hasError = false;
+    const errors: { cfg: MessageTypeConfig; detail: string }[] = [];
 
     for (const cfg of this.selectedConfigs) {
-      const payload = {
-        message_type: cfg.bulkId,
-        count: this.messageCount,
-        selected_blocks: this.getSelectedBlocks(cfg.id)
-      };
-
+      this.currentStreamingType = cfg.label;
       try {
-        const res = await this.http.post<any>(this.config.getApiUrl('/bulk-generate'), payload).toPromise();
-        
-        const msgs = res.messages || [];
-        msgs.forEach((m: any) => {
-          m.index = globalIndex++;
-          this.generatedMessages.push(m);
-        });
-
-        this.generationStats.produced += (res.count || 0);
-        this.generationStats.totalAttempts += (res.total_attempts || 0);
-
+        const produced = await this.streamMessageType(cfg, globalIndex);
+        globalIndex += produced;
       } catch (err: any) {
-        hasError = true;
-        const detail = typeof err?.error?.detail === 'string'
-          ? err.error.detail
-          : err?.error?.detail?.message || err?.message || `Generation failed for ${cfg.label}.`;
-        
-        // Add a visible error entry so the user can see which type failed
+        const detail = err?.message || `Generation failed for ${cfg.label}.`;
+        errors.push({ cfg, detail });
+        // Visible error placeholder so users see which type failed
         this.generatedMessages.push({
           index: globalIndex++,
           xml: `<!-- Generation failed: ${detail} -->`,
           message_type: cfg.bulkId,
           status: 'error',
-          error: detail
+          error: detail,
         });
-
         this.snackBar.open(`⚠️ ${cfg.label}: ${detail}`, 'Close', {
-          duration: 6000,
-          horizontalPosition: 'center',
-          verticalPosition: 'bottom'
+          duration: 6000, horizontalPosition: 'center', verticalPosition: 'bottom',
         });
-        continue; // Continue with next message type instead of stopping
       }
     }
 
-    // Group the messages by message type
+    this.groupMessagesByType();
+    this.isGenerating = false;
+    this.expandedIndex = null;
+    this.currentStreamingType = null;
+    this.streamAbortController = null;
+
+    this.view = 'results';
+    setTimeout(() => this.scrollToResults(), 100);
+
+    const validCount = this.generatedMessages.filter(m => m.status !== 'error').length;
+    if (errors.length === 0) {
+      this.snackBar.open(`✅ Generated ${validCount} valid messages.`, 'Close',
+        { duration: 4000, horizontalPosition: 'center', verticalPosition: 'bottom' });
+    } else if (validCount > 0) {
+      this.snackBar.open(
+        `⚠️ Generated ${validCount} messages; ${errors.length} message type(s) failed.`,
+        'Close', { duration: 6000, horizontalPosition: 'center', verticalPosition: 'bottom' });
+    }
+  }
+
+  /**
+   * Stream one message type via SSE. Resolves with the number of valid messages
+   * produced. Rejects on terminal `error` events. Updates `generationStats`,
+   * `generatedMessages`, and `liveFailureTop` in real time.
+   */
+  private streamMessageType(cfg: MessageTypeConfig, startIndex: number): Promise<number> {
+    const payload = {
+      message_type: cfg.bulkId,
+      count: this.messageCount,
+      selected_blocks: this.getSelectedBlocks(cfg.id),
+    };
+
+    return new Promise<number>((resolve, reject) => {
+      this.streamAbortController = new AbortController();
+      let produced = 0;
+      let buffer = '';
+
+      fetch(this.config.getApiUrl('/bulk-generate/stream'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+        signal: this.streamAbortController.signal,
+      }).then(async (res) => {
+        if (!res.ok || !res.body) {
+          // Try to read JSON error body
+          let detail = `HTTP ${res.status}`;
+          try {
+            const body = await res.json();
+            detail = body?.detail || detail;
+          } catch { /* not JSON */ }
+          throw new Error(detail);
+        }
+
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder('utf-8');
+
+        // Parse SSE frames: each is "event: X\ndata: Y\n\n"
+        const flushFrame = (frame: string): boolean => {
+          // Returns true if the stream should terminate (error event)
+          const lines = frame.split('\n');
+          let event = 'message';
+          let data = '';
+          for (const line of lines) {
+            if (line.startsWith('event:')) event = line.slice(6).trim();
+            else if (line.startsWith('data:')) data += line.slice(5).trim();
+          }
+          if (!data) return false;
+
+          let payload: any;
+          try { payload = JSON.parse(data); } catch { return false; }
+
+          switch (event) {
+            case 'start':
+              // no-op (we already set the request count)
+              break;
+            case 'progress':
+              if (this.generationStats) {
+                this.generationStats.produced = (this.generationStats.produced - produced) + (payload.produced || 0);
+                this.generationStats.totalAttempts += 0;  // attempts tracked at done
+              }
+              this.liveFailureTop = payload.failure_top || [];
+              break;
+            case 'message':
+              produced++;
+              const msg: GeneratedMessage = {
+                index: startIndex + produced - 1,
+                xml: payload.xml,
+                message_type: payload.message_type,
+                status: 'VALID',
+                validation_report: payload.validation_report,
+              };
+              this.generatedMessages.push(msg);
+              if (this.generationStats) this.generationStats.produced++;
+              break;
+            case 'done':
+              if (this.generationStats) {
+                this.generationStats.totalAttempts += (payload.total_attempts || 0);
+              }
+              this.liveFailureTop = [];
+              return true;  // stream complete
+            case 'error':
+              reject(new Error(payload.detail || 'Stream error'));
+              return true;  // terminate
+          }
+          return false;
+        };
+
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+
+          // SSE frames are separated by a blank line (\n\n)
+          let sepIdx: number;
+          while ((sepIdx = buffer.indexOf('\n\n')) >= 0) {
+            const frame = buffer.slice(0, sepIdx);
+            buffer = buffer.slice(sepIdx + 2);
+            if (flushFrame(frame)) {
+              // either 'done' (resolve) or 'error' (already rejected)
+              try { reader.cancel(); } catch { /* ignore */ }
+              resolve(produced);
+              return;
+            }
+          }
+        }
+        // Stream closed without a 'done' event — resolve with whatever we got
+        resolve(produced);
+      }).catch((err) => {
+        if (err?.name === 'AbortError') {
+          resolve(produced);
+          return;
+        }
+        reject(err);
+      });
+    });
+  }
+
+  /** Cancel an in-flight SSE stream (e.g. user clicked a Back/Cancel button). */
+  cancelGeneration() {
+    this.streamAbortController?.abort();
+    this.streamAbortController = null;
+    this.isGenerating = false;
+  }
+
+  /** Rebuild groupedMessages from generatedMessages. */
+  private groupMessagesByType() {
     const groupMap = new Map<string, GroupedMessage>();
     for (const msg of this.generatedMessages) {
       if (!groupMap.has(msg.message_type)) {
@@ -740,30 +879,14 @@ export class BulkGenerateComponent implements OnInit {
           messages: [],
           status: 'VALIDATED',
           expanded: false,
-          activeMessageIndex: 0
+          activeMessageIndex: 0,
         });
       }
       const group = groupMap.get(msg.message_type)!;
       group.messages.push(msg);
-      if (msg.status === 'error') {
-        group.status = 'ERROR';
-      }
+      if (msg.status === 'error') group.status = 'ERROR';
     }
     this.groupedMessages = Array.from(groupMap.values());
-
-    this.isGenerating = false;
-    this.expandedIndex = null;
-
-    if (!hasError || this.generatedMessages.length > 0) {
-      this.view = 'results';
-      // Scroll to results
-      setTimeout(() => this.scrollToResults(), 100);
-      this.snackBar.open(
-        `✅ Generated ${this.generatedMessages.length} valid messages successfully.`,
-        'Close',
-        { duration: 4000, horizontalPosition: 'center', verticalPosition: 'bottom' }
-      );
-    }
   }
 
   // ── Results Actions ────────────────────────────────────────────────────────

@@ -325,7 +325,7 @@
 
   </ng-container>
 
-  <!-- ══════════════════════ LOADING OVERLAY ══════════════════════ -->
+  <!-- ══════════════════════ LIVE PROGRESS OVERLAY ══════════════════════ -->
   <div #loadingSection class="generating-overlay" *ngIf="isGenerating">
     <div class="generating-card">
       <div class="generating-spinner">
@@ -334,13 +334,53 @@
       </div>
       <div class="generating-title">Generating &amp; Validating…</div>
       <div class="generating-subtitle">
-        Creating <strong>{{ messageCount * selectedConfigs.length }}</strong> total messages. 
-        Running mandatory XSD and business rule validation for each sample.
-        Please wait while we finalize the ISO 20022 compliance.
+        <ng-container *ngIf="currentStreamingType">
+          Currently producing <strong>{{ currentStreamingType }}</strong>.
+        </ng-container>
+        Each message is built and run through XSD + business-rule validation before
+        being added to your results.
       </div>
-      <div class="generating-progress-bar">
-        <div class="progress-fill"></div>
+
+      <!-- Live counters -->
+      <div class="live-counters" *ngIf="generationStats">
+        <div class="counter-item">
+          <span class="counter-label">Produced</span>
+          <span class="counter-value">{{ generationStats.produced }} / {{ generationStats.requested }}</span>
+        </div>
+        <div class="counter-item">
+          <span class="counter-label">Attempts</span>
+          <span class="counter-value">{{ generationStats.totalAttempts || generationStats.produced }}</span>
+        </div>
+        <div class="counter-item" *ngIf="liveFailureTop.length > 0">
+          <span class="counter-label">Retries this batch</span>
+          <span class="counter-value warn">{{ liveFailureTop[0].count }}+</span>
+        </div>
       </div>
+
+      <!-- Determinate progress bar -->
+      <div class="generating-progress-bar" *ngIf="generationStats?.requested">
+        <div class="progress-fill determinate"
+             [style.width.%]="(generationStats!.produced / generationStats!.requested) * 100"></div>
+      </div>
+
+      <!-- Live failure breakdown -->
+      <div class="failure-breakdown" *ngIf="liveFailureTop.length > 0">
+        <div class="fb-header">
+          <mat-icon>info</mat-icon>
+          Validation issues causing retries:
+        </div>
+        <ul class="fb-list">
+          <li *ngFor="let f of liveFailureTop">
+            <span class="fb-count">{{ f.count }}×</span>
+            <span class="fb-reason">{{ f.reason }}</span>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Cancel button -->
+      <button class="btn-cancel-generation" (click)="cancelGeneration()" type="button">
+        <mat-icon>close</mat-icon> Cancel
+      </button>
     </div>
   </div>
 

@@ -337,7 +337,9 @@ export class Pacs9Component implements OnInit, OnDestroy {
             intrmyAgt1Bic: ['', BIC_OPT], intrmyAgt2Bic: ['', BIC_OPT], intrmyAgt3Bic: ['', BIC_OPT],
             // Debtor/Creditor FI Accounts
             dbtrFiAcct: ['471932901234'],
+            dbtrFiAcctType: ['other'],
             cdtrFiAcct: ['471932905678'],
+            cdtrFiAcctType: ['other'],
             dbtrAgtAcct: [''],
             cdtrAgtAcct: [''],
             // Instructions for Creditor Agent (0..2)
@@ -852,9 +854,12 @@ ${tx}\t\t\t</CdtTrfTxInf>
         let res = this.agt(tag, prefix, v, indent);
         if (v[prefix + 'Acct']?.trim()) {
             const val = v[prefix + 'Acct'];
+            const explicitType = v[prefix + 'AcctType'];
             const ibanCountries = ['AD', 'AE', 'AL', 'AT', 'AZ', 'BA', 'BE', 'BG', 'BH', 'BR', 'BY', 'CH', 'CR', 'CY', 'CZ', 'DE', 'DK', 'DO', 'EE', 'EG', 'ES', 'FI', 'FO', 'FR', 'GB', 'GE', 'GI', 'GL', 'GR', 'GT', 'HR', 'HU', 'IE', 'IL', 'IQ', 'IS', 'IT', 'JO', 'KW', 'KZ', 'LB', 'LI', 'LT', 'LU', 'LV', 'MC', 'MD', 'ME', 'MK', 'MR', 'MT', 'MU', 'NL', 'NO', 'PK', 'PL', 'PS', 'PT', 'QA', 'RO', 'RS', 'RU', 'SA', 'SC', 'SE', 'SI', 'SK', 'SM', 'ST', 'SV', 'TL', 'TN', 'TR', 'UA', 'VA', 'VG', 'XK'];
             let idContent = '';
-            if (val.length >= 14 && ibanCountries.includes(val.substring(0, 2).toUpperCase()) && /^[A-Z]{2}[0-9]{2}[A-Z0-9]+$/i.test(val)) {
+            const useIban = explicitType === 'iban' ||
+                (!explicitType && val.length >= 14 && ibanCountries.includes(val.substring(0, 2).toUpperCase()) && /^[A-Z]{2}[0-9]{2}[A-Z0-9]+$/i.test(val));
+            if (useIban) {
                 idContent = this.el('IBAN', val, indent + 2);
             } else {
                 idContent = `\n${this.tabs(indent + 2)}<Othr>\n${this.tabs(indent + 3)}<Id>${this.e(val)}</Id>\n${this.tabs(indent + 2)}</Othr>\n${this.tabs(indent + 1)}`;
