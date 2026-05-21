@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
+﻿import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, FormArray, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
@@ -982,9 +982,14 @@ ${grpHdr}${pmtInf}\t\t</CstmrCdtTrfInitn>
     dialogRef.afterClosed().subscribe(result => {
       if (result && result.bic) {
         const targetGroup = group || this.form;
-
-        targetGroup.get(controlName)?.patchValue(result.bic);
-        targetGroup.get(controlName)?.markAsDirty();
+        const control = targetGroup.get(controlName);
+        
+        if (control) {
+          control.setValue(result.bic, { emitEvent: true });
+          control.markAsTouched();
+          control.markAsDirty();
+          control.updateValueAndValidity();
+        }
       }
     });
   }

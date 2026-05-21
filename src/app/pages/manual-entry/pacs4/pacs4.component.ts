@@ -140,11 +140,16 @@ export class Pacs4Component implements OnInit, OnDestroy {
             width: '800px',
             disableClose: true
         });
-
         dialogRef.afterClosed().subscribe(result => {
             if (result && result.bic) {
-                this.form.patchValue({ [f]: result.bic });
-                this.form.get(f)?.markAsDirty();
+                const ctrl = this.form.get(f);
+                if (ctrl) {
+                    ctrl.setValue(result.bic, { emitEvent: false });
+                    ctrl.markAsTouched();
+                    ctrl.markAsDirty();
+                    ctrl.updateValueAndValidity({ emitEvent: false });
+                    this.generateXml();
+                }
             }
         });
     }
@@ -154,13 +159,17 @@ export class Pacs4Component implements OnInit, OnDestroy {
             width: '800px',
             disableClose: true
         });
-
         dialogRef.afterClosed().subscribe(result => {
             if (result && result.bic) {
                 const targetGroup = group || this.form;
-
-                targetGroup.get(controlName)?.patchValue(result.bic);
-                targetGroup.get(controlName)?.markAsDirty();
+                const control = targetGroup.get(controlName);
+                if (control) {
+                    control.setValue(result.bic, { emitEvent: false });
+                    control.markAsTouched();
+                    control.markAsDirty();
+                    control.updateValueAndValidity({ emitEvent: false });
+                    this.generateXml();
+                }
             }
         });
     }
@@ -253,6 +262,9 @@ export class Pacs4Component implements OnInit, OnDestroy {
             if (p === 'initgPty' || p === 'ultmtDbtr' || p === 'ultmtCdtr') defaultBic = '';
 
             c[p + 'Bic'] = [isMandatory ? defaultBic : (defaultBic || ''), isMandatory ? BIC_REQ : BIC];
+            // OrgAnyBIC is used by the party template (isAgent:false) for non-agent party BIC fields
+            const isParty = ['dbtr', 'cdtr', 'initgPty', 'ultmtDbtr', 'ultmtCdtr'].includes(p);
+            if (isParty) c[p + 'OrgAnyBIC'] = [isMandatory ? defaultBic : '', isMandatory ? BIC_REQ : BIC];
             c[p + 'Name'] = [isMandatory ? (p === 'dbtr' ? 'Original Debtor' : 'Original Creditor') : '', [Validators.maxLength(140), SAFE_NAME]];
 
             if (isMandatory) {
@@ -469,7 +481,8 @@ ${tx}\t\t\t</TxInf>
     }
 
     party(tag: string, prefix: string, v: any, indent = 4) {
-        const bic = v[prefix + 'Bic'];
+        // OrgAnyBIC is used by the party form template (isAgent:false); fall back to Bic for agents
+        const bic = v[prefix + 'OrgAnyBIC'] || v[prefix + 'Bic'];
         const name = (v[prefix + 'Name'] || '').trim();
         const lei = v[prefix + 'Lei'];
 
@@ -478,7 +491,7 @@ ${tx}\t\t\t</TxInf>
         let pty = '';
         if (name) pty += this.el('Nm', name, indent + 2);
         pty += this.addrXml(v, prefix, indent + 2);
-        
+
         if (bic) pty += this.tag('Id', this.tag('OrgId', this.el('AnyBIC', bic, indent + 5), indent + 4), indent + 2);
         else if (lei) pty += this.tag('Id', this.tag('OrgId', this.el('LEI', lei, indent + 5), indent + 4), indent + 2);
 

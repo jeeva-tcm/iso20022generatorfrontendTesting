@@ -96,6 +96,10 @@ export class Pacs10Component implements OnInit, OnDestroy {
         }
 
         this.form.valueChanges.pipe(debounceTime(300)).subscribe(() => {
+            if (!this.isParsingXml && !this.isInternalChange) {
+                this.generateXml();
+                this.pushHistory();
+            }
             this.scheduleDraftSave();
             this.updateConditionalValidators();
             this.updateClearingSystemValidation();
@@ -918,11 +922,16 @@ ${this.rmtInf(v)}
             width: '800px',
             disableClose: true
         });
-
         dialogRef.afterClosed().subscribe(result => {
             if (result && result.bic) {
-                this.form.patchValue({ [f]: result.bic });
-                this.form.get(f)?.markAsDirty();
+                const ctrl = this.form.get(f);
+                if (ctrl) {
+                    ctrl.setValue(result.bic, { emitEvent: false });
+                    ctrl.markAsTouched();
+                    ctrl.markAsDirty();
+                    ctrl.updateValueAndValidity({ emitEvent: false });
+                    this.generateXml();
+                }
             }
         });
     }
@@ -1534,15 +1543,21 @@ ${this.rmtInf(v)}
     ngOnDestroy(): void {
         if (this.draftSaveTimer) clearTimeout(this.draftSaveTimer);
     }
-  openBicSearchGroup(controlName: string, group: FormGroup | any) {
-    const dialogRef = this.dialog.open(BicSearchDialogComponent, { width: '800px', disableClose: true });
-    dialogRef.afterClosed().subscribe(result => {
-        if (result && result.bic) {
-            const targetGroup = group || this.form;
 
-            targetGroup.get(controlName)?.patchValue(result.bic);
-            targetGroup.get(controlName)?.markAsDirty();
-        }
-    });
-  }
+    openBicSearchGroup(controlName: string, group: FormGroup | any): void {
+        const dialogRef = this.dialog.open(BicSearchDialogComponent, { width: '800px', disableClose: true });
+        dialogRef.afterClosed().subscribe(result => {
+            if (result && result.bic) {
+                const targetGroup = group || this.form;
+                const control = targetGroup.get(controlName);
+                if (control) {
+                    control.setValue(result.bic, { emitEvent: false });
+                    control.markAsTouched();
+                    control.markAsDirty();
+                    control.updateValueAndValidity({ emitEvent: false });
+                    this.generateXml();
+                }
+            }
+        });
+    }
 }

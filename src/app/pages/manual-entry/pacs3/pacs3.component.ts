@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+﻿import { CommonModule } from '@angular/common';
 import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -1982,12 +1982,20 @@ ${tx}\t\t\t</DrctDbtTxInf>
         if (index !== undefined) {
           const formArray = this.form.get(controlName) as any;
           if (formArray && formArray.at) {
-            formArray.at(index).patchValue(result.bic);
-            formArray.at(index).markAsDirty();
+            const arrCtrl = formArray.at(index);
+            arrCtrl.setValue(result.bic, { emitEvent: true });
+            arrCtrl.markAsTouched();
+            arrCtrl.markAsDirty();
+            arrCtrl.updateValueAndValidity();
           }
         } else {
-          this.form.get(controlName)?.patchValue(result.bic);
-          this.form.get(controlName)?.markAsDirty();
+          const ctrl = this.form.get(controlName);
+                    if (ctrl) {
+                      ctrl.setValue(result.bic, { emitEvent: true });
+                      ctrl.markAsTouched();
+                      ctrl.markAsDirty();
+                      ctrl.updateValueAndValidity();
+                    }
         }
       }
     });
@@ -2002,9 +2010,14 @@ ${tx}\t\t\t</DrctDbtTxInf>
     dialogRef.afterClosed().subscribe(result => {
       if (result && result.bic) {
         const targetGroup = group || this.form;
-
-        targetGroup.get(controlName)?.patchValue(result.bic);
-        targetGroup.get(controlName)?.markAsDirty();
+        const control = targetGroup.get(controlName);
+        
+        if (control) {
+          control.setValue(result.bic, { emitEvent: true });
+          control.markAsTouched();
+          control.markAsDirty();
+          control.updateValueAndValidity();
+        }
       }
     });
   }

@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+﻿import { CommonModule } from '@angular/common';
 import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -1438,8 +1438,13 @@ ${tx}\t\t\t</CdtTrfTxInf>
              if (result && result.bic) {
                 const targetGroup = group || this.form;
 
-                targetGroup.get(controlName)?.patchValue(result.bic);
-                targetGroup.markAsDirty();
+                const ctrl = targetGroup.get(controlName);
+                                if (ctrl) {
+                                  ctrl.setValue(result.bic, { emitEvent: true });
+                                  ctrl.markAsTouched();
+                                  ctrl.markAsDirty();
+                                  ctrl.updateValueAndValidity();
+                                }
             }
         });
     }

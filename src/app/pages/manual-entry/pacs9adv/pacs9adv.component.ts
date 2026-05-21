@@ -761,41 +761,58 @@ ${tx}\t\t\t</CdtTrfTxInf>
             this.onEditorChange(this.generatedXml, true);
     }
 
-    openBicSearch(controlName: string) {
+    openBicSearch(controlName: string): void {
         const dialogRef = this.dialog.open(BicSearchDialogComponent, {
             width: '800px',
             disableClose: true
         });
-
         dialogRef.afterClosed().subscribe(result => {
-             if (result && result.bic) {
-                this.form.patchValue({ [controlName]: result.bic });
-                this.form.markAsDirty();
+            if (result && result.bic) {
+                const ctrl = this.form.get(controlName);
+                if (ctrl) {
+                    ctrl.setValue(result.bic, { emitEvent: false });
+                    ctrl.markAsTouched();
+                    ctrl.markAsDirty();
+                    ctrl.updateValueAndValidity({ emitEvent: false });
+                    this.generateXml();
+                }
             }
         });
     }
 
-    openBicSearchGroup(controlName: string, group: any) {
+    openBicSearchGroup(controlName: string, group: any): void {
         const dialogRef = this.dialog.open(BicSearchDialogComponent, {
             width: '800px',
             disableClose: true
         });
-
         dialogRef.afterClosed().subscribe(result => {
             if (result && result.bic) {
                 const targetGroup = group || this.form;
-
-                targetGroup.get(controlName)?.patchValue(result.bic);
-                targetGroup.get(controlName)?.markAsDirty();
+                const control = targetGroup.get(controlName);
+                if (control) {
+                    control.setValue(result.bic, { emitEvent: false });
+                    control.markAsTouched();
+                    control.markAsDirty();
+                    control.updateValueAndValidity({ emitEvent: false });
+                    this.generateXml();
+                }
             }
         });
     }
 
-    // XML helpers
-    private e(v: string) { return (v || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
-    private tabs(n: number) { return '\t'.repeat(n); }
-    private el(tag: string, val: string, indent = 3) { return val?.trim() ? `${this.tabs(indent)}<${tag}>${this.e(val)}</${tag}>\n` : ''; }
-    private tag(tag: string, content: string, indent = 3) { return content?.trim() ? `${this.tabs(indent)}<${tag}>\n${content}${this.tabs(indent)}</${tag}>\n` : ''; }
+    private e(v: any): string {
+        if (v === null || v === undefined || v === '') return '';
+        return v.toString().replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+    private tabs(n: number): string { return '\t'.repeat(n); }
+    private el(tag: string, val: any, indent: number): string {
+        if (val === undefined || val === null || val === '') return '';
+        return `${this.tabs(indent)}<${tag}>${this.e(val)}</${tag}>\n`;
+    }
+    private tag(tag: string, content: string, indent: number): string {
+        if (!content || !content.trim()) return '';
+        return `${this.tabs(indent)}<${tag}>\n${content}${this.tabs(indent)}</${tag}>\n`;
+    }
 
     grpAgt(tag: string, prefix: string, v: any) {
         const bic = v[prefix + 'Bic']; if (!bic) return '';

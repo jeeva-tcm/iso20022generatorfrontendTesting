@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+﻿import { CommonModule } from '@angular/common';
 import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -1413,8 +1413,13 @@ export class Camt053Component implements OnInit, OnDestroy {
 
         dialogRef.afterClosed().subscribe(result => {
             if (result && result.bic) {
-                this.form.patchValue({ [controlName]: result.bic });
-                this.form.get(controlName)?.markAsDirty();
+                const ctrl = this.form.get(controlName);
+                          if (ctrl) {
+                            ctrl.setValue(result.bic, { emitEvent: true });
+                            ctrl.markAsTouched();
+                            ctrl.markAsDirty();
+                            ctrl.updateValueAndValidity();
+                          }
             }
         });
     }
@@ -1453,9 +1458,14 @@ export class Camt053Component implements OnInit, OnDestroy {
     dialogRef.afterClosed().subscribe(result => {
         if (result && result.bic) {
             const targetGroup = group || this.form;
+            const control = targetGroup.get(controlName);
 
-            targetGroup.get(controlName)?.patchValue(result.bic);
-            targetGroup.get(controlName)?.markAsDirty();
+            if (control) {
+              control.setValue(result.bic, { emitEvent: true });
+              control.markAsTouched();
+              control.markAsDirty();
+              control.updateValueAndValidity();
+            }
         }
     });
   }

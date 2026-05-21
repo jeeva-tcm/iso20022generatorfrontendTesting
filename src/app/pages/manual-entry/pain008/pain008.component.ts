@@ -1098,8 +1098,13 @@ ${grpHdr}${pmtInf}\t\t</CstmrDrctDbtInitn>
         const group = index !== undefined
           ? this.transactions.controls[index] as FormGroup
           : this.form;
-        group.get(controlName)?.patchValue(result.bic);
-        group.get(controlName)?.markAsDirty();
+        const grpCtrl = group.get(controlName);
+            if (grpCtrl) {
+              grpCtrl.setValue(result.bic, { emitEvent: true });
+              grpCtrl.markAsTouched();
+              grpCtrl.markAsDirty();
+              grpCtrl.updateValueAndValidity();
+            }
       }
     });
   }
@@ -1113,9 +1118,13 @@ ${grpHdr}${pmtInf}\t\t</CstmrDrctDbtInitn>
     dialogRef.afterClosed().subscribe(result => {
       if (result && result.bic) {
         const targetGroup = group || this.form;
-
-        targetGroup.get(controlName)?.patchValue(result.bic);
-        targetGroup.get(controlName)?.markAsDirty();
+        const grpCtrl = targetGroup.get(controlName);
+        if (grpCtrl) {
+          grpCtrl.setValue(result.bic, { emitEvent: true });
+          grpCtrl.markAsTouched();
+          grpCtrl.markAsDirty();
+          grpCtrl.updateValueAndValidity();
+        }
       }
     });
   }

@@ -1,4 +1,4 @@
-import { BicSearchDialogComponent } from '../bic-search-dialog/bic-search-dialog.component';
+﻿import { BicSearchDialogComponent } from '../bic-search-dialog/bic-search-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
 import { Component, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -1078,11 +1078,22 @@ ${doc.trimEnd()}
       if (result && result.bic) {
         if (index !== undefined) {
            const grp = this.transactions.at(index) as FormGroup;
-           grp.patchValue({ [controlName]: result.bic });
+           const grpCtrl = grp.get(controlName);
+            if (grpCtrl) {
+              grpCtrl.setValue(result.bic, { emitEvent: true });
+              grpCtrl.markAsTouched();
+              grpCtrl.markAsDirty();
+              grpCtrl.updateValueAndValidity();
+            }
            grp.get(controlName)?.markAsDirty();
         } else {
-           this.form.patchValue({ [controlName]: result.bic });
-           this.form.get(controlName)?.markAsDirty();
+           const ctrl = this.form.get(controlName);
+                     if (ctrl) {
+                       ctrl.setValue(result.bic, { emitEvent: true });
+                       ctrl.markAsTouched();
+                       ctrl.markAsDirty();
+                       ctrl.updateValueAndValidity();
+                     }
         }
       }
     });
@@ -1094,8 +1105,18 @@ ${doc.trimEnd()}
       if (result && result.bic) {
         const targetGroup = group || this.form;
 
-        targetGroup.patchValue({ [controlName]: result.bic });
-        group.get(controlName)?.markAsDirty();
+        const tgCtrl = targetGroup.get(controlName);
+          if (tgCtrl) {
+            tgCtrl.setValue(result.bic, { emitEvent: true });
+            tgCtrl.markAsTouched();
+            tgCtrl.markAsDirty();
+            tgCtrl.updateValueAndValidity();
+          }
+        const control = targetGroup.get(controlName);
+        if (control) {
+          control.markAsDirty();
+          control.updateValueAndValidity();
+        }
       }
     });
   }

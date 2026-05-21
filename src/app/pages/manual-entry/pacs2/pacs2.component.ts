@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
+﻿import { Component, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
@@ -871,12 +871,20 @@ ${txInf.trimEnd()}
         if (index !== undefined) {
           const formArray = this.form.get(controlName) as any;
           if (formArray && formArray.at) {
-            formArray.at(index).patchValue(result.bic);
-            formArray.at(index).markAsDirty();
+            const arrCtrl = formArray.at(index);
+            arrCtrl.setValue(result.bic, { emitEvent: true });
+            arrCtrl.markAsTouched();
+            arrCtrl.markAsDirty();
+            arrCtrl.updateValueAndValidity();
           }
         } else {
-          this.form.get(controlName)?.patchValue(result.bic);
-          this.form.get(controlName)?.markAsDirty();
+          const ctrl = this.form.get(controlName);
+                    if (ctrl) {
+                      ctrl.setValue(result.bic, { emitEvent: true });
+                      ctrl.markAsTouched();
+                      ctrl.markAsDirty();
+                      ctrl.updateValueAndValidity();
+                    }
         }
       }
     });
@@ -891,9 +899,14 @@ ${txInf.trimEnd()}
     dialogRef.afterClosed().subscribe(result => {
       if (result && result.bic) {
         const targetGroup = group || this.form;
-
-        targetGroup.get(controlName)?.patchValue(result.bic);
-        targetGroup.get(controlName)?.markAsDirty();
+        const control = targetGroup.get(controlName);
+        
+        if (control) {
+          control.setValue(result.bic, { emitEvent: true });
+          control.markAsTouched();
+          control.markAsDirty();
+          control.updateValueAndValidity();
+        }
       }
     });
   }

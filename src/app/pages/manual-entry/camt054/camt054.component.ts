@@ -1015,40 +1015,53 @@ export class Camt054Component implements OnInit, OnDestroy {
     }
   }
 
-  openBicSearch(controlName: string, index?: number) {
+  openBicSearch(controlName: string, index?: number): void {
     const dialogRef = this.dialog.open(BicSearchDialogComponent, {
       width: '800px',
       disableClose: true
     });
-
     dialogRef.afterClosed().subscribe(result => {
       if (result && result.bic) {
         if (index !== undefined) {
           const formArray = this.form.get(controlName) as any;
           if (formArray && formArray.at) {
-            formArray.at(index).patchValue(result.bic);
-            formArray.at(index).markAsDirty();
+            const arrCtrl = formArray.at(index);
+            arrCtrl.setValue(result.bic, { emitEvent: false });
+            arrCtrl.markAsTouched();
+            arrCtrl.markAsDirty();
+            arrCtrl.updateValueAndValidity({ emitEvent: false });
+            this.generateXml();
           }
         } else {
-          this.form.get(controlName)?.patchValue(result.bic);
-          this.form.get(controlName)?.markAsDirty();
+          const ctrl = this.form.get(controlName);
+          if (ctrl) {
+            ctrl.setValue(result.bic, { emitEvent: false });
+            ctrl.markAsTouched();
+            ctrl.markAsDirty();
+            ctrl.updateValueAndValidity({ emitEvent: false });
+            this.generateXml();
+          }
         }
       }
     });
   }
 
-  openBicSearchGroup(controlName: string, group: any) {
+  openBicSearchGroup(controlName: string, group: any): void {
     const dialogRef = this.dialog.open(BicSearchDialogComponent, {
       width: '800px',
       disableClose: true
     });
-
     dialogRef.afterClosed().subscribe(result => {
       if (result && result.bic) {
         const targetGroup = group || this.form;
-
-        targetGroup.get(controlName)?.patchValue(result.bic);
-        targetGroup.get(controlName)?.markAsDirty();
+        const control = targetGroup.get(controlName);
+        if (control) {
+          control.setValue(result.bic, { emitEvent: false });
+          control.markAsTouched();
+          control.markAsDirty();
+          control.updateValueAndValidity({ emitEvent: false });
+          this.generateXml();
+        }
       }
     });
   }

@@ -477,6 +477,8 @@ export class BulkGenerateComponent implements OnInit {
     } else {
       // Uncheck blocks that depend on this one
       this.autoClearDependents(cfg, blockId);
+      // Also uncheck this block's own requires if nothing else needs them
+      this.autoClearUnusedRequires(cfg, blockId);
     }
 
     this.updateDependencyWarnings(cfg);
@@ -500,6 +502,35 @@ export class BulkGenerateComponent implements OnInit {
         this.blockChecked[cfg.id][dependent.id] = false;
         this.autoClearDependents(cfg, dependent.id);
       });
+  }
+
+  /**
+   * When a block is unchecked, also uncheck its `requires` dependencies
+   * if no other currently-checked (non-mandatory) block still depends on them.
+   */
+  private autoClearUnusedRequires(cfg: MessageTypeConfig, blockId: string) {
+    const block = cfg.blocks.find(b => b.id === blockId);
+    if (!block?.requires) return;
+
+    block.requires.forEach(reqId => {
+      const reqBlock = cfg.blocks.find(b => b.id === reqId);
+      if (!reqBlock || reqBlock.mandatory) return;  // never uncheck mandatory blocks
+
+      // Check if any OTHER checked block still requires this reqId
+      const stillNeeded = cfg.blocks.some(b =>
+        b.id !== blockId &&
+        this.blockChecked[cfg.id][b.id] &&
+        b.requires?.includes(reqId)
+      );
+
+      if (!stillNeeded) {
+        this.blockChecked[cfg.id][reqId] = false;
+        // Recurse: the dependency's own requires may now be unused too
+        this.autoClearUnusedRequires(cfg, reqId);
+        // Also clear anything that depended on reqId
+        this.autoClearDependents(cfg, reqId);
+      }
+    });
   }
 
   private updateDependencyWarnings(cfg: MessageTypeConfig) {
