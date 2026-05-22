@@ -78,7 +78,12 @@ export class HistoryComponent implements OnInit {
     editedXmlContent: string = '';
     editorLineCount: number[] = [1];
 
-    @ViewChild(MatPaginator) paginator!: MatPaginator;
+    paginator!: MatPaginator;
+
+    @ViewChild(MatPaginator) set matPaginator(mp: MatPaginator) {
+        this.paginator = mp;
+        this.dataSource.paginator = mp;
+    }
 
     constructor(
         private http: HttpClient,

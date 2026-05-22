@@ -233,7 +233,19 @@ body {
     border-radius: 8px !important;
 }
 
-.mat-mdc-option {
+/* ── Mat-Dialog Surface — Theme Fix ── */
+.cdk-overlay-pane .mdc-dialog__surface {
+    background: var(--bg-card) !important;
+    border: 1px solid var(--border-light) !important;
+    border-radius: 16px !important;
+    color: var(--text-main) !important;
+    box-shadow: var(--shadow-xl) !important;
+}
+
+.mat-mdc-option,
+.mat-mdc-option .mdc-list-item__primary-text,
+.mat-mdc-option .mdc-list-item__label,
+.mat-option-text {
     color: var(--text-main) !important;
     font-size: 0.82rem !important;
 }
@@ -2342,4 +2354,12 @@ body .mandate-grid.mandate-grid .field-hint {
         max-width: 40px !important;
         flex-basis: 40px !important;
     }
+}
+
+/* Hide paginator navigation buttons when they are disabled (first/last page reached) */
+.mat-mdc-paginator button.mat-mdc-paginator-navigation-next:disabled,
+.mat-mdc-paginator button.mat-mdc-paginator-navigation-last:disabled,
+.mat-mdc-paginator button.mat-mdc-paginator-navigation-previous:disabled,
+.mat-mdc-paginator button.mat-mdc-paginator-navigation-first:disabled {
+    visibility: hidden !important;
 }

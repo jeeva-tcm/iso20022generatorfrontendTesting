@@ -96,7 +96,8 @@
 
             <!-- DESKTOP TABLE VIEW -->
             <div class="desktop-only" *ngIf="!isLoading">
-                <table mat-table [dataSource]="dataSource" multiTemplateDataRows class="full-width">
+                <div class="table-scroll-container">
+                    <table mat-table [dataSource]="dataSource" multiTemplateDataRows class="full-width">
                     <!-- Validation ID Column -->
                     <ng-container matColumnDef="validation_id">
                         <th mat-header-cell *matHeaderCellDef> ID </th>
@@ -304,7 +305,8 @@
                         </td>
                     </tr>
                 </table>
-                <mat-paginator [pageSizeOptions]="[10, 25, 50, 100]" showFirstLastButtons></mat-paginator>
+                </div>
+                <mat-paginator [pageSize]="10" [pageSizeOptions]="[10, 25, 50, 100]" showFirstLastButtons></mat-paginator>
             </div>
 
             <!-- MOBILE CARD VIEW -->
