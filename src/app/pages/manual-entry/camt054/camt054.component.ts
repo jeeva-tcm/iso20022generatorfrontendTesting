@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
-import { FormBuilder, FormGroup, FormArray, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
+import { FormBuilder, FormGroup, FormArray, AbstractControl, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { MatIconModule } from '@angular/material/icon';
@@ -197,7 +197,7 @@ export class Camt054Component implements OnInit, OnDestroy {
       bankTxnFamily: ['RDTX', [Validators.required, Validators.maxLength(4)]],
       bankTxnCode: ['PMNT', [Validators.required, Validators.maxLength(4)]],
       charges: ['', [Validators.pattern(/^\d{1,18}(\.\d{1,5})?$/)]],
-      uetr: [this.uetr.generate(), [Validators.pattern(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i)]],
+      uetr: [this.uetr.generate(), [Validators.pattern(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/)]],
       endToEndId: ['E2E' + Date.now().toString().slice(-13), [Validators.maxLength(16)]],
       instructionId: ['INS' + Date.now().toString().slice(-13), [Validators.maxLength(16)]],
       dbtrNm: ['JOHN DOE SENDER', [Validators.maxLength(140)]],
@@ -815,9 +815,8 @@ export class Camt054Component implements OnInit, OnDestroy {
       const tval = (t: string, p: any = doc) => getT(t, p)?.textContent?.trim() || '';
 
       const patch: any = {};
-      // Reset every form control to '' so any element the user removed from the XML
-      // clears its mirrored form value (prevents generateXml from re-inserting it).
-      Object.keys(this.form.controls).forEach(k => patch[k] = '');
+      // Only patch fields the parser explicitly reads — previously this wiped
+      // every control to '' on each XML edit, silently dropping user data.
       const setVal = (f: string, v: string) => { if (v) patch[f] = v; };
 
       // 1. AppHdr
@@ -1045,14 +1044,18 @@ export class Camt054Component implements OnInit, OnDestroy {
     });
   }
 
-  openBicSearchGroup(controlName: string, group: any): void {
+  openBicSearchGroup(controlName: string, group: AbstractControl, i?: number): void {
     const dialogRef = this.dialog.open(BicSearchDialogComponent, {
       width: '800px',
       disableClose: true
     });
+
     dialogRef.afterClosed().subscribe(result => {
       if (result && result.bic) {
-        const targetGroup = group || this.form;
+        let targetGroup = group || this.form;
+        if (i !== undefined) {
+          targetGroup = this.entries.at(i);
+        }
         const control = targetGroup.get(controlName);
         if (control) {
           control.setValue(result.bic, { emitEvent: false });

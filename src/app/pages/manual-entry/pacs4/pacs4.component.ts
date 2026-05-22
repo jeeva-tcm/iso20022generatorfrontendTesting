@@ -312,7 +312,7 @@ export class Pacs4Component implements OnInit, OnDestroy {
 
     err(f: string): string | null {
         const c = this.form.get(f);
-        if (!c || c.valid) return null;
+        if (!c || c.valid || (!c.touched && !c.dirty)) return null;
         if (c.errors?.['required']) return 'Required field.';
         if (c.errors?.['maxlength']) return `Max ${c.errors['maxlength'].requiredLength} chars.`;
         if (c.errors?.['pattern']) {
@@ -564,9 +564,9 @@ ${tx}\t\t\t</TxInf>
             const tval = (t: string, p: any = doc) => getT(t, p)?.textContent?.trim() || '';
 
             const patch: any = {};
-            // Reset every form control to '' so any element the user removed from the XML
-            // clears its mirrored form value (prevents generateXml from re-inserting it).
-            Object.keys(this.form.controls).forEach(k => patch[k] = '');
+            // Only patch fields the parser explicitly reads — previously this wiped
+            // every control to '' on each XML edit, silently dropping user data for
+            // any form field not covered by the parser.
 
             // BAH
             const appHdr = getT('AppHdr');

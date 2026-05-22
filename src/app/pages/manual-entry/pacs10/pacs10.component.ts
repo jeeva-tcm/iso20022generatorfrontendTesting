@@ -1079,7 +1079,8 @@ ${this.rmtInf(v)}
             if (doc.querySelector('parsererror')) return;
 
             const patch: any = {};
-            Object.keys(this.form.controls).forEach(k => patch[k] = '');
+            // Only patch fields the parser explicitly reads — previously this wiped
+            // every control to '' on each XML edit, silently dropping user data.
 
             const tval = (el: Element | Document, tag: string) =>
                 el.getElementsByTagName(tag)[0]?.textContent?.trim() || '';

@@ -355,7 +355,7 @@ export class Camt057Component implements OnInit, OnDestroy {
     err(f: string): string | null {
         const c = this.form.get(f);
         // Remove .touched requirement to show errors more aggressively
-        if (!c || c.valid) return null;
+        if (!c || c.valid || (!c.touched && !c.dirty)) return null;
 
         if (c.errors?.['required']) return 'Required field.';
         if (c.errors?.['maxlength']) return `Max ${c.errors['maxlength'].requiredLength} chars.`;
@@ -915,9 +915,8 @@ ${ntfctnPartiesXml}${itmXml}
             }
 
             const patch: any = {};
-            // Reset every form control to '' so any element the user removed from the XML
-            // clears its mirrored form value (prevents generateXml from re-inserting it).
-            Object.keys(this.form.controls).forEach(k => patch[k] = '');
+            // Only patch fields the parser explicitly reads — previously this wiped
+            // every control to '' on each XML edit, silently dropping user data.
             const tval = (t: string) => doc.getElementsByTagName(t)[0]?.textContent || '';
             const setVal = (key: string, val: string) => { patch[key] = val; };
 
@@ -1200,6 +1199,7 @@ ${ntfctnPartiesXml}${itmXml}
     addrXml(v: any, p: string, indent = 4): string {
         const type = v[p + 'AddrType']; if (!type || type === 'none') return '';
         const lines: string[] = []; const t = this.tabs(indent + 1);
+        // Structured-only fields
         if (type === 'structured' || type === 'hybrid') {
             if (v[p + 'Dept']) lines.push(`${t}<Dept>${this.e(v[p + 'Dept'])}</Dept>`);
             if (v[p + 'SubDept']) lines.push(`${t}<SubDept>${this.e(v[p + 'SubDept'])}</SubDept>`);
@@ -1210,9 +1210,12 @@ ${ntfctnPartiesXml}${itmXml}
             if (v[p + 'PstBx']) lines.push(`${t}<PstBx>${this.e(v[p + 'PstBx'])}</PstBx>`);
             if (v[p + 'Room']) lines.push(`${t}<Room>${this.e(v[p + 'Room'])}</Room>`);
             if (v[p + 'PstCd']) lines.push(`${t}<PstCd>${this.e(v[p + 'PstCd'])}</PstCd>`);
-            if (v[p + 'TwnNm']) lines.push(`${t}<TwnNm>${this.e(v[p + 'TwnNm'])}</TwnNm>`);
-            if (v[p + 'CtrySubDvsn']) lines.push(`${t}<CtrySubDvsn>${this.e(v[p + 'CtrySubDvsn'])}</CtrySubDvsn>`);
         }
+        // Geographic fields are valid in ALL modes (including unstructured) per ISO 20022.
+        // Emit them outside the structured-only branch so TwnNm/CtrySubDvsn aren't lost
+        // when the user picks 'unstructured'.
+        if (v[p + 'TwnNm']) lines.push(`${t}<TwnNm>${this.e(v[p + 'TwnNm'])}</TwnNm>`);
+        if (v[p + 'CtrySubDvsn']) lines.push(`${t}<CtrySubDvsn>${this.e(v[p + 'CtrySubDvsn'])}</CtrySubDvsn>`);
         if (v[p + 'Ctry']) lines.push(`${t}<Ctry>${this.e(v[p + 'Ctry'])}</Ctry>`);
         if (type === 'unstructured' || type === 'hybrid') {
             if (v[p + 'AdrLine1']) lines.push(`${t}<AdrLine>${this.e(v[p + 'AdrLine1'])}</AdrLine>`);

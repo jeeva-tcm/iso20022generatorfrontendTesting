@@ -1,4 +1,4 @@
-﻿import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, FormArray, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
@@ -137,7 +137,7 @@ export class Pain001Component implements OnInit, OnDestroy {
       nbOfTxs: ['1', [Validators.required]],
       ctrlSum: ['0.00', [Validators.pattern(/^\d{1,18}(\.\d{1,5})?$/)]],
       initgPtyName: ['Global Solutions Corp', [Validators.required, Validators.maxLength(140)]],
-      initgPtyBic: ['GBSOLUS33XX', [Validators.pattern(/^([A-Z0-9]{8}|[A-Z0-9]{11})$/)]],
+      initgPtyOrgIdAnyBic: ['GBSOLUS33XX', [Validators.pattern(/^([A-Z0-9]{8}|[A-Z0-9]{11})$/)]],
       initgPtyId: ['GS-ID-9988'],
       initgPtyAddrType: ['none'],
       initgPtyCtry: ['', [Validators.pattern(/^[A-Z]{2,2}$/)]],
@@ -228,7 +228,7 @@ export class Pain001Component implements OnInit, OnDestroy {
     return this.fb.group({
       instrId: ['INSTR-' + Date.now(), [Validators.required, Validators.maxLength(35)]],
       endToEndId: ['E2E-' + Date.now(), [Validators.required, Validators.maxLength(35)]],
-      uetr: [crypto.randomUUID ? crypto.randomUUID() : '550e8400-e29b-41d4-a716-446655440000', [Validators.required, Validators.pattern(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i)]],
+      uetr: [crypto.randomUUID ? crypto.randomUUID() : '550e8400-e29b-41d4-a716-446655440000', [Validators.required, Validators.pattern(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/)]],
       amount: ['12500.00', [Validators.required, Validators.pattern(/^\d{1,18}(\.\d{1,5})?$/)]],
       currency: ['USD', Validators.required],
       xchgRate: [''],
@@ -555,8 +555,17 @@ ${grpHdr}${pmtInf}\t\t</CstmrCdtTrfInitn>
         setV('Flr', 'Flr');
         setV('PstBx', 'PstBx');
         setV('Room', 'Room');
+        setV('CtrySubDvsn', 'CtrySubDvsn');
+        setV('TwnLctnNm', 'TwnLctnNm');
+        setV('DstrctNm', 'DstrctNm');
         const adrLines = Array.from(pstl.getElementsByTagName('AdrLine'));
-        const hasStructured = !!(getV('StrtNm') || getV('TwnNm') || getV('Ctry') || getV('PstCd'));
+        // Any structured field counts — including BldgNb/BldgNm/Dept/SubDept/Flr/etc.
+        // — so the form doesn't snap back to 'unstructured' when the user has only
+        // filled secondary structured fields.
+        const hasStructured = !!(getV('StrtNm') || getV('TwnNm') || getV('Ctry') || getV('PstCd')
+          || getV('BldgNb') || getV('BldgNm') || getV('Dept') || getV('SubDept')
+          || getV('Flr') || getV('PstBx') || getV('Room')
+          || getV('CtrySubDvsn') || getV('TwnLctnNm') || getV('DstrctNm'));
         const hasAdrLines = adrLines.length > 0;
         if (hasAdrLines) {
           patch[prefix + 'AdrLine1'] = adrLines[0].textContent?.trim() || '';
@@ -623,10 +632,20 @@ ${grpHdr}${pmtInf}\t\t</CstmrCdtTrfInitn>
       if (pstl) {
         const gv = (t: string) => pstl.getElementsByTagName(t)[0]?.textContent?.trim();
         const sv2 = (f: string, t: string) => { const v = gv(t); if (v) patch[prefix + f] = v; };
+        // Parse every PstlAdr child the form supports so the round trip stays lossless.
+        // Previously only 6 fields were read back, so users editing the XML directly
+        // would see their Dept/SubDept/Flr/PstBx/Room/CtrySubDvsn/TwnLctnNm/DstrctNm
+        // values silently dropped when the form refreshed.
         sv2('Ctry', 'Ctry'); sv2('TwnNm', 'TwnNm'); sv2('StrtNm', 'StrtNm');
         sv2('BldgNb', 'BldgNb'); sv2('BldgNm', 'BldgNm'); sv2('PstCd', 'PstCd');
+        sv2('Dept', 'Dept'); sv2('SubDept', 'SubDept'); sv2('Flr', 'Flr');
+        sv2('PstBx', 'PstBx'); sv2('Room', 'Room');
+        sv2('CtrySubDvsn', 'CtrySubDvsn'); sv2('TwnLctnNm', 'TwnLctnNm');
+        sv2('DstrctNm', 'DstrctNm');
         const adrLines2 = Array.from(pstl.getElementsByTagName('AdrLine'));
-        const hasStr2 = !!(gv('StrtNm') || gv('TwnNm') || gv('Ctry') || gv('PstCd'));
+        const hasStr2 = !!(gv('StrtNm') || gv('TwnNm') || gv('Ctry') || gv('PstCd')
+          || gv('BldgNb') || gv('BldgNm') || gv('Dept') || gv('SubDept')
+          || gv('Flr') || gv('PstBx') || gv('Room'));
         const hasLn2 = adrLines2.length > 0;
         if (hasLn2) {
           patch[prefix + 'AdrLine1'] = adrLines2[0].textContent?.trim() || '';
@@ -699,15 +718,31 @@ ${grpHdr}${pmtInf}\t\t</CstmrCdtTrfInitn>
     const nm = v[p + 'Name'];
     const idXml = this.partyIdXml(v, p, indent);
     if (!nm && !idXml && !this.hasAddr(v, p)) return '';
-    
-    let content = this.el('Nm', nm || 'DEFAULT NAME', indent + 1);
+
+    // Mirror form value exactly — don't inject 'DEFAULT NAME' when the user
+    // cleared the field. The XML must match what's in the form so the round
+    // trip stays predictable and the user can see their own data.
+    let content = nm ? this.el('Nm', nm, indent + 1) : '';
     if (this.hasAddr(v, p)) content += this.addrXml(v, p, indent + 1);
     content += idXml;
     return this.tag(tag, content, indent);
   }
 
   private hasAddr(v: any, p: string): boolean {
-    return !!(v[p + 'Ctry'] || v[p + 'TwnNm'] || v[p + 'AdrLine1'] || v[p + 'StrtNm']);
+    // Any address field the user has filled should keep the PstlAdr block alive.
+    // Previously this only checked Ctry/TwnNm/AdrLine1/StrtNm, which silently
+    // dropped the entire <PstlAdr> when only BldgNb/BldgNm/PstCd/Dept/etc. were
+    // filled — a frequent source of "data isn't appearing in the XML" bug reports.
+    const fields = [
+      'Ctry', 'TwnNm', 'StrtNm', 'BldgNb', 'BldgNm', 'PstCd',
+      'Dept', 'SubDept', 'Flr', 'PstBx', 'Room',
+      'CtrySubDvsn', 'TwnLctnNm', 'DstrctNm',
+      'AdrLine1', 'AdrLine2',
+    ];
+    return fields.some(f => {
+      const val = v[p + f];
+      return val !== undefined && val !== null && String(val).trim() !== '';
+    });
   }
 
   addrXml(v: any, p: string, indent = 4): string {
@@ -729,8 +764,12 @@ ${grpHdr}${pmtInf}\t\t</CstmrCdtTrfInitn>
       if (v[p + 'PstBx']) lines.push(`${t}<PstBx>${this.e(v[p + 'PstBx'])}</PstBx>`);
       if (v[p + 'Room']) lines.push(`${t}<Room>${this.e(v[p + 'Room'])}</Room>`);
       if (v[p + 'PstCd']) lines.push(`${t}<PstCd>${this.e(v[p + 'PstCd'])}</PstCd>`);
-      lines.push(`${t}<TwnNm>${this.e(v[p + 'TwnNm'] || 'London')}</TwnNm>`);
-      lines.push(`${t}<Ctry>${this.e(v[p + 'Ctry'] || 'GB')}</Ctry>`);
+      // Mirror the form value exactly — no silent default overrides. If the
+      // user cleared TwnNm/Ctry, the XML should reflect that so the round-trip
+      // stays predictable. CBPR+ rule violations are reported by the validator
+      // separately.
+      if (v[p + 'TwnNm']) lines.push(`${t}<TwnNm>${this.e(v[p + 'TwnNm'])}</TwnNm>`);
+      if (v[p + 'Ctry']) lines.push(`${t}<Ctry>${this.e(v[p + 'Ctry'])}</Ctry>`);
     } else if (v[p + 'Ctry']) {
       lines.push(`${t}<Ctry>${this.e(v[p + 'Ctry'])}</Ctry>`);
     }
@@ -799,9 +838,10 @@ ${grpHdr}${pmtInf}\t\t</CstmrCdtTrfInitn>
       };
       const tval = (t: string, p: any = doc) => getT(t, p)?.textContent?.trim() || '';
       const patch: any = {};
-      // Reset every form control to '' so any element the user removed from the XML
-      // clears its mirrored form value (prevents generateXml from re-inserting it).
-      Object.keys(this.form.controls).forEach(k => patch[k] = '');
+      // Only patch fields the parser actually reads — wiping all controls to '' here
+      // silently dropped any form value the parser didn't explicitly repopulate
+      // (e.g. mandate, regulatory reporting, tax fields), and the next generateXml
+      // would emit XML missing the user's data.
       const setV = (f: string, v: string) => { if (v !== undefined && v !== null && v !== '') patch[f] = v; };
 
       // 1. AppHdr (BAH)

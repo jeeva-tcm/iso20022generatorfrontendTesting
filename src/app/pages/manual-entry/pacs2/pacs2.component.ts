@@ -562,9 +562,8 @@ ${txInf.trimEnd()}
       const tval = (t: string, p: any = doc) => getT(t, p)?.textContent?.trim() || '';
 
       const patch: any = {};
-      // Reset every form control to '' so any element the user removed from the XML
-      // clears its mirrored form value (prevents generateXml from re-inserting it).
-      Object.keys(this.form.controls).forEach(k => patch[k] = '');
+      // Only patch fields the parser explicitly reads — previously this wiped
+      // every control to '' on each XML edit, silently dropping user data.
 
       // BAH
       const appHdr = getT('AppHdr');
@@ -761,7 +760,7 @@ ${txInf.trimEnd()}
   // UI Helpers
   err(f: string): string | null {
     const c = this.form.get(f);
-    if (!c || c.valid) return null;
+    if (!c || c.valid || (!c.touched && !c.dirty)) return null;
     
     // Always show maxlength errors immediately as they occur
     if (c.errors?.['maxlength']) return `Max length ${c.errors['maxlength'].requiredLength} characters.`;

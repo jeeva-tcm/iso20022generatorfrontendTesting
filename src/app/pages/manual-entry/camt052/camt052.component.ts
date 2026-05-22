@@ -149,7 +149,16 @@ export class Camt052Component implements OnInit, OnDestroy {
     }
 
     private buildPostalAddr(prefix: string, v: any, t: (i: number) => string, indent: number) {
-        const hasAddr = v[prefix + 'StrtNm']?.trim() || v[prefix + 'BldgNb']?.trim() || v[prefix + 'PstCd']?.trim() || v[prefix + 'TwnNm']?.trim() || v[prefix + 'Ctry']?.trim() || v[prefix + 'AdrLine1']?.trim();
+        // Any address field should keep the PstlAdr block alive — including BldgNm,
+        // Dept, SubDept, Flr, PstBx, Room, CtrySubDvsn, AdrLine2. Previously this
+        // dropped the entire <PstlAdr> when only those secondary fields were set.
+        const addrFields = [
+            'StrtNm', 'BldgNb', 'BldgNm', 'PstCd', 'TwnNm', 'Ctry',
+            'Dept', 'SubDept', 'Flr', 'PstBx', 'Room',
+            'CtrySubDvsn', 'TwnLctnNm', 'DstrctNm', 'AdrTp',
+            'AdrLine1', 'AdrLine2',
+        ];
+        const hasAddr = addrFields.some(f => v[prefix + f]?.toString().trim());
         if (!hasAddr) return '';
         let xml = t(indent) + '<PstlAdr>\n';
         if (v[prefix + 'AdrTp']?.trim()) xml += t(indent + 1) + '<AdrTp><Cd>' + this.e(v[prefix + 'AdrTp']) + '</Cd></AdrTp>\n';
@@ -350,7 +359,7 @@ export class Camt052Component implements OnInit, OnDestroy {
             txAcctSvcrRef: ['', [Validators.maxLength(35)]],
             txPmtInfId: ['', [Validators.maxLength(35)]],
             txInstrId: ['', [Validators.maxLength(35)]],
-            txUetr: ['', [Validators.pattern(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i)]],
+            txUetr: ['', [Validators.pattern(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/)]],
 
             txAmt: [''],
             txCdtDbtInd: [''],
@@ -382,7 +391,7 @@ export class Camt052Component implements OnInit, OnDestroy {
 
     err(f: string): string | null {
         const c = this.form.get(f);
-        if (!c || c.valid) return null;
+        if (!c || c.valid || (!c.touched && !c.dirty)) return null;
         if (c.errors?.['required']) return 'Required field.';
         if (c.errors?.['maxlength']) return 'Max ' + c.errors['maxlength'].requiredLength + ' chars.';
         if (c.errors?.['pattern']) {
@@ -1139,9 +1148,8 @@ export class Camt052Component implements OnInit, OnDestroy {
             const tval = (t: string, p: any = doc) => getT(t, p)?.textContent?.trim() || '';
 
             const patch: any = {};
-            // Reset every form control to '' so any element the user removed from the XML
-            // clears its mirrored form value (prevents generateXml from re-inserting it).
-            Object.keys(this.form.controls).forEach(k => patch[k] = '');
+            // Only patch fields the parser explicitly reads — previously this wiped
+            // every control to '' on each XML edit, silently dropping user data.
             const setVal = (f: string, v: string) => { if (v) patch[f] = v; };
 
             const appHdr = getT('AppHdr');

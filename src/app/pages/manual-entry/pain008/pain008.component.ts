@@ -109,11 +109,11 @@ export class Pain008Component implements OnInit, OnDestroy {
   private buildForm() {
     this.form = this.fb.group({
       // === AppHdr ===
-      fromBic: ['BANCGB2LXXX', [Validators.required, Validators.pattern(/^[A-Z0-9]{8,11}$/)]],
+      fromBic: ['BANCGB2LXXX', [Validators.required, Validators.pattern(/^[A-Z0-9]{4}[A-Z]{2}[A-Z0-9]{2}([A-Z0-9]{3})?$/)]],
       fromClrSysCd: [''],
       fromMmbId: [''],
       fromLei: [''],
-      toBic: ['BOFAUS3NXXX', [Validators.required, Validators.pattern(/^[A-Z0-9]{8,11}$/)]],
+      toBic: ['BOFAUS3NXXX', [Validators.required, Validators.pattern(/^[A-Z0-9]{4}[A-Z]{2}[A-Z0-9]{2}([A-Z0-9]{3})?$/)]],
       toClrSysCd: [''],
       toMmbId: [''],
       toLei: [''],
@@ -733,13 +733,16 @@ export class Pain008Component implements OnInit, OnDestroy {
         if (tx.rmtInfStrdCdtrRefCd || tx.rmtInfStrdCdtrRefPrtry || tx.rmtInfStrdCdtrRefRef) {
           strd += this.tag('CdtrRefInf', this.tag('Tp', (tx.rmtInfStrdCdtrRefCd ? this.tag('CdOrPrtry', this.el('Cd', tx.rmtInfStrdCdtrRefCd, 9), 8) : this.tag('CdOrPrtry', this.el('Prtry', tx.rmtInfStrdCdtrRefPrtry, 9), 8)) + this.el('Issr', tx.rmtInfStrdCdtrRefIssr, 8), 7) + this.el('Ref', tx.rmtInfStrdCdtrRefRef, 7), 6);
         }
-        // Invcr
+        // Invcr — mirror form values exactly. Don't inject 'Default Town'/'US'
+        // when the user has typed nothing, otherwise the XML drifts from the form.
         if (tx.rmtInfStrdInvcrNm) {
-          strd += this.tag('Invcr', this.el('Nm', tx.rmtInfStrdInvcrNm, 7) + this.tag('PstlAdr', this.el('TwnNm', tx.rmtInfStrdInvcrTwnNm || 'Default Town', 8) + this.el('Ctry', tx.rmtInfStrdInvcrCtry || 'US', 8), 7), 6);
+          const invcrPstl = this.el('TwnNm', tx.rmtInfStrdInvcrTwnNm, 8) + this.el('Ctry', tx.rmtInfStrdInvcrCtry, 8);
+          strd += this.tag('Invcr', this.el('Nm', tx.rmtInfStrdInvcrNm, 7) + (invcrPstl ? this.tag('PstlAdr', invcrPstl, 7) : ''), 6);
         }
         // Invcee
         if (tx.rmtInfStrdInvceeNm) {
-          strd += this.tag('Invcee', this.el('Nm', tx.rmtInfStrdInvceeNm, 7) + this.tag('PstlAdr', this.el('TwnNm', tx.rmtInfStrdInvceeTwnNm || 'Default Town', 8) + this.el('Ctry', tx.rmtInfStrdInvceeCtry || 'US', 8), 7), 6);
+          const invceePstl = this.el('TwnNm', tx.rmtInfStrdInvceeTwnNm, 8) + this.el('Ctry', tx.rmtInfStrdInvceeCtry, 8);
+          strd += this.tag('Invcee', this.el('Nm', tx.rmtInfStrdInvceeNm, 7) + (invceePstl ? this.tag('PstlAdr', invceePstl, 7) : ''), 6);
         }
         // TaxRmt
         if (tx.rmtInfStrdTaxRmtCdtrTaxId || tx.rmtInfStrdTaxRmtDbtrTaxId || tx.rmtInfStrdTaxRmtRefNb || tx.rmtInfStrdTaxRmtUltmtDbtrTaxId) {
@@ -888,9 +891,14 @@ ${grpHdr}${pmtInf}\t\t</CstmrDrctDbtInitn>
         return el ? el.textContent?.trim() || '' : '';
       };
       const patch: any = {};
-      // Reset every form control to '' so any element the user removed from the XML
-      // clears its mirrored form value (prevents generateXml from re-inserting it).
-      Object.keys(this.form.controls).forEach(k => patch[k] = '');
+      // NOTE: previously every form control was reset to '' here, on the theory
+      // that "elements the user removed from the XML should clear from the form".
+      // In practice the parser only repopulates ~11 of the ~150 pain.008 fields,
+      // so every XML edit silently wiped dbtr address / charges / mandate /
+      // remittance / tax / etc. values from the form, and the next generateXml
+      // pass would re-emit XML with most of the user's data missing.
+      // Now we only patch the fields the parser actually reads; everything else
+      // keeps the user's previous value.
       const appHdr = findTag('AppHdr');
       if (appHdr) {
         const fr = findTag('Fr', appHdr);
@@ -969,7 +977,9 @@ ${grpHdr}${pmtInf}\t\t</CstmrDrctDbtInitn>
 
   err(f: string, group?: any): string | null {
     const c = group ? group.get(f) : this.form.get(f);
-    if (!c || c.valid) return null;
+    // Only show errors after the user has touched the field so the form doesn't
+    // light up red on initial render before the user has had a chance to type.
+    if (!c || c.valid || (!c.touched && !c.dirty)) return null;
     if (c.errors?.['required']) return 'Required field.';
     if (c.errors?.['maxlength']) return `Max ${c.errors['maxlength'].requiredLength} chars.`;
     if (c.errors?.['pattern']) {

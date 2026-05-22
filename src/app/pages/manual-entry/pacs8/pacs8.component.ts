@@ -722,7 +722,7 @@ export class Pacs8Component implements OnInit, OnDestroy {
   err(f: string): string | null {
     const c = this.form.get(f);
     // Remove touched/dirty requirement to show errors immediately
-    if (!c || c.valid) return null;
+    if (!c || c.valid || (!c.touched && !c.dirty)) return null;
 
     if (c.errors?.['required']) return 'Required field.';
     if (c.errors?.['maxlength']) return `Max ${c.errors['maxlength'].requiredLength} chars.`;
@@ -1637,9 +1637,8 @@ ${tx}\t\t\t</CdtTrfTxInf>
       }
 
       const patch: any = {};
-      // Reset every form control to '' so any element the user removed from the XML
-      // clears its mirrored form value (prevents generateXml from re-inserting it).
-      Object.keys(this.form.controls).forEach(k => patch[k] = '');
+      // Only patch fields the parser explicitly reads — previously this wiped
+      // every control to '' on each XML edit, silently dropping user data.
       const getT = (t: string, p: any = doc): Element | null => {
         const els = p.getElementsByTagName(t);
         if (els.length > 0) return els[0];
@@ -1861,8 +1860,20 @@ ${tx}\t\t\t</CdtTrfTxInf>
             setVal(prefix + 'TwnLctnNm', tval('TwnLctnNm', addr));
             setVal(prefix + 'DstrctNm', tval('DstrctNm', addr));
             
-            if (lines.length > 0 && (tval('StrtNm', addr) || tval('BldgNb', addr))) {
+            // Hybrid detection: any structured field coexisting with AdrLine.
+            // Previous check only looked at StrtNm/BldgNb, so PstCd/Dept/BldgNm-only
+            // structured-plus-AdrLine messages were misclassified as 'unstructured'.
+            const hasStructured = !!(
+              tval('StrtNm', addr) || tval('BldgNb', addr) || tval('BldgNm', addr)
+              || tval('PstCd', addr) || tval('TwnNm', addr) || tval('Dept', addr)
+              || tval('SubDept', addr) || tval('Flr', addr) || tval('PstBx', addr)
+              || tval('Room', addr) || tval('CtrySubDvsn', addr) || tval('TwnLctnNm', addr)
+              || tval('DstrctNm', addr)
+            );
+            if (lines.length > 0 && hasStructured) {
                 setVal(prefix + 'AddrType', 'hybrid');
+            } else if (lines.length === 0 && hasStructured) {
+                setVal(prefix + 'AddrType', 'structured');
             }
           } else {
             setVal(prefix + 'AddrType', 'none');

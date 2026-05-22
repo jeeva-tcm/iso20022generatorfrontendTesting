@@ -637,7 +637,7 @@ ${assgnmt.trimEnd()}
 \t\t\t</Assgnmt>
 \t\t\t<Undrlyg>
 \t\t\t\t<OrgnlPmtInfAndCxl>
-\t\t\t\t\t<OrgnlPmtInfId>${this.esc(v.orgnlPmtInfId || 'NOTPROVIDED')}</OrgnlPmtInfId>
+\t\t\t\t\t<OrgnlPmtInfId>${this.esc(v.orgnlPmtInfId || '')}</OrgnlPmtInfId>
 \t\t\t\t\t<OrgnlGrpInf>
 ${orgnlGrpInf.trimEnd()}
 \t\t\t\t\t</OrgnlGrpInf>
@@ -851,9 +851,8 @@ ${txInf.trimEnd()}
       const tval = (tag: string, p: Element | Document = doc) => getT(tag, p)?.textContent?.trim() || '';
       
       const patch: any = {};
-      // Reset every form control to '' so any element the user removed from the XML
-      // clears its mirrored form value (prevents generateXml from re-inserting it).
-      Object.keys(this.form.controls).forEach(k => patch[k] = '');
+      // Only patch fields the parser explicitly reads — previously this wiped
+      // every control to '' on each XML edit, silently dropping user data.
       const setVal = (f: string, v: string) => { if (v) patch[f] = v; };
 
       // 1. AppHdr (head.001)

@@ -1,4 +1,4 @@
-﻿import { CommonModule } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -428,7 +428,7 @@ export class Pacs9Component implements OnInit, OnDestroy {
     err(f: string): string | null {
         const c = this.form.get(f);
         // Remove touched/dirty requirement to show errors immediately
-        if (!c || c.valid) return null;
+        if (!c || c.valid || (!c.touched && !c.dirty)) return null;
 
         if (c.errors?.['required']) return 'Required field.';
         if (c.errors?.['maxlength']) return `Max ${c.errors['maxlength'].requiredLength} chars.`;
@@ -923,8 +923,9 @@ ${tx}\t\t\t</CdtTrfTxInf>
         if (v[p + 'CtrySubDvsn']) lines.push(`${t}<CtrySubDvsn>${this.e(v[p + 'CtrySubDvsn'])}</CtrySubDvsn>`);
         if (v[p + 'Ctry']) lines.push(`${t}<Ctry>${this.e(v[p + 'Ctry'])}</Ctry>`);
 
-        // AdrLine (unstructured or hybrid)
-        if (['hybrid', 'hybrid'].includes(type)) {
+        // AdrLine (unstructured or hybrid). Previous code was ['hybrid','hybrid']
+        // — a typo that silently dropped both AdrLines for unstructured addresses.
+        if (['unstructured', 'hybrid'].includes(type)) {
             if (v[p + 'AdrLine1']) lines.push(`${t}<AdrLine>${this.e(v[p + 'AdrLine1'])}</AdrLine>`);
             if (v[p + 'AdrLine2']) lines.push(`${t}<AdrLine>${this.e(v[p + 'AdrLine2'])}</AdrLine>`);
         }
@@ -1165,9 +1166,8 @@ ${tx}\t\t\t</CdtTrfTxInf>
             const tval = (t: string, p: any = doc) => getT(t, p)?.textContent?.trim() || '';
 
             const patch: any = {};
-            // Reset every form control to '' so any element the user removed from the XML
-            // clears its mirrored form value (prevents generateXml from re-inserting it).
-            Object.keys(this.form.controls).forEach(k => patch[k] = '');
+            // Only patch fields the parser explicitly reads — previously this wiped
+            // every control to '' on each XML edit, silently dropping user data.
 
             // 1. AppHdr (BAH)
             const appHdr = getT('AppHdr');
