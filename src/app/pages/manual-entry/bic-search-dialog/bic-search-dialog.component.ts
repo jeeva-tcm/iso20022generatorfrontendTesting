@@ -1,4 +1,4 @@
-import { Component, Inject } from '@angular/core';
+import { Component, Inject, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
@@ -10,6 +10,7 @@ import { BicSearchService, BicRecord } from '../../../services/bic-search.servic
   selector: 'app-bic-search-dialog',
   standalone: true,
   imports: [CommonModule, FormsModule, MatDialogModule, MatIconModule, MatProgressSpinnerModule],
+  encapsulation: ViewEncapsulation.None,
   template: `
     <div class="bic-search-container">
         <h2 mat-dialog-title class="dialog-title">
@@ -69,190 +70,272 @@ import { BicSearchService, BicRecord } from '../../../services/bic-search.servic
         flex-direction: column;
         max-height: 90vh;
         width: 100%;
-        color: #1e293b;
+        color: var(--text-main);
     }
 
-    .dialog-title {
+    .bic-search-container .dialog-title {
         display: flex;
         align-items: center;
         gap: 12px;
         margin: 0;
-        padding-bottom: 16px;
-        border-bottom: 1px solid #e2e8f0;
+        padding: 20px 24px 16px;
+        border-bottom: 1px solid var(--border-light);
         font-weight: 600;
         position: relative;
+        color: var(--text-main) !important;
+        font-size: 1.25rem;
     }
 
-    .close-btn {
+    .bic-search-container .close-btn {
         position: absolute;
-        right: 0;
-        top: 0;
+        right: 20px;
+        top: 20px;
         background: transparent;
         border: none;
         cursor: pointer;
-        color: #64748b;
-        padding: 8px;
+        color: var(--text-muted);
+        padding: 6px;
         border-radius: 50%;
         display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
     }
 
-    .close-btn:hover {
-        background: #f1f5f9;
+    .bic-search-container .close-btn:hover {
+        background: var(--bg-card-hover);
         color: #ef4444;
     }
 
-    .dialog-content {
-        padding-top: 20px !important;
+    .bic-search-container .dialog-content {
+        padding: 0 24px 24px !important;
         display: flex;
         flex-direction: column;
         overflow: hidden;
+        background: transparent !important;
     }
 
-    .search-input-wrapper {
-        position: relative;
-        margin-bottom: 20px;
+    .bic-search-container .search-input-wrapper {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background: var(--bg-card) !important;
+        margin-bottom: 16px;
+        padding: 16px 0;
         display: flex;
         align-items: center;
+        border-bottom: 1px solid var(--border-light);
     }
 
-    .search-icon {
+    .bic-search-container .search-icon {
         position: absolute;
-        left: 12px;
-        color: #94a3b8;
+        left: 14px;
+        color: var(--text-muted);
+        z-index: 11;
     }
 
-    div.search-input-wrapper input.search-input {
+    .bic-search-container input.search-input {
         width: 100%;
-        padding: 12px 12px 12px 42px !important;
-        border: 2px solid #e2e8f0;
-        border-radius: 8px;
-        font-size: 1rem;
+        padding: 12px 16px 12px 46px !important;
+        border: 1px solid var(--border-light) !important;
+        border-radius: 10px !important;
+        font-size: 0.95rem;
         outline: none;
-        transition: all 0.2s;
-        background: #f8fafc;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        background: var(--bg-app) !important;
+        color: var(--text-main) !important;
     }
 
-    .search-input:focus {
-        border-color: #3b82f6;
-        background: #fff;
-        box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+    .bic-search-container input.search-input:focus {
+        border-color: var(--accent-color) !important;
+        box-shadow: 0 0 0 3px var(--accent-light) !important;
     }
 
-    .search-spinner {
+    .bic-search-container .search-spinner {
         position: absolute;
-        right: 12px;
+        right: 14px;
+        z-index: 11;
     }
 
-    .results-scroller {
+    .bic-search-container .results-scroller {
         flex: 1;
         overflow-y: auto;
-        min-height: 350px;
-        max-height: 500px;
+        min-height: 380px;
+        max-height: 520px;
         padding-right: 4px;
     }
 
-    .placeholder-state {
+    .bic-search-container .results-scroller::-webkit-scrollbar {
+        display: block !important;
+        width: 6px !important;
+    }
+
+    .bic-search-container .results-scroller::-webkit-scrollbar-track {
+        background: transparent !important;
+    }
+
+    .bic-search-container .results-scroller::-webkit-scrollbar-thumb {
+        background: var(--border-light) !important;
+        border-radius: 3px !important;
+    }
+
+    .bic-search-container .results-scroller::-webkit-scrollbar-thumb:hover {
+        background: var(--text-muted) !important;
+    }
+
+    .bic-search-container .placeholder-state {
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        height: 350px;
+        height: 380px;
         text-align: center;
-        color: #94a3b8;
+        color: var(--text-muted) !important;
+        animation: bicFadeIn 0.3s ease-out;
     }
 
-    .large-icon {
-        font-size: 64px;
-        width: 64px;
-        height: 64px;
+    .bic-search-container .large-icon {
+        font-size: 48px;
+        width: 48px;
+        height: 48px;
         margin-bottom: 16px;
-        opacity: 0.3;
+        color: var(--accent-color) !important;
+        opacity: 0.8;
     }
 
-    .hint {
-        font-size: 0.8rem;
-        margin-top: 4px;
-    }
-
-    .clear-btn {
-        margin-top: 16px;
-        background: #f1f5f9;
-        border: none;
-        padding: 6px 12px;
-        border-radius: 4px;
-        color: #3b82f6;
+    .bic-search-container .placeholder-state p {
+        font-size: 1rem;
         font-weight: 500;
-        cursor: pointer;
+        margin: 0;
+        color: var(--text-main) !important;
     }
 
-    .bic-list {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
+    .bic-search-container .hint {
+        font-size: 0.8rem;
+        color: var(--text-muted) !important;
+        margin-top: 6px;
+        opacity: 0.8;
     }
 
-    .bic-item {
-        display: flex;
-        align-items: center;
-        padding: 12px;
-        background: #fff;
-        border: 1px solid #e2e8f0;
-        border-radius: 8px;
+    .bic-search-container .clear-btn {
+        margin-top: 16px;
+        background: var(--accent-light) !important;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 6px;
+        color: var(--accent-text) !important;
+        font-weight: 600;
         cursor: pointer;
         transition: all 0.2s;
     }
 
-    .bic-item:hover {
-        border-color: #3b82f6;
-        transform: translateY(-1px);
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    .bic-search-container .clear-btn:hover {
+        background: var(--border-light) !important;
     }
 
-    .country-badge {
-        width: 32px;
-        height: 32px;
-        background: #eff6ff;
-        color: #3b82f6;
+    .bic-search-container .bic-list {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        padding-top: 4px;
+        padding-bottom: 8px;
+    }
+
+    .bic-search-container .bic-item {
+        display: flex;
+        align-items: center;
+        padding: 14px 16px;
+        background: rgba(255, 255, 255, 0.02) !important;
+        border: 1px solid var(--border-light) !important;
+        border-radius: 12px !important;
+        cursor: pointer;
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    }
+
+    .bic-search-container .bic-item:hover {
+        border-color: var(--accent-color) !important;
+        background: rgba(59, 130, 246, 0.06) !important;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4) !important;
+    }
+
+    body.light-theme .bic-search-container .bic-item {
+        background: rgba(0, 0, 0, 0.01) !important;
+    }
+
+    body.light-theme .bic-search-container .bic-item:hover {
+        background: rgba(37, 99, 235, 0.03) !important;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05) !important;
+    }
+
+    .bic-search-container .country-badge {
+        width: 40px;
+        height: 40px;
+        background: var(--accent-light) !important;
+        color: var(--accent-text) !important;
         display: flex;
         align-items: center;
         justify-content: center;
-        border-radius: 6px;
+        border-radius: 8px;
         font-weight: 700;
-        font-size: 0.75rem;
+        font-size: 0.85rem;
         flex-shrink: 0;
-        margin-right: 12px;
+        margin-right: 16px;
+        border: 1px solid rgba(59, 130, 246, 0.2) !important;
     }
 
-    .bic-main {
+    body.light-theme .bic-search-container .country-badge {
+        border-color: rgba(37, 99, 235, 0.15) !important;
+    }
+
+    .bic-search-container .bic-main {
         flex: 1;
         overflow: hidden;
     }
 
-    .bank-name {
-        font-weight: 600;
+    .bic-search-container .bank-name {
+        font-weight: 600 !important;
+        font-size: 0.95rem !important;
+        color: var(--text-main) !important;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-        font-size: 0.95rem;
+        line-height: 1.4 !important;
     }
 
-    .bank-addr {
-        font-size: 0.8rem;
-        color: #64748b;
+    .bic-search-container .bank-addr {
+        font-size: 0.8rem !important;
+        color: var(--text-muted) !important;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-        margin-top: 2px;
+        margin-top: 4px;
+        opacity: 0.85;
+        line-height: 1.3 !important;
     }
 
-    .bic-code code {
-        background: #f1f5f9;
-        padding: 4px 8px;
-        border-radius: 4px;
+    .bic-search-container .bic-code code {
+        background: var(--bg-card) !important;
+        border: 1px solid var(--border-light) !important;
+        padding: 6px 14px;
+        border-radius: 6px;
         font-family: 'JetBrains Mono', monospace;
-        font-weight: 700;
-        color: #0f172a;
-        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--accent-text) !important;
+        font-size: 0.85rem;
+        letter-spacing: 0.5px;
+        transition: all 0.2s;
+    }
+
+    .bic-search-container .bic-item:hover .bic-code code {
+        background: var(--accent-color) !important;
+        color: #ffffff !important;
+        border-color: var(--accent-color) !important;
+    }
+
+    @keyframes bicFadeIn {
+        from { opacity: 0; transform: translateY(8px); }
+        to   { opacity: 1; transform: translateY(0); }
     }
   `]
 })

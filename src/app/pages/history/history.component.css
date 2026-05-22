@@ -878,6 +878,7 @@ body.light-theme .val-id {
 
 .desktop-only {
     display: block;
+    border-radius: 8px 8px 0 0;
 }
 
 @media (max-width: 900px) {
@@ -1339,4 +1340,149 @@ mat-card {
 
 .origin-filter {
     margin-left: 8px;
+}
+
+/* ========================================= */
+/* PREMIUM LOADING SPINNER                   */
+/* ========================================= */
+.history-loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 20px;
+    background: transparent;
+    animation: fadeIn 0.4s ease-out;
+}
+
+.spinner-box {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 16px;
+}
+
+.premium-spinner {
+    position: relative;
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: radial-gradient(farthest-side, var(--accent-color) 94%, #0000) top/8px 8px no-repeat,
+                conic-gradient(#0000 30%, var(--accent-color));
+    -webkit-mask: radial-gradient(farthest-side, #0000 calc(100% - 8px), #000 0);
+    animation: spin 1s infinite linear;
+}
+
+.spinner-box::before {
+    content: '';
+    position: absolute;
+    top: -8px;
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: var(--accent-color);
+    opacity: 0.15;
+    animation: pulse 2s infinite ease-in-out;
+    z-index: 0;
+    pointer-events: none;
+}
+
+@keyframes spin {
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(0.85);
+        opacity: 0.1;
+    }
+    50% {
+        transform: scale(1.15);
+        opacity: 0.25;
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.spinner-box h3 {
+    margin: 8px 0 0 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-main);
+    letter-spacing: -0.02em;
+}
+
+.spinner-box p {
+    margin: 0;
+    font-size: 14px;
+    color: var(--text-muted);
+}
+
+/* Scrollable table container for sticky headers & paginator */
+.table-scroll-container {
+    max-height: 550px;
+    overflow-y: auto;
+    overflow-x: auto;
+    border-radius: 8px 8px 0 0;
+}
+
+/* Custom Scrollbar for Desktop Table View */
+.table-scroll-container::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+.table-scroll-container::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 4px;
+}
+
+.table-scroll-container::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 4px;
+    transition: background 0.2s;
+}
+
+.table-scroll-container::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+:host-context(.light-theme) .table-scroll-container::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.03);
+}
+
+:host-context(.light-theme) .table-scroll-container::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.15);
+}
+
+:host-context(.light-theme) .table-scroll-container::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.25);
+}
+
+/* Sticky Header for scrollable table container */
+::ng-deep .history-container table.mat-mdc-table thead tr {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: var(--bg-card) !important;
+}
+
+::ng-deep .history-container .mat-mdc-header-cell {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: var(--bg-card) !important;
 }
