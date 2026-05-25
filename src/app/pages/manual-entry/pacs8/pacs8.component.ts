@@ -393,6 +393,25 @@ export class Pacs8Component implements OnInit, OnDestroy {
     ustrd?.updateValueAndValidity({ emitEvent: false });
     strdRef?.updateValueAndValidity({ emitEvent: false });
 
+    // ChrgsInf validators — mandatory only when ChrgBr=CRED
+    const chrgBr = this.form.get('chrgBr')?.value;
+    const chrgsAmtCtrl = this.form.get('chrgsInfAmt');
+    const chrgsCcyCtrl = this.form.get('chrgsInfCcy');
+    const chrgsAgtCtrl = this.form.get('chrgsInfAgtBic');
+    const BIC_PAT = Validators.pattern(/^[A-Z0-9]{4}[A-Z]{2}[A-Z0-9]{2}([A-Z0-9]{3})?$/);
+    const AMT_PAT = Validators.pattern(/^\d{1,13}(\.\d{1,5})?$/);
+    if (chrgBr === 'CRED') {
+      chrgsAmtCtrl?.setValidators([Validators.required, AMT_PAT]);
+      chrgsCcyCtrl?.setValidators([Validators.required]);
+      chrgsAgtCtrl?.setValidators([Validators.required, BIC_PAT]);
+    } else {
+      chrgsAmtCtrl?.setValidators([AMT_PAT]);
+      chrgsCcyCtrl?.clearValidators();
+      chrgsAgtCtrl?.setValidators([BIC_PAT]);
+    }
+    chrgsAmtCtrl?.updateValueAndValidity({ emitEvent: false });
+    chrgsCcyCtrl?.updateValueAndValidity({ emitEvent: false });
+    chrgsAgtCtrl?.updateValueAndValidity({ emitEvent: false });
 
     // Agent & Party Clearing System Validators
     [...this.agentPrefixes].forEach(p => {
@@ -481,8 +500,9 @@ export class Pacs8Component implements OnInit, OnDestroy {
   }
 
   private buildForm() {
-    const BIC = [Validators.required, Validators.pattern(/^[A-Z]{4}[A-Z]{2}[A-Z0-9]{2}([A-Z0-9]{3})?$/)];
-    const BIC_OPT = [Validators.pattern(/^[A-Z]{4}[A-Z]{2}[A-Z0-9]{2}([A-Z0-9]{3})?$/)];
+    // BIC per ISO 9362 / CBPR+ BICFIDec2014Identifier — first 4 chars are alphanumeric.
+    const BIC = [Validators.required, Validators.pattern(/^[A-Z0-9]{4}[A-Z]{2}[A-Z0-9]{2}([A-Z0-9]{3})?$/)];
+    const BIC_OPT = [Validators.pattern(/^[A-Z0-9]{4}[A-Z]{2}[A-Z0-9]{2}([A-Z0-9]{3})?$/)];
     // Safe character set: letters, digits, space, . , ( ) ' - only. No & @ ! # $ etc.
     const SAFE_NAME = Validators.pattern(/^[a-zA-Z0-9 .,()'\-]+$/);
     // ISO 20022 MX allowed character pattern for address fields
@@ -510,16 +530,16 @@ export class Pacs8Component implements OnInit, OnDestroy {
       appHdrPriority: ['NORM'],
       fromMmbId: ['', [Validators.maxLength(35)]], fromClrSysId: ['', [Validators.maxLength(5)]], fromLei: ['', [Validators.pattern(/^[A-Z0-9]{18}[0-9]{2}$/)]],
       toMmbId: ['', [Validators.maxLength(35)]], toClrSysId: ['', [Validators.maxLength(5)]], toLei: ['', [Validators.pattern(/^[A-Z0-9]{18}[0-9]{2}$/)]],
-      rltd: [''], rltdCharSet: [''],
+      rltd: [''],
       sttlmPrty: [''],
 
       instdAmt: ['15000.00', [Validators.pattern(/^\d{1,13}(\.\d{1,5})?$/)]],
       instdAmtCcy: ['EUR'],
       xchgRate: [''],
       dbtDtTm: [this.isoNow()], cdtDtTm: [this.isoNow()],
-      chrgsInfAmt: ['0.00', [Validators.required, Validators.pattern(/^\d{1,13}(\.\d{1,5})?$/)]],
-      chrgsInfCcy: ['EUR', Validators.required],
-      chrgsInfAgtBic: ['SNDRBEBBXXX', [Validators.required, Validators.pattern(/^[A-Z]{4}[A-Z]{2}[A-Z0-9]{2}([A-Z0-9]{3})?$/)]],
+      chrgsInfAmt: ['', [Validators.pattern(/^\d{1,13}(\.\d{1,5})?$/)]],
+      chrgsInfCcy: [''],
+      chrgsInfAgtBic: ['', [Validators.pattern(/^[A-Z0-9]{4}[A-Z]{2}[A-Z0-9]{2}([A-Z0-9]{3})?$/)]],
       rgltryRptg1Code: [''], rgltryRptg1Inf: [''],
       rgltryRptg2Code: [''], rgltryRptg2Inf: [''],
       rgltryRptg3Code: [''], rgltryRptg3Inf: [''],
@@ -589,7 +609,9 @@ export class Pacs8Component implements OnInit, OnDestroy {
       // instructing/instructed agents) defaults to 'none' so changing their BIC doesn't
       // trigger spurious "Country/Town required" errors on empty fields.
       if (!c[p + 'AddrType']) {
-        c[p + 'AddrType'] = ['dbtr', 'cdtr', 'dbtrAgt', 'cdtrAgt'].includes(p) ? 'hybrid' : 'none';
+        // Parties (Dbtr/Cdtr) default to hybrid; agents default to none because
+        // CBPR+ forbids Nm/PstlAdr when BICFI is present.
+        c[p + 'AddrType'] = ['dbtr', 'cdtr'].includes(p) ? 'hybrid' : 'none';
       }
       if (!c[p + 'AdrLine1']) c[p + 'AdrLine1'] = ['', [Validators.maxLength(70), ADDR_PATTERN]];
       if (!c[p + 'AdrLine2']) c[p + 'AdrLine2'] = ['', [Validators.maxLength(70), ADDR_PATTERN]];
@@ -614,8 +636,9 @@ export class Pacs8Component implements OnInit, OnDestroy {
         if (!c[p + 'Name']) c[p + 'Name'] = ['', [Validators.maxLength(140), SAFE_NAME]];
         if (!c[p + 'Lei']) c[p + 'Lei'] = ['', [Validators.pattern(/^[A-Z0-9]{18}[0-9]{2}$/)]];
         if (!c[p + 'ClrSysCd']) c[p + 'ClrSysCd'] = ['', Validators.maxLength(5)];
-        if (!c[p + 'ClrSysMmbId']) c[p + 'ClrSysMmbId'] = ['', Validators.maxLength(35)];
-        if (!c[p + 'Acct']) c[p + 'Acct'] = ['', [Validators.pattern(/^[A-Z0-9]{5,34}$/)]];
+        // CBPR_RestrictedFINXMax28Text — schema caps MmbId at 28, not 35, and constrains the FIN-X character set
+        if (!c[p + 'ClrSysMmbId']) c[p + 'ClrSysMmbId'] = ['', [Validators.maxLength(28), ADDR_PATTERN]];
+        if (!c[p + 'Acct']) c[p + 'Acct'] = ['', [Validators.maxLength(34), Validators.pattern(/^[A-Z0-9]{5,34}$/)]];
       }
     });
 
@@ -636,32 +659,31 @@ export class Pacs8Component implements OnInit, OnDestroy {
     c['cdtrAdrLine1'] = ['18 Boulevard Royal', [Validators.maxLength(70), ADDR_PATTERN]];
     c['cdtrAdrLine2'] = ['L-2449 Luxembourg', [Validators.maxLength(70), ADDR_PATTERN]];
 
-    // Debtor Agent address (Belgium)
-    c['dbtrAgtAddrType'] = ['hybrid'];
-    c['dbtrAgtCtry'] = ['BE', Validators.pattern(/^[A-Z]{2,2}$/)];
-    c['dbtrAgtTwnNm'] = ['Brussels', [Validators.maxLength(35), ADDR_PATTERN]];
-    c['dbtrAgtAdrLine1'] = ['1 Rue de la Banque', [Validators.maxLength(70), ADDR_PATTERN]];
-    c['dbtrAgtAdrLine2'] = ['1000 Brussels', [Validators.maxLength(70), ADDR_PATTERN]];
+    // CBPR+: DbtrAgt and CdtrAgt use BICFI → Nm and PstlAdr must be absent
+    c['dbtrAgtAddrType'] = ['none'];
+    c['dbtrAgtCtry'] = ['', Validators.pattern(/^[A-Z]{2,2}$/)];
+    c['dbtrAgtTwnNm'] = ['', [Validators.maxLength(35), ADDR_PATTERN]];
+    c['dbtrAgtAdrLine1'] = ['', [Validators.maxLength(70), ADDR_PATTERN]];
+    c['dbtrAgtAdrLine2'] = ['', [Validators.maxLength(70), ADDR_PATTERN]];
 
-    // Creditor Agent address (Luxembourg)
-    c['cdtrAgtAddrType'] = ['hybrid'];
-    c['cdtrAgtCtry'] = ['LU', Validators.pattern(/^[A-Z]{2,2}$/)];
-    c['cdtrAgtTwnNm'] = ['Luxembourg City', [Validators.maxLength(35), ADDR_PATTERN]];
-    c['cdtrAgtAdrLine1'] = ['25 Avenue Monterey', [Validators.maxLength(70), ADDR_PATTERN]];
-    c['cdtrAgtAdrLine2'] = ['L-2163 Luxembourg', [Validators.maxLength(70), ADDR_PATTERN]];
+    c['cdtrAgtAddrType'] = ['none'];
+    c['cdtrAgtCtry'] = ['', Validators.pattern(/^[A-Z]{2,2}$/)];
+    c['cdtrAgtTwnNm'] = ['', [Validators.maxLength(35), ADDR_PATTERN]];
+    c['cdtrAgtAdrLine1'] = ['', [Validators.maxLength(70), ADDR_PATTERN]];
+    c['cdtrAgtAdrLine2'] = ['', [Validators.maxLength(70), ADDR_PATTERN]];
 
     // Reimbursement Agent BICs (required when SttlmMtd = COVE)
-    c['instgRmbrsmntAgtBic'] = ['', [Validators.pattern(/^[A-Z]{4}[A-Z]{2}[A-Z0-9]{2}([A-Z0-9]{3})?$/)]]; 
-    c['instdRmbrsmntAgtBic'] = ['', [Validators.pattern(/^[A-Z]{4}[A-Z]{2}[A-Z0-9]{2}([A-Z0-9]{3})?$/)]]; 
-    c['thrdRmbrsmntAgtBic'] = ['', [Validators.pattern(/^[A-Z]{4}[A-Z]{2}[A-Z0-9]{2}([A-Z0-9]{3})?$/)]];
+    c['instgRmbrsmntAgtBic'] = ['', [Validators.pattern(/^[A-Z0-9]{4}[A-Z]{2}[A-Z0-9]{2}([A-Z0-9]{3})?$/)]];
+    c['instdRmbrsmntAgtBic'] = ['', [Validators.pattern(/^[A-Z0-9]{4}[A-Z]{2}[A-Z0-9]{2}([A-Z0-9]{3})?$/)]];
+    c['thrdRmbrsmntAgtBic'] = ['', [Validators.pattern(/^[A-Z0-9]{4}[A-Z]{2}[A-Z0-9]{2}([A-Z0-9]{3})?$/)]];
 
     this.partyPrefixes.forEach(p => {
       if (!c[p + 'IdType']) c[p + 'IdType'] = 'none';
       if (!c[p + 'OrgAnyBIC']) c[p + 'OrgAnyBIC'] = ['', [Validators.pattern(/^[A-Z0-9]{4}[A-Z]{2}[A-Z0-9]{2}([A-Z0-9]{3})?$/)]];
       if (!c[p + 'OrgLEI']) c[p + 'OrgLEI'] = ['', [Validators.pattern(/^[A-Z0-9]{18}[0-9]{2}$/)]];
       if (!c[p + 'OrgClrSysCd']) c[p + 'OrgClrSysCd'] = ['', Validators.maxLength(5)];
-      if (!c[p + 'OrgClrSysMmbId']) c[p + 'OrgClrSysMmbId'] = ['', Validators.maxLength(35)];
-      if (!c[p + 'OrgOthrId']) c[p + 'OrgOthrId'] = ['', Validators.maxLength(35)];
+      if (!c[p + 'OrgClrSysMmbId']) c[p + 'OrgClrSysMmbId'] = ['', [Validators.maxLength(28), ADDR_PATTERN]];
+      if (!c[p + 'OrgOthrId']) c[p + 'OrgOthrId'] = ['', [Validators.maxLength(35), ADDR_PATTERN]];
       if (!c[p + 'OrgOthrSchmeNmCd']) c[p + 'OrgOthrSchmeNmCd'] = ['', Validators.maxLength(4)];
       if (!c[p + 'OrgOthrSchmeNmPrtry']) c[p + 'OrgOthrSchmeNmPrtry'] = ['', Validators.maxLength(35)];
       if (!c[p + 'OrgOthrIssr']) c[p + 'OrgOthrIssr'] = ['', Validators.maxLength(35)];
@@ -669,15 +691,15 @@ export class Pacs8Component implements OnInit, OnDestroy {
       if (!c[p + 'PrvtDtAndPlcOfBirthPrvc']) c[p + 'PrvtDtAndPlcOfBirthPrvc'] = ['', Validators.maxLength(35)];
       if (!c[p + 'PrvtDtAndPlcOfBirthCity']) c[p + 'PrvtDtAndPlcOfBirthCity'] = ['', Validators.maxLength(35)];
       if (!c[p + 'PrvtDtAndPlcOfBirthCtry']) c[p + 'PrvtDtAndPlcOfBirthCtry'] = ['', Validators.pattern(/^[A-Z]{2,2}$/)];
-      if (!c[p + 'PrvtOthrId']) c[p + 'PrvtOthrId'] = ['', Validators.maxLength(35)];
+      if (!c[p + 'PrvtOthrId']) c[p + 'PrvtOthrId'] = ['', [Validators.maxLength(35), ADDR_PATTERN]];
       if (!c[p + 'PrvtOthrSchmeNmCd']) c[p + 'PrvtOthrSchmeNmCd'] = ['', Validators.maxLength(4)];
       if (!c[p + 'PrvtOthrSchmeNmPrtry']) c[p + 'PrvtOthrSchmeNmPrtry'] = ['', Validators.maxLength(35)];
       if (!c[p + 'PrvtOthrIssr']) c[p + 'PrvtOthrIssr'] = ['', Validators.maxLength(35)];
     });
 
-    // Set default names for mandatory agents
-    c['dbtrAgtName'] = ['KBC Bank NV', [Validators.required, Validators.maxLength(140), SAFE_NAME]];
-    c['cdtrAgtName'] = ['Banque Internationale a Luxembourg', [Validators.required, Validators.maxLength(140), SAFE_NAME]];
+    // Agent names are optional in CBPR+: when BICFI is present, Nm and PstlAdr must NOT appear.
+    c['dbtrAgtName'] = ['', [Validators.maxLength(140), SAFE_NAME]];
+    c['cdtrAgtName'] = ['', [Validators.maxLength(140), SAFE_NAME]];
 
     this.form = this.fb.group(c);
   }
@@ -1262,7 +1284,7 @@ ${appHdrFi(v.toBic, v.toMmbId, v.toClrSysId, v.toLei)}\t\t</To>
 \t\t\t\t<CreDtTm>${creDtTm}</CreDtTm>
 \t\t\t\t<NbOfTxs>${v.nbOfTxs}</NbOfTxs>
 \t\t\t\t<SttlmInf>
-\t\t\t\t\t<SttlmMtd>${this.e(v.sttlmMtd)}</SttlmMtd>${v.sttlmMtd === 'COVE' && v.instgRmbrsmntAgtBic?.trim() ? `\n\t\t\t\t\t<InstgRmbrsmntAgt>\n\t\t\t\t\t\t<FinInstnId>\n\t\t\t\t\t\t\t<BICFI>${this.e(v.instgRmbrsmntAgtBic)}</BICFI>\n\t\t\t\t\t\t</FinInstnId>\n\t\t\t\t\t</InstgRmbrsmntAgt>` : ''}${v.sttlmMtd === 'COVE' && v.instdRmbrsmntAgtBic?.trim() ? `\n\t\t\t\t\t<InstdRmbrsmntAgt>\n\t\t\t\t\t\t<FinInstnId>\n\t\t\t\t\t\t\t<BICFI>${this.e(v.instdRmbrsmntAgtBic)}</BICFI>\n\t\t\t\t\t\t</FinInstnId>\n\t\t\t\t\t</InstdRmbrsmntAgt>` : ''}${v.sttlmMtd === 'COVE' && v.thrdRmbrsmntAgtBic?.trim() ? `\n\t\t\t\t\t<ThrdRmbrsmntAgt>\n\t\t\t\t\t\t<FinInstnId>\n\t\t\t\t\t\t\t<BICFI>${this.e(v.thrdRmbrsmntAgtBic)}</BICFI>\n\t\t\t\t\t\t</FinInstnId>\n\t\t\t\t\t</ThrdRmbrsmntAgt>` : ''}
+\t\t\t\t\t<SttlmMtd>${this.e(v.sttlmMtd)}</SttlmMtd>${v.sttlmPrty?.trim() ? `\n\t\t\t\t\t<SttlmPrty>${v.sttlmPrty}</SttlmPrty>` : ''}${v.sttlmMtd === 'COVE' && v.instgRmbrsmntAgtBic?.trim() ? `\n\t\t\t\t\t<InstgRmbrsmntAgt>\n\t\t\t\t\t\t<FinInstnId>\n\t\t\t\t\t\t\t<BICFI>${this.e(v.instgRmbrsmntAgtBic)}</BICFI>\n\t\t\t\t\t\t</FinInstnId>\n\t\t\t\t\t</InstgRmbrsmntAgt>` : ''}${v.sttlmMtd === 'COVE' && v.instdRmbrsmntAgtBic?.trim() ? `\n\t\t\t\t\t<InstdRmbrsmntAgt>\n\t\t\t\t\t\t<FinInstnId>\n\t\t\t\t\t\t\t<BICFI>${this.e(v.instdRmbrsmntAgtBic)}</BICFI>\n\t\t\t\t\t\t</FinInstnId>\n\t\t\t\t\t</InstdRmbrsmntAgt>` : ''}${v.sttlmMtd === 'COVE' && v.thrdRmbrsmntAgtBic?.trim() ? `\n\t\t\t\t\t<ThrdRmbrsmntAgt>\n\t\t\t\t\t\t<FinInstnId>\n\t\t\t\t\t\t\t<BICFI>${this.e(v.thrdRmbrsmntAgtBic)}</BICFI>\n\t\t\t\t\t\t</FinInstnId>\n\t\t\t\t\t</ThrdRmbrsmntAgt>` : ''}
 \t\t\t\t</SttlmInf>
 ${this.initgPtyXml(v, 4)}\t\t\t</GrpHdr>
 \t\t\t<CdtTrfTxInf>
@@ -1294,7 +1316,8 @@ ${tx}\t\t\t</CdtTrfTxInf>
 
   grpAgt(tag: string, prefix: string, v: any) {
     const bic = v[prefix + 'Bic']; if (!bic) return '';
-    return `\t\t\t\t<${tag}>\n\t\t\t\t\t<FinInstnId>\n\t\t\t\t\t\t<BICFI>${this.e(bic)}</BICFI>\n${this.addrXml(v, prefix, 6)}\t\t\t\t\t</FinInstnId>\n\t\t\t\t</${tag}>\n`;
+    // CBPR+: BICFI present → no Nm/PstlAdr allowed
+    return `\t\t\t\t<${tag}>\n\t\t\t\t\t<FinInstnId>\n\t\t\t\t\t\t<BICFI>${this.e(bic)}</BICFI>\n\t\t\t\t\t</FinInstnId>\n\t\t\t\t</${tag}>\n`;
   }
   agt(tag: string, prefix: string, v: any, indent = 4) {
     const bic = v[prefix + 'Bic'];
@@ -1313,8 +1336,11 @@ ${tx}\t\t\t</CdtTrfTxInf>
       content += `${t}</ClrSysMmbId>\n`;
     }
     if (lei) content += `${t}<LEI>${this.e(lei)}</LEI>\n`;
-    if (name) content += `${t}<Nm>${this.e(name)}</Nm>\n`;
-    content += this.addrXml(v, prefix, indent + 2, tag.startsWith('PrvsInstgAgt'));
+    // CBPR+ rule: when BICFI is present, Nm and PstlAdr must NOT appear
+    if (!bic) {
+      if (name) content += `${t}<Nm>${this.e(name)}</Nm>\n`;
+      content += this.addrXml(v, prefix, indent + 2, tag.startsWith('PrvsInstgAgt'));
+    }
 
     if (!content.trim()) return '';
     return `${this.tabs(indent)}<${tag}>\n${this.tabs(indent + 1)}<FinInstnId>\n${content}${this.tabs(indent + 1)}</FinInstnId>\n${this.tabs(indent)}</${tag}>\n`;

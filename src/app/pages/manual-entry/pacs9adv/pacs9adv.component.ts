@@ -254,8 +254,9 @@ export class Pacs9AdvComponent implements OnInit, OnDestroy {
     }
 
     private buildForm() {
-        const BIC = [Validators.required, Validators.pattern(/^[A-Z]{4}[A-Z]{2}[A-Z0-9]{2}([A-Z0-9]{3})?$/)];
-        const BIC_OPT = [Validators.pattern(/^[A-Z]{4}[A-Z]{2}[A-Z0-9]{2}([A-Z0-9]{3})?$/)];
+        // BICFIDec2014Identifier — first 4 chars are alphanumeric per ISO 9362 / CBPR+
+        const BIC = [Validators.required, Validators.pattern(/^[A-Z0-9]{4}[A-Z]{2}[A-Z0-9]{2}([A-Z0-9]{3})?$/)];
+        const BIC_OPT = [Validators.pattern(/^[A-Z0-9]{4}[A-Z]{2}[A-Z0-9]{2}([A-Z0-9]{3})?$/)];
         // Safe character set: letters, digits, space, . , ( ) ' - only. No & @ ! # $ etc.
         const SAFE_NAME = Validators.pattern(/^[a-zA-Z0-9 .,()'\-]+$/);
         const ADDR_PATTERN = Validators.pattern(/^[a-zA-Z0-9\/\-\?:\(\)\.,\+' ]+$/);
@@ -349,8 +350,10 @@ export class Pacs9AdvComponent implements OnInit, OnDestroy {
             if (!c[p + 'Bic']) c[p + 'Bic'] = ['', [Validators.pattern(/^[A-Z0-9]{4}[A-Z]{2}[A-Z0-9]{2}([A-Z0-9]{3})?$/)]];
             if (!c[p + 'Lei']) c[p + 'Lei'] = ['', [Validators.pattern(/^[A-Z0-9]{18}[0-9]{2}$/)]];
             if (!c[p + 'ClrSysCd']) c[p + 'ClrSysCd'] = ['', Validators.maxLength(5)];
-            if (!c[p + 'ClrSysMmbId']) c[p + 'ClrSysMmbId'] = ['', Validators.maxLength(35)];
-            if (!c[p + 'Acct']) c[p + 'Acct'] = ['', [Validators.pattern(/^[A-Z0-9]{5,34}$/)]];
+            // CBPR_RestrictedFINXMax28Text — schema caps MmbId at 28 and constrains the FIN-X character set
+            if (!c[p + 'ClrSysMmbId']) c[p + 'ClrSysMmbId'] = ['', [Validators.maxLength(28), ADDR_PATTERN]];
+            // CBPR_RestrictedFINXMax34Text — Acct must be ≤ 34
+            if (!c[p + 'Acct']) c[p + 'Acct'] = ['', [Validators.maxLength(34), Validators.pattern(/^[A-Z0-9]{5,34}$/)]];
         });
         // Set default names and address data for mandatory parties to comply with CBPR+ coexistence rules
         const mandatoryParties = ['dbtrFi', 'cdtrFi', 'dbtrAgt', 'cdtrAgt'];
@@ -367,8 +370,8 @@ export class Pacs9AdvComponent implements OnInit, OnDestroy {
         });
 
         // Reimbursement agents (required when SttlmMtd = COVE)
-        if (!c['instgRmbrsmntAgtBic']) c['instgRmbrsmntAgtBic'] = ['BBBBUS33XXX', [Validators.pattern(/^[A-Z]{4}[A-Z]{2}[A-Z0-9]{2}([A-Z0-9]{3})?$/)]];
-        if (!c['instdRmbrsmntAgtBic']) c['instdRmbrsmntAgtBic'] = ['', [Validators.pattern(/^[A-Z]{4}[A-Z]{2}[A-Z0-9]{2}([A-Z0-9]{3})?$/)]];
+        if (!c['instgRmbrsmntAgtBic']) c['instgRmbrsmntAgtBic'] = ['BBBBUS33XXX', [Validators.pattern(/^[A-Z0-9]{4}[A-Z]{2}[A-Z0-9]{2}([A-Z0-9]{3})?$/)]];
+        if (!c['instdRmbrsmntAgtBic']) c['instdRmbrsmntAgtBic'] = ['', [Validators.pattern(/^[A-Z0-9]{4}[A-Z]{2}[A-Z0-9]{2}([A-Z0-9]{3})?$/)]];
 
         this.form = this.fb.group(c);
     }

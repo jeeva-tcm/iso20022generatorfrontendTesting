@@ -257,7 +257,8 @@ export class Camt057Component implements OnInit, OnDestroy {
     }
 
     private buildForm() {
-        const BIC = [Validators.pattern(/^[A-Z]{4}[A-Z]{2}[A-Z0-9]{2}([A-Z0-9]{3})?$/)];
+        // BICFIDec2014Identifier — first 4 chars are alphanumeric per ISO 9362 / CBPR+
+        const BIC = [Validators.pattern(/^[A-Z0-9]{4}[A-Z]{2}[A-Z0-9]{2}([A-Z0-9]{3})?$/)];
         const BIC_REQ = [Validators.required, ...BIC];
 
         this.form = this.fb.group({
@@ -302,9 +303,11 @@ export class Camt057Component implements OnInit, OnDestroy {
             valDt: [new Date().toISOString().split('T')[0], [Validators.required, Validators.pattern(/^\d{4}-\d{2}-\d{2}$/)]],
 
             // Optional but commonly used
+            instrId: ['', [Validators.maxLength(35), Validators.pattern(/^[A-Za-z0-9\-\/]{1,35}$/)]],
             endToEndId: ['E2E-057-001', Validators.maxLength(35)],
             uetr: ['550e8400-e29b-41d4-a716-446655440001', [Validators.pattern(/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/)]],
             clrSysRef: ['', [Validators.pattern(/^[A-Za-z0-9]{1,35}$/)]],
+            appHdrPriority: ['NORM'],
         });
 
         // Add agents
@@ -317,8 +320,10 @@ export class Camt057Component implements OnInit, OnDestroy {
             this.form.addControl(p + 'Bic', this.fb.control('', BIC_OPT));
             this.form.addControl(p + 'Lei', this.fb.control('', Validators.pattern(/^[A-Z0-9]{18}[0-9]{2}$/)));
             this.form.addControl(p + 'ClrSysCd', this.fb.control('', [Validators.maxLength(5), Validators.pattern(/^[A-Z0-9]{1,5}$/)]));
-            this.form.addControl(p + 'ClrSysMmbId', this.fb.control('', Validators.maxLength(35)));
-            this.form.addControl(p + 'Acct', this.fb.control('', Validators.maxLength(34)));
+            // CBPR_RestrictedFINXMax28Text — MmbId capped at 28 + FIN-X charset
+            this.form.addControl(p + 'ClrSysMmbId', this.fb.control('', [Validators.maxLength(28), ADDR_PATTERN]));
+            // CBPR_RestrictedFINXMax34Text — Acct FIN-X charset
+            this.form.addControl(p + 'Acct', this.fb.control('', [Validators.maxLength(34), ADDR_PATTERN]));
 
             // Address fields
             this.form.addControl(p + 'AddrType', this.fb.control('none'));
@@ -337,9 +342,6 @@ export class Camt057Component implements OnInit, OnDestroy {
             this.form.addControl(p + 'AdrLine1', this.fb.control('', [Validators.maxLength(70), ADDR_PATTERN]));
             this.form.addControl(p + 'AdrLine2', this.fb.control('', [Validators.maxLength(70), ADDR_PATTERN]));
         });
-
-        // Add OrgAnyBIC for non-agent parties (partyForm template uses prefix+'OrgAnyBIC' for isAgent=false)
-        this.form.addControl('dbtrOrgAnyBIC', this.fb.control('', BIC_OPT));
 
         // Set Default Dbtr with hybrid address (Nm + PstlAdr must always be present together)
         this.form.patchValue({
@@ -652,8 +654,11 @@ export class Camt057Component implements OnInit, OnDestroy {
         let itmXml = `        <Itm>\n          <Id>${this.e(v.itmId)}</Id>\n`;
         if (v.endToEndId?.trim()) itmXml += `          <EndToEndId>${this.e(v.endToEndId)}</EndToEndId>\n`;
         if (v.uetr?.trim()) itmXml += `          <UETR>${this.e(v.uetr)}</UETR>\n`;
-        if (v.clrSysRef?.trim()) {
-            itmXml += `          <PmtId>\n            <ClrSysRef>${this.e(v.clrSysRef)}</ClrSysRef>\n          </PmtId>\n`;
+        if (v.instrId?.trim() || v.clrSysRef?.trim()) {
+            itmXml += `          <PmtId>\n`;
+            if (v.instrId?.trim()) itmXml += `            <InstrId>${this.e(v.instrId)}</InstrId>\n`;
+            if (v.clrSysRef?.trim()) itmXml += `            <ClrSysRef>${this.e(v.clrSysRef)}</ClrSysRef>\n`;
+            itmXml += `          </PmtId>\n`;
         }
         const formattedAmt = this.formatting.formatAmount(v.amount, v.currency);
         itmXml += `          <Amt Ccy="${this.e(v.currency)}">${formattedAmt}</Amt>\n`;
@@ -733,7 +738,7 @@ export class Camt057Component implements OnInit, OnDestroy {
     <BizMsgIdr>${this.e(v.bizMsgId)}</BizMsgIdr>
     <MsgDefIdr>camt.057.001.06</MsgDefIdr>
     <BizSvc>${this.e(v.bizSvc)}</BizSvc>
-    <CreDt>${creDtTm}</CreDt>
+    <CreDt>${creDtTm}</CreDt>${v.appHdrPriority?.trim() ? `\n    <Prty>${this.e(v.appHdrPriority)}</Prty>` : ''}
   </AppHdr>
   <Document xmlns="urn:iso:std:iso:20022:tech:xsd:camt.057.001.06">
     <NtfctnToRcv>
@@ -943,6 +948,9 @@ ${ntfctnPartiesXml}${itmXml}
                 setVal('itmId', itm.getElementsByTagName('Id')[0]?.textContent || '');
                 setVal('endToEndId', itm.getElementsByTagName('EndToEndId')[0]?.textContent || '');
                 setVal('uetr', itm.getElementsByTagName('UETR')[0]?.textContent || '');
+                const pmtIdEl = itm.getElementsByTagName('PmtId')[0];
+                setVal('instrId', pmtIdEl?.getElementsByTagName('InstrId')[0]?.textContent || '');
+                setVal('clrSysRef', pmtIdEl?.getElementsByTagName('ClrSysRef')[0]?.textContent || '');
                 const amtEl = itm.getElementsByTagName('Amt')[0];
                 setVal('amount', amtEl ? (amtEl.textContent || '') : '');
                 setVal('currency', amtEl ? (amtEl.getAttribute('Ccy') || '') : '');
@@ -1042,7 +1050,7 @@ ${ntfctnPartiesXml}${itmXml}
                     setVal('rmtInfType', 'none');
                 }
             } else {
-                ['itmId', 'endToEndId', 'uetr', 'amount', 'currency', 'valDt'].forEach(f => setVal(f, ''));
+                ['itmId', 'instrId', 'endToEndId', 'uetr', 'clrSysRef', 'amount', 'currency', 'valDt'].forEach(f => setVal(f, ''));
                 this.agentPrefixes.forEach(p => {
                     setVal(p + 'Bic', ''); setVal(p + 'Name', ''); setVal(p + 'Lei', '');
                     setVal(p + 'ClrSysCd', ''); setVal(p + 'ClrSysMmbId', ''); setVal(p + 'Acct', '');
@@ -1158,8 +1166,11 @@ ${ntfctnPartiesXml}${itmXml}
             content += `${this.tabs(indent + 2)}</ClrSysMmbId>\n`;
         }
         if (lei) content += `${this.tabs(indent + 2)}<LEI>${this.e(lei)}</LEI>\n`;
-        if (name) content += `${this.tabs(indent + 2)}<Nm>${this.e(name)}</Nm>\n`;
-        content += this.addrXml(v, prefix, indent + 2);
+        // CBPR+: when BICFI is present, Nm and PstlAdr must NOT appear
+        if (!bic) {
+            if (name) content += `${this.tabs(indent + 2)}<Nm>${this.e(name)}</Nm>\n`;
+            content += this.addrXml(v, prefix, indent + 2);
+        }
 
         return `${this.tabs(indent)}<${tag}>\n${this.tabs(indent + 1)}<FinInstnId>\n${content}${this.tabs(indent + 1)}</FinInstnId>\n${this.tabs(indent)}</${tag}>\n`;
     }

@@ -365,6 +365,15 @@
                                                         </option>
                                                 </select>
                                                 <div class="validation-msg" *ngIf="err('chrgBr') as e">{{e}}</div>
+                                                <div class="field-hint" *ngIf="form.get('chrgBr')?.value === 'CRED'">
+                                                        CRED: ChrgsInf mandatory — use 0.00 if no charges deducted.
+                                                </div>
+                                                <div class="field-hint" *ngIf="form.get('chrgBr')?.value === 'DEBT'">
+                                                        DEBT: ChrgsInf optional — may communicate charges added for InstructedAgent.
+                                                </div>
+                                                <div class="field-hint" *ngIf="form.get('chrgBr')?.value === 'SHAR' || form.get('chrgBr')?.value === 'SLEV'">
+                                                        {{form.get('chrgBr')?.value}}: ChrgsInf is optional.
+                                                </div>
                                         </div>
                                         <div class="form-group intermediary-field">
                                                 <label>Clearing System Reference <span
@@ -375,23 +384,32 @@
                                                         {{h}}</div>
                                         </div>
                                         <div class="form-group intermediary-field">
-                                                <label>Charges Amount <span class="req">*</span></label>
-                                                <input formControlName="chrgsInfAmt" required>
+                                                <label>Charges Amount
+                                                        <span class="req" *ngIf="form.get('chrgBr')?.value === 'CRED'">*</span>
+                                                        <span class="opt" *ngIf="form.get('chrgBr')?.value !== 'CRED'">Optional</span>
+                                                </label>
+                                                <input formControlName="chrgsInfAmt" placeholder="e.g. 0.00">
                                                 <div class="validation-msg" *ngIf="err('chrgsInfAmt') as e">{{e}}</div>
                                         </div>
                                         <div class="form-group intermediary-field">
-                                                <label>Charges Currency <span class="req">*</span></label>
-                                                <select formControlName="chrgsInfCcy" required>
+                                                <label>Charges Currency
+                                                        <span class="req" *ngIf="form.get('chrgBr')?.value === 'CRED'">*</span>
+                                                        <span class="opt" *ngIf="form.get('chrgBr')?.value !== 'CRED'">Optional</span>
+                                                </label>
+                                                <select formControlName="chrgsInfCcy">
                                                         <option value="">Select Currency</option>
                                                         <option *ngFor="let c of currencies" [value]="c">{{c}}</option>
                                                 </select>
                                                 <div class="validation-msg" *ngIf="err('chrgsInfCcy') as e">{{e}}</div>
                                         </div>
                                         <div class="form-group intermediary-field">
-                                                <label>Charges Agent BIC <span class="req">*</span></label>
+                                                <label>Charges Agent BIC
+                                                        <span class="req" *ngIf="form.get('chrgBr')?.value === 'CRED'">*</span>
+                                                        <span class="opt" *ngIf="form.get('chrgBr')?.value !== 'CRED'">Optional</span>
+                                                </label>
                                                 <div class="uetr-control-row">
                                                         <input formControlName="chrgsInfAgtBic" maxlength="11"
-                                                                class="auto-uppercase" required>
+                                                                class="auto-uppercase">
                                                         <button type="button" class="uetr-refresh-btn"
                                                                 (click)="openBicSearchGroup('chrgsInfAgtBic', form)"
                                                                 matTooltip="Search BIC">

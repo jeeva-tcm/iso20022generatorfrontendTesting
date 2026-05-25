@@ -327,8 +327,9 @@ export class Pacs9CovComponent implements OnInit, OnDestroy {
     }
 
     private buildForm() {
-        const BIC = [Validators.required, Validators.pattern(/^[A-Z]{4}[A-Z]{2}[A-Z0-9]{2}([A-Z0-9]{3})?$/)];
-        const BIC_OPT = [Validators.pattern(/^[A-Z]{4}[A-Z]{2}[A-Z0-9]{2}([A-Z0-9]{3})?$/)];
+        // BICFIDec2014Identifier — first 4 chars are alphanumeric per ISO 9362 / CBPR+
+        const BIC = [Validators.required, Validators.pattern(/^[A-Z0-9]{4}[A-Z]{2}[A-Z0-9]{2}([A-Z0-9]{3})?$/)];
+        const BIC_OPT = [Validators.pattern(/^[A-Z0-9]{4}[A-Z]{2}[A-Z0-9]{2}([A-Z0-9]{3})?$/)];
         // Safe character set: letters, digits, space, . , ( ) ' - only. No & @ ! # $ etc.
         const SAFE_NAME = Validators.pattern(/^[a-zA-Z0-9 .,()'\-]+$/);
         const ADDR_PATTERN = Validators.pattern(/^[a-zA-Z0-9\/\-\?:\(\)\.,\+' ]+$/);
@@ -455,10 +456,12 @@ export class Pacs9CovComponent implements OnInit, OnDestroy {
             if (!c[p + 'AdrTpCd']) c[p + 'AdrTpCd'] = [''];
             if (!c[p + 'AdrTpPrtry']) c[p + 'AdrTpPrtry'] = ['', Validators.maxLength(35)];
             if (!c[p + 'Name']) c[p + 'Name'] = ['', [Validators.maxLength(140), SAFE_NAME]];
-            if (!c[p + 'Bic']) c[p + 'Bic'] = ['', [Validators.maxLength(11), Validators.pattern(/^[A-Z]{4}[A-Z]{2}[A-Z0-9]{2}([A-Z0-9]{3})?$/)]];
+            // BICFIDec2014Identifier — schema allows alphanumeric in the 4-char institution code
+            if (!c[p + 'Bic']) c[p + 'Bic'] = ['', [Validators.maxLength(11), Validators.pattern(/^[A-Z0-9]{4}[A-Z]{2}[A-Z0-9]{2}([A-Z0-9]{3})?$/)]];
             if (!c[p + 'Lei']) c[p + 'Lei'] = ['', [Validators.maxLength(20), Validators.pattern(/^[A-Z0-9]{18}[0-9]{2}$/)]];
             if (!c[p + 'ClrSysCd']) c[p + 'ClrSysCd'] = ['', Validators.maxLength(5)];
-            if (!c[p + 'ClrSysMmbId']) c[p + 'ClrSysMmbId'] = ['', Validators.maxLength(35)];
+            // CBPR_RestrictedFINXMax28Text — MmbId capped at 28 + FIN-X charset
+            if (!c[p + 'ClrSysMmbId']) c[p + 'ClrSysMmbId'] = ['', [Validators.maxLength(28), ADDR_PATTERN]];
             if (!c[p + 'Acct']) c[p + 'Acct'] = ['', [Validators.maxLength(34), Validators.pattern(/^[A-Z0-9]{5,34}$/)]];
         });
         // Address prefixes for COV parties (Debtor / Creditor in UndrlygCstmrCdtTrf)
@@ -490,23 +493,25 @@ export class Pacs9CovComponent implements OnInit, OnDestroy {
                 if (!c[p + 'IdType']) c[p + 'IdType'] = 'none';
                 if (!c[p + 'OrgAnyBIC']) c[p + 'OrgAnyBIC'] = ['', [Validators.pattern(/^[A-Z0-9]{4}[A-Z]{2}[A-Z0-9]{2}([A-Z0-9]{3})?$/)]];
                 if (!c[p + 'OrgLEI']) c[p + 'OrgLEI'] = ['', [Validators.pattern(/^[A-Z0-9]{18}[0-9]{2}$/)]];
-                if (!c[p + 'OrgOthrId']) c[p + 'OrgOthrId'] = ['', Validators.maxLength(35)];
+                // CBPR_RestrictedFINXMax35Text — FIN-X character set
+                if (!c[p + 'OrgOthrId']) c[p + 'OrgOthrId'] = ['', [Validators.maxLength(35), ADDR_PATTERN]];
                 if (!c[p + 'OrgOthrSchmeNmCd']) c[p + 'OrgOthrSchmeNmCd'] = ['', Validators.maxLength(4)];
                 if (!c[p + 'OrgOthrSchmeNmPrtry']) c[p + 'OrgOthrSchmeNmPrtry'] = ['', Validators.maxLength(35)];
                 if (!c[p + 'OrgOthrIssr']) c[p + 'OrgOthrIssr'] = ['', Validators.maxLength(35)];
-                if (!c[p + 'PrvtDtAndPlcOfBirthDt']) c[p + 'PrvtDtAndPlcOfBirthDt'] = [''];
+                // ISODate — schema requires a valid YYYY-MM-DD calendar date
+                if (!c[p + 'PrvtDtAndPlcOfBirthDt']) c[p + 'PrvtDtAndPlcOfBirthDt'] = ['', [Validators.pattern(/^\d{4}-\d{2}-\d{2}$/)]];
                 if (!c[p + 'PrvtDtAndPlcOfBirthPrvc']) c[p + 'PrvtDtAndPlcOfBirthPrvc'] = ['', Validators.maxLength(35)];
                 if (!c[p + 'PrvtDtAndPlcOfBirthCity']) c[p + 'PrvtDtAndPlcOfBirthCity'] = ['', Validators.maxLength(35)];
                 if (!c[p + 'PrvtDtAndPlcOfBirthCtry']) c[p + 'PrvtDtAndPlcOfBirthCtry'] = ['', Validators.pattern(/^[A-Z]{2,2}$/)];
-                if (!c[p + 'PrvtOthrId']) c[p + 'PrvtOthrId'] = ['', Validators.maxLength(35)];
+                if (!c[p + 'PrvtOthrId']) c[p + 'PrvtOthrId'] = ['', [Validators.maxLength(35), ADDR_PATTERN]];
                 if (!c[p + 'PrvtOthrSchmeNmCd']) c[p + 'PrvtOthrSchmeNmCd'] = ['', Validators.maxLength(4)];
                 if (!c[p + 'PrvtOthrSchmeNmPrtry']) c[p + 'PrvtOthrSchmeNmPrtry'] = ['', Validators.maxLength(35)];
                 if (!c[p + 'PrvtOthrIssr']) c[p + 'PrvtOthrIssr'] = ['', Validators.maxLength(35)];
             } else {
-                if (!c[p + 'Bic']) c[p + 'Bic'] = ['', [Validators.maxLength(11), Validators.pattern(/^[A-Z]{4}[A-Z]{2}[A-Z0-9]{2}([A-Z0-9]{3})?$/)]];
+                if (!c[p + 'Bic']) c[p + 'Bic'] = ['', [Validators.maxLength(11), Validators.pattern(/^[A-Z0-9]{4}[A-Z]{2}[A-Z0-9]{2}([A-Z0-9]{3})?$/)]];
                 if (!c[p + 'Lei']) c[p + 'Lei'] = ['', [Validators.maxLength(20), Validators.pattern(/^[A-Z0-9]{18}[0-9]{2}$/)]];
                 if (!c[p + 'ClrSysCd']) c[p + 'ClrSysCd'] = ['', Validators.maxLength(5)];
-                if (!c[p + 'ClrSysMmbId']) c[p + 'ClrSysMmbId'] = ['', Validators.maxLength(35)];
+                if (!c[p + 'ClrSysMmbId']) c[p + 'ClrSysMmbId'] = ['', [Validators.maxLength(28), ADDR_PATTERN]];
                 if (!c[p + 'Acct']) c[p + 'Acct'] = ['', [Validators.maxLength(34), Validators.pattern(/^[A-Z0-9]{5,34}$/)]];
             }
         });
