@@ -28,6 +28,8 @@ export class Pacs8Component implements OnInit, OnDestroy {
   currentTab: 'form' | 'preview' = 'form';
   isParsingXml = false;
   editorLineCount: number[] = [];
+  visibleCdtrAgtInstrCount = 1;
+  visibleNxtAgtInstrCount = 1;
 
   /** UETR Refresh state */
   uetrError: string | null = null;
@@ -552,12 +554,15 @@ export class Pacs8Component implements OnInit, OnDestroy {
       lclInstrmCd: ['', [Validators.pattern(/^[A-Z0-9]{1,4}$/)]],
       lclInstrmPrtry: ['', [Validators.pattern(/^[A-Za-z0-9 .\-]{1,35}$/)]],
       dbtrAcct: ['BE68539007547034'],
+      dbtrAcctType: ['iban'],
       cdtrAcct: ['LU280019400644750000'],
+      cdtrAcctType: ['iban'],
       dbtrAgtAcct: [''],
+      dbtrAgtAcctType: ['iban'],
       cdtrAgtAcct: [''],
+      cdtrAgtAcctType: ['iban'],
       initgPtyAcct: [''],
-      ultmtDbtrAcct: [''],
-      ultmtCdtrAcct: [''],
+      initgPtyAcctType: ['iban'],
 
       rmtInfType: ['none'],
       rmtInfUstrd: ['', [Validators.maxLength(140), Validators.pattern(/^[a-zA-Z0-9\/\-\?:\(\)\.,\+' ]+$/)]],
@@ -616,6 +621,9 @@ export class Pacs8Component implements OnInit, OnDestroy {
         if (!c[p + 'ClrSysCd']) c[p + 'ClrSysCd'] = ['', Validators.maxLength(5)];
         if (!c[p + 'ClrSysMmbId']) c[p + 'ClrSysMmbId'] = ['', Validators.maxLength(35)];
         if (!c[p + 'Acct']) c[p + 'Acct'] = ['', [Validators.pattern(/^[A-Z0-9]{5,34}$/)]];
+        if (['intrmyAgt1', 'intrmyAgt2', 'intrmyAgt3'].includes(p)) {
+          if (!c[p + 'AcctType']) c[p + 'AcctType'] = ['iban'];
+        }
       }
     });
 
@@ -680,6 +688,57 @@ export class Pacs8Component implements OnInit, OnDestroy {
     c['cdtrAgtName'] = ['Banque Internationale a Luxembourg', [Validators.required, Validators.maxLength(140), SAFE_NAME]];
 
     this.form = this.fb.group(c);
+  }
+
+  addCdtrAgtInstr(): void {
+    if (this.visibleCdtrAgtInstrCount < 2) {
+      this.visibleCdtrAgtInstrCount++;
+      this.generateXml();
+    }
+  }
+
+  removeCdtrAgtInstr(index: number): void {
+    if (index === 1 && this.visibleCdtrAgtInstrCount === 2) {
+      // Shift instruction 2 to 1
+      const nextCd = this.form.get('instrForCdtrAgt2Cd')?.value || '';
+      const nextTxt = this.form.get('instrForCdtrAgt2InfTxt')?.value || '';
+      this.form.get('instrForCdtrAgt1Cd')?.setValue(nextCd, { emitEvent: false });
+      this.form.get('instrForCdtrAgt1InfTxt')?.setValue(nextTxt, { emitEvent: false });
+    }
+    // Clear instruction 2
+    this.form.get('instrForCdtrAgt2Cd')?.setValue('', { emitEvent: false });
+    this.form.get('instrForCdtrAgt2InfTxt')?.setValue('', { emitEvent: false });
+
+    if (this.visibleCdtrAgtInstrCount > 1) {
+      this.visibleCdtrAgtInstrCount--;
+    }
+    this.generateXml();
+  }
+
+  addNxtAgtInstr(): void {
+    if (this.visibleNxtAgtInstrCount < 6) {
+      this.visibleNxtAgtInstrCount++;
+      this.generateXml();
+    }
+  }
+
+  removeNxtAgtInstr(index: number): void {
+    // Shift subsequent values down
+    for (let i = index; i < this.visibleNxtAgtInstrCount; i++) {
+      const nextCd = this.form.get(`instrForNxtAgt${i+1}Cd`)?.value || '';
+      const nextTxt = this.form.get(`instrForNxtAgt${i+1}InfTxt`)?.value || '';
+      this.form.get(`instrForNxtAgt${i}Cd`)?.setValue(nextCd, { emitEvent: false });
+      this.form.get(`instrForNxtAgt${i}InfTxt`)?.setValue(nextTxt, { emitEvent: false });
+    }
+    // Clear the last visible slot
+    const lastIndex = this.visibleNxtAgtInstrCount;
+    this.form.get(`instrForNxtAgt${lastIndex}Cd`)?.setValue('', { emitEvent: false });
+    this.form.get(`instrForNxtAgt${lastIndex}InfTxt`)?.setValue('', { emitEvent: false });
+
+    if (this.visibleNxtAgtInstrCount > 1) {
+      this.visibleNxtAgtInstrCount--;
+    }
+    this.generateXml();
   }
 
   /**
@@ -988,6 +1047,22 @@ export class Pacs8Component implements OnInit, OnDestroy {
       });
 
       this.form.patchValue(parsed, { emitEvent: false });
+
+      // Update dynamic instruction count from draft
+      let cdtrCount = 1;
+      if (parsed['instrForCdtrAgt2Cd'] || parsed['instrForCdtrAgt2InfTxt']) {
+        cdtrCount = 2;
+      }
+      this.visibleCdtrAgtInstrCount = cdtrCount;
+
+      let nxtCount = 1;
+      for (let i = 2; i <= 6; i++) {
+        if (parsed[`instrForNxtAgt${i}Cd`] || parsed[`instrForNxtAgt${i}InfTxt`]) {
+          nxtCount = i;
+        }
+      }
+      this.visibleNxtAgtInstrCount = nxtCount;
+
       return true;
     } catch (e) { console.warn('Draft load failed:', e); return false; }
   }
@@ -1096,8 +1171,15 @@ export class Pacs8Component implements OnInit, OnDestroy {
         tx += this.tag('ChrgsInf', chrgs, 4);
     }
     
-    const formatAcct = (val: string, tabs: number) => {
+    const formatAcct = (val: string, tabs: number, acctType?: string) => {
       if (!val) return '';
+      // If explicit type is provided, respect it; otherwise auto-detect by IBAN pattern
+      if (acctType === 'iban') {
+        return this.el('IBAN', val, tabs + 1);
+      } else if (acctType === 'other') {
+        return `\n${'\t'.repeat(tabs + 1)}<Othr>\n${'\t'.repeat(tabs + 2)}<Id>${this.e(val)}</Id>\n${'\t'.repeat(tabs + 1)}</Othr>\n${'\t'.repeat(tabs)}`;
+      }
+      // Auto-detect fallback
       const ibanCountries = ['AD', 'AE', 'AL', 'AT', 'AZ', 'BA', 'BE', 'BG', 'BH', 'BR', 'BY', 'CH', 'CR', 'CY', 'CZ', 'DE', 'DK', 'DO', 'EE', 'EG', 'ES', 'FI', 'FO', 'FR', 'GB', 'GE', 'GI', 'GL', 'GR', 'GT', 'HR', 'HU', 'IE', 'IL', 'IQ', 'IS', 'IT', 'JO', 'KW', 'KZ', 'LB', 'LI', 'LT', 'LU', 'LV', 'MC', 'MD', 'ME', 'MK', 'MR', 'MT', 'MU', 'NL', 'NO', 'PK', 'PL', 'PS', 'PT', 'QA', 'RO', 'RS', 'RU', 'SA', 'SC', 'SE', 'SI', 'SK', 'SM', 'ST', 'SV', 'TL', 'TN', 'TR', 'UA', 'VA', 'VG', 'XK'];
       if (val.length >= 14 && ibanCountries.includes(val.substring(0, 2).toUpperCase()) && /^[A-Z]{2}[0-9]{2}[A-Z0-9]+$/i.test(val)) {
         return this.el('IBAN', val, tabs + 1);
@@ -1119,27 +1201,23 @@ export class Pacs8Component implements OnInit, OnDestroy {
     ['intrmyAgt1', 'intrmyAgt2', 'intrmyAgt3'].forEach(p => {
       tx += this.agt(p.charAt(0).toUpperCase() + p.slice(1), p, v, 4);
       if (v[p + 'Acct']?.trim()) {
-        tx += this.tag(p.charAt(0).toUpperCase() + p.slice(1) + 'Acct', this.tag('Id', this.tag('Othr', this.el('Id', v[p + 'Acct'], 7), 6), 5), 4);
+        tx += this.tag(p.charAt(0).toUpperCase() + p.slice(1) + 'Acct', this.tag('Id', formatAcct(v[p + 'Acct'], 5, v[p + 'AcctType']), 5), 4);
       }
     });
 
     // ISO 20022 pacs.008.001.08 CdtTrfTxInf schema order:
-    // UltmtDbtr â†’ InitgPty â†’ Dbtr â†’ DbtrAcct â†’ DbtrAgt â†’ DbtrAgtAcct â†’ CdtrAgt â†’ CdtrAgtAcct â†’ Cdtr â†’ CdtrAcct â†’ UltmtCdtr
-    if (v.ultmtDbtrName?.trim() || (v.ultmtDbtrAddrType && v.ultmtDbtrAddrType !== 'none') || (v.ultmtDbtrIdType && v.ultmtDbtrIdType !== 'none')) {
-      tx += this.tag('UltmtDbtr', this.el('Nm', v.ultmtDbtrName, 5) + this.addrXml(v, 'ultmtDbtr', 5) + this.partyIdXml(v, 'ultmtDbtr', 5), 4);
-    }
+    // UltmtDbtr → InitgPty → Dbtr → DbtrAcct → DbtrAgt → DbtrAgtAcct → CdtrAgt → CdtrAgtAcct → Cdtr → CdtrAcct → UltmtCdtr
+    tx += this.partyAgentXml('UltmtDbtr', 'ultmtDbtr', v, 4);
     tx += this.partyAgentXml('Dbtr', 'dbtr', v, 4);
-    if (v.dbtrAcct?.trim()) tx += this.tag('DbtrAcct', this.tag('Id', formatAcct(v.dbtrAcct, 5), 5), 4);
+    if (v.dbtrAcct?.trim()) tx += this.tag('DbtrAcct', this.tag('Id', formatAcct(v.dbtrAcct, 5, v.dbtrAcctType), 5), 4);
     tx += this.agt('DbtrAgt', 'dbtrAgt', v, 4);
-    if (v.dbtrAgtAcct?.trim()) tx += this.tag('DbtrAgtAcct', this.tag('Id', formatAcct(v.dbtrAgtAcct, 5), 5), 4);
+    if (v.dbtrAgtAcct?.trim()) tx += this.tag('DbtrAgtAcct', this.tag('Id', formatAcct(v.dbtrAgtAcct, 5, v.dbtrAgtAcctType), 5), 4);
 
     tx += this.agt('CdtrAgt', 'cdtrAgt', v, 4);
-    if (v.cdtrAgtAcct?.trim()) tx += this.tag('CdtrAgtAcct', this.tag('Id', formatAcct(v.cdtrAgtAcct, 5), 5), 4);
+    if (v.cdtrAgtAcct?.trim()) tx += this.tag('CdtrAgtAcct', this.tag('Id', formatAcct(v.cdtrAgtAcct, 5, v.cdtrAgtAcctType), 5), 4);
     tx += this.partyAgentXml('Cdtr', 'cdtr', v, 4);
-    if (v.cdtrAcct?.trim()) tx += this.tag('CdtrAcct', this.tag('Id', formatAcct(v.cdtrAcct, 5), 5), 4);
-    if (v.ultmtCdtrName?.trim() || (v.ultmtCdtrAddrType && v.ultmtCdtrAddrType !== 'none') || (v.ultmtCdtrIdType && v.ultmtCdtrIdType !== 'none')) {
-      tx += this.tag('UltmtCdtr', this.el('Nm', v.ultmtCdtrName, 5) + this.addrXml(v, 'ultmtCdtr', 5) + this.partyIdXml(v, 'ultmtCdtr', 5), 4);
-    }
+    if (v.cdtrAcct?.trim()) tx += this.tag('CdtrAcct', this.tag('Id', formatAcct(v.cdtrAcct, 5, v.cdtrAcctType), 5), 4);
+    tx += this.partyAgentXml('UltmtCdtr', 'ultmtCdtr', v, 4);
 
     // InstrForCdtrAgt (0..2)
     for (let i = 1; i <= 2; i++) {
@@ -1361,49 +1439,59 @@ ${tx}\t\t\t</CdtTrfTxInf>
   }
 
   partyIdXml(v: any, p: string, indent = 4): string {
-    const type = v[p + 'IdType']; if (!type || type === 'none') return '';
+    let type = v[p + 'IdType'];
+    if (!type || type === 'none') {
+      if (v[p + 'OrgAnyBIC']?.trim() || v[p + 'OrgLEI']?.trim() || v[p + 'OrgClrSysMmbId']?.trim() || v[p + 'OrgOthrId']?.trim()) {
+        type = 'org';
+      } else if (v[p + 'PrvtDtAndPlcOfBirthDt']?.trim() || v[p + 'PrvtDtAndPlcOfBirthCity']?.trim() || v[p + 'PrvtDtAndPlcOfBirthCtry']?.trim() || v[p + 'PrvtOthrId']?.trim()) {
+        type = 'prvt';
+      }
+    }
+    if (!type || type === 'none') return '';
     const t = this.tabs(indent + 1);
     if (type === 'org') {
       let org = '';
-      if (v[p + 'OrgAnyBIC']) org += `${t}\t<AnyBIC>${this.e(v[p + 'OrgAnyBIC'])}</AnyBIC>\n`;
-      if (v[p + 'OrgLEI']) org += `${t}\t<LEI>${this.e(v[p + 'OrgLEI'])}</LEI>\n`;
-      if (v[p + 'OrgClrSysMmbId']) {
+      if (v[p + 'OrgAnyBIC']?.trim()) org += `${t}\t<AnyBIC>${this.e(v[p + 'OrgAnyBIC'])}</AnyBIC>\n`;
+      if (v[p + 'OrgLEI']?.trim()) org += `${t}\t<LEI>${this.e(v[p + 'OrgLEI'])}</LEI>\n`;
+      if (v[p + 'OrgClrSysMmbId']?.trim()) {
         org += `${t}\t<Othr>\n${t}\t\t<Id>${this.e(v[p + 'OrgClrSysMmbId'])}</Id>\n`;
-        if (v[p + 'OrgClrSysCd']) {
+        if (v[p + 'OrgClrSysCd']?.trim()) {
           org += `${t}\t\t<SchmeNm>\n${t}\t\t\t<Cd>${this.e(v[p + 'OrgClrSysCd'])}</Cd>\n${t}\t\t</SchmeNm>\n`;
         }
         org += `${t}\t</Othr>\n`;
       }
-      if (v[p + 'OrgOthrId']) {
+      if (v[p + 'OrgOthrId']?.trim()) {
         org += `${t}\t<Othr>\n${t}\t\t<Id>${this.e(v[p + 'OrgOthrId'])}</Id>\n`;
-        if (v[p + 'OrgOthrSchmeNmCd']) {
+        if (v[p + 'OrgOthrSchmeNmCd']?.trim()) {
           org += `${t}\t\t<SchmeNm>\n${t}\t\t\t<Cd>${this.e(v[p + 'OrgOthrSchmeNmCd'])}</Cd>\n${t}\t\t</SchmeNm>\n`;
-        } else if (v[p + 'OrgOthrSchmeNmPrtry']) {
+        } else if (v[p + 'OrgOthrSchmeNmPrtry']?.trim()) {
           org += `${t}\t\t<SchmeNm>\n${t}\t\t\t<Prtry>${this.e(v[p + 'OrgOthrSchmeNmPrtry'])}</Prtry>\n${t}\t\t</SchmeNm>\n`;
         }
-        if (v[p + 'OrgOthrIssr']) org += `${t}\t\t<Issr>${this.e(v[p + 'OrgOthrIssr'])}</Issr>\n`;
+        if (v[p + 'OrgOthrIssr']?.trim()) org += `${t}\t\t<Issr>${this.e(v[p + 'OrgOthrIssr'])}</Issr>\n`;
         org += `${t}\t</Othr>\n`;
       }
+      if (!org) return '';
       return `${this.tabs(indent)}<Id>\n${t}<OrgId>\n${org}${t}</OrgId>\n${this.tabs(indent)}</Id>\n`;
     } else if (type === 'prvt') {
       let prvt = '';
-      if (v[p + 'PrvtDtAndPlcOfBirthDt'] || v[p + 'PrvtDtAndPlcOfBirthCity'] || v[p + 'PrvtDtAndPlcOfBirthCtry']) {
+      if (v[p + 'PrvtDtAndPlcOfBirthDt']?.trim() || v[p + 'PrvtDtAndPlcOfBirthCity']?.trim() || v[p + 'PrvtDtAndPlcOfBirthCtry']?.trim()) {
         prvt += `${t}\t<DtAndPlcOfBirth>\n`;
-        if (v[p + 'PrvtDtAndPlcOfBirthDt']) prvt += `${t}\t\t<BirthDt>${this.e(v[p + 'PrvtDtAndPlcOfBirthDt'])}</BirthDt>\n`;
-        if (v[p + 'PrvtDtAndPlcOfBirthCity']) prvt += `${t}\t\t<CityOfBirth>${this.e(v[p + 'PrvtDtAndPlcOfBirthCity'])}</CityOfBirth>\n`;
-        if (v[p + 'PrvtDtAndPlcOfBirthCtry']) prvt += `${t}\t\t<CtryOfBirth>${this.e(v[p + 'PrvtDtAndPlcOfBirthCtry'])}</CtryOfBirth>\n`;
+        if (v[p + 'PrvtDtAndPlcOfBirthDt']?.trim()) prvt += `${t}\t\t<BirthDt>${this.e(v[p + 'PrvtDtAndPlcOfBirthDt'])}</BirthDt>\n`;
+        if (v[p + 'PrvtDtAndPlcOfBirthCity']?.trim()) prvt += `${t}\t\t<CityOfBirth>${this.e(v[p + 'PrvtDtAndPlcOfBirthCity'])}</CityOfBirth>\n`;
+        if (v[p + 'PrvtDtAndPlcOfBirthCtry']?.trim()) prvt += `${t}\t\t<CtryOfBirth>${this.e(v[p + 'PrvtDtAndPlcOfBirthCtry'])}</CtryOfBirth>\n`;
         prvt += `${t}\t</DtAndPlcOfBirth>\n`;
       }
-      if (v[p + 'PrvtOthrId']) {
+      if (v[p + 'PrvtOthrId']?.trim()) {
         prvt += `${t}\t<Othr>\n${t}\t\t<Id>${this.e(v[p + 'PrvtOthrId'])}</Id>\n`;
-        if (v[p + 'PrvtOthrSchmeNmCd']) {
+        if (v[p + 'PrvtOthrSchmeNmCd']?.trim()) {
           prvt += `${t}\t\t<SchmeNm>\n${t}\t\t\t<Cd>${this.e(v[p + 'PrvtOthrSchmeNmCd'])}</Cd>\n${t}\t\t</SchmeNm>\n`;
-        } else if (v[p + 'PrvtOthrSchmeNmPrtry']) {
+        } else if (v[p + 'PrvtOthrSchmeNmPrtry']?.trim()) {
           prvt += `${t}\t\t<SchmeNm>\n${t}\t\t\t<Prtry>${this.e(v[p + 'PrvtOthrSchmeNmPrtry'])}</Prtry>\n${t}\t\t</SchmeNm>\n`;
         }
-        if (v[p + 'PrvtOthrIssr']) prvt += `${t}\t\t<Issr>${this.e(v[p + 'PrvtOthrIssr'])}</Issr>\n`;
+        if (v[p + 'PrvtOthrIssr']?.trim()) prvt += `${t}\t\t<Issr>${this.e(v[p + 'PrvtOthrIssr'])}</Issr>\n`;
         prvt += `${t}\t</Othr>\n`;
       }
+      if (!prvt) return '';
       return `${this.tabs(indent)}<Id>\n${t}<PrvtId>\n${prvt}${t}</PrvtId>\n${this.tabs(indent)}</Id>\n`;
     }
     return '';
@@ -1412,7 +1500,7 @@ ${tx}\t\t\t</CdtTrfTxInf>
   /**
    * Dedicated XML builder for InitgPty in GrpHdr.
    * Renders ALL available fields from the form: Name, Address, BIC (AnyBIC),
-   * LEI, Clearing System Member ID, Other ID, Account ï¿½ regardless of idType.
+   * LEI, Clearing System Member ID, Other ID, Account – regardless of idType.
    */
   initgPtyXml(v: any, indent = 4): string {
     const p = 'initgPty';
@@ -1455,15 +1543,22 @@ ${tx}\t\t\t</CdtTrfTxInf>
       }
       const t2 = this.tabs(indent + 2);
       content += `${this.tabs(indent + 1)}<Id>\n${t2}<OrgId>\n${org}${t2}</OrgId>\n${this.tabs(indent + 1)}</Id>\n`;
-    } else if (v[p + 'IdType'] === 'prvt') {
+    } else if (v[p + 'IdType'] === 'prvt' || (!v[p + 'IdType'] || v[p + 'IdType'] === 'none') && (v[p + 'PrvtDtAndPlcOfBirthDt']?.trim() || v[p + 'PrvtDtAndPlcOfBirthCity']?.trim() || v[p + 'PrvtDtAndPlcOfBirthCtry']?.trim() || v[p + 'PrvtOthrId']?.trim())) {
       // Fall back to partyIdXml for private id
       content += this.partyIdXml(v, p, indent + 1);
     }
 
     // Account (optional)
     const acct = v[p + 'Acct']?.trim();
+    const acctType = v[p + 'AcctType'] || 'iban';
     if (acct) {
-      content += `${this.tabs(indent + 1)}<Acct>\n${this.tabs(indent + 2)}<Id>\n${this.tabs(indent + 3)}<Othr>\n${this.tabs(indent + 4)}<Id>${this.e(acct)}</Id>\n${this.tabs(indent + 3)}</Othr>\n${this.tabs(indent + 2)}</Id>\n${this.tabs(indent + 1)}</Acct>\n`;
+      let acctIdContent = '';
+      if (acctType === 'iban') {
+        acctIdContent = `${this.tabs(indent + 3)}<IBAN>${this.e(acct)}</IBAN>\n`;
+      } else {
+        acctIdContent = `${this.tabs(indent + 3)}<Othr>\n${this.tabs(indent + 4)}<Id>${this.e(acct)}</Id>\n${this.tabs(indent + 3)}</Othr>\n`;
+      }
+      content += `${this.tabs(indent + 1)}<Acct>\n${this.tabs(indent + 2)}<Id>\n${acctIdContent}${this.tabs(indent + 2)}</Id>\n${this.tabs(indent + 1)}</Acct>\n`;
     }
 
     if (!content.trim()) return '';
@@ -1740,7 +1835,27 @@ ${tx}\t\t\t</CdtTrfTxInf>
         setVal('msgId', tval('MsgId', grpHdr));
         setVal('nbOfTxs', tval('NbOfTxs', grpHdr));
         const sttlmInf = getT('SttlmInf', grpHdr);
-        if (sttlmInf) setVal('sttlmMtd', tval('SttlmMtd', sttlmInf));
+        if (sttlmInf) {
+          setVal('sttlmMtd', tval('SttlmMtd', sttlmInf));
+          const instgRmbrsmntAgt = getT('InstgRmbrsmntAgt', sttlmInf);
+          if (instgRmbrsmntAgt) {
+            setVal('instgRmbrsmntAgtBic', tval('BICFI', getT('FinInstnId', instgRmbrsmntAgt) || doc));
+          } else {
+            setVal('instgRmbrsmntAgtBic', '');
+          }
+          const instdRmbrsmntAgt = getT('InstdRmbrsmntAgt', sttlmInf);
+          if (instdRmbrsmntAgt) {
+            setVal('instdRmbrsmntAgtBic', tval('BICFI', getT('FinInstnId', instdRmbrsmntAgt) || doc));
+          } else {
+            setVal('instdRmbrsmntAgtBic', '');
+          }
+          const thrdRmbrsmntAgt = getT('ThrdRmbrsmntAgt', sttlmInf);
+          if (thrdRmbrsmntAgt) {
+            setVal('thrdRmbrsmntAgtBic', tval('BICFI', getT('FinInstnId', thrdRmbrsmntAgt) || doc));
+          } else {
+            setVal('thrdRmbrsmntAgtBic', '');
+          }
+        }
       }
 
       // 3. CdtTrfTxInf
@@ -1836,6 +1951,7 @@ ${tx}\t\t\t</CdtTrfTxInf>
 
         // Instructions
         const instrCdtrEls = tx.querySelectorAll(':scope > InstrForCdtrAgt');
+        this.visibleCdtrAgtInstrCount = Math.max(1, Math.min(2, instrCdtrEls.length));
         instrCdtrEls.forEach((el, index) => {
             if (index < 2) {
                 setVal(`instrForCdtrAgt${index + 1}Cd`, tval('Cd', el));
@@ -1843,6 +1959,7 @@ ${tx}\t\t\t</CdtTrfTxInf>
             }
         });
         const instrNxtEls = tx.querySelectorAll(':scope > InstrForNxtAgt');
+        this.visibleNxtAgtInstrCount = Math.max(1, Math.min(6, instrNxtEls.length));
         instrNxtEls.forEach((el, index) => {
             if (index < 6) {
                 setVal(`instrForNxtAgt${index + 1}Cd`, tval('Cd', el));
@@ -1945,13 +2062,28 @@ ${tx}\t\t\t</CdtTrfTxInf>
                     setVal(prefix + 'OrgLEI', tval('LEI', org));
                     const othr = getT('Othr', org);
                     if (othr) {
-                        setVal(prefix + 'OrgOthrId', tval('Id', othr));
+                        const othrId = tval('Id', othr);
                         const sch = getT('SchmeNm', othr);
+                        const cd = sch ? tval('Cd', sch) : '';
+                        const prtry = sch ? tval('Prtry', sch) : '';
+                        const issr = tval('Issr', othr);
+                        
+                        setVal(prefix + 'OrgClrSysMmbId', othrId);
+                        setVal(prefix + 'OrgClrSysCd', cd);
+                        
+                        setVal(prefix + 'OrgOthrId', othrId);
                         if (sch) {
-                            setVal(prefix + 'OrgOthrSchmeNmCd', tval('Cd', sch));
-                            setVal(prefix + 'OrgOthrSchmeNmPrtry', tval('Prtry', sch));
+                            setVal(prefix + 'OrgOthrSchmeNmCd', cd);
+                            setVal(prefix + 'OrgOthrSchmeNmPrtry', prtry);
                         }
-                        setVal(prefix + 'OrgOthrIssr', tval('Issr', othr));
+                        setVal(prefix + 'OrgOthrIssr', issr);
+                    } else {
+                        setVal(prefix + 'OrgClrSysMmbId', '');
+                        setVal(prefix + 'OrgClrSysCd', '');
+                        setVal(prefix + 'OrgOthrId', '');
+                        setVal(prefix + 'OrgOthrSchmeNmCd', '');
+                        setVal(prefix + 'OrgOthrSchmeNmPrtry', '');
+                        setVal(prefix + 'OrgOthrIssr', '');
                     }
                 }
                 const prvt = getT('PrvtId', id);
@@ -1962,29 +2094,91 @@ ${tx}\t\t\t</CdtTrfTxInf>
                         setVal(prefix + 'PrvtDtAndPlcOfBirthDt', tval('BirthDt', dob));
                         setVal(prefix + 'PrvtDtAndPlcOfBirthCity', tval('CityOfBirth', dob));
                         setVal(prefix + 'PrvtDtAndPlcOfBirthCtry', tval('CtryOfBirth', dob));
+                    } else {
+                        setVal(prefix + 'PrvtDtAndPlcOfBirthDt', '');
+                        setVal(prefix + 'PrvtDtAndPlcOfBirthCity', '');
+                        setVal(prefix + 'PrvtDtAndPlcOfBirthCtry', '');
                     }
                     const othr = getT('Othr', prvt);
                     if (othr) {
-                        setVal(prefix + 'PrvtOthrId', tval('Id', othr));
+                        const othrId = tval('Id', othr);
                         const sch = getT('SchmeNm', othr);
+                        const cd = sch ? tval('Cd', sch) : '';
+                        const prtry = sch ? tval('Prtry', sch) : '';
+                        const issr = tval('Issr', othr);
+                        
+                        setVal(prefix + 'PrvtOthrId', othrId);
                         if (sch) {
-                            setVal(prefix + 'PrvtOthrSchmeNmCd', tval('Cd', sch));
-                            setVal(prefix + 'PrvtOthrSchmeNmPrtry', tval('Prtry', sch));
+                            setVal(prefix + 'PrvtOthrSchmeNmCd', cd);
+                            setVal(prefix + 'PrvtOthrSchmeNmPrtry', prtry);
                         }
-                        setVal(prefix + 'PrvtOthrIssr', tval('Issr', othr));
+                        setVal(prefix + 'PrvtOthrIssr', issr);
+                    } else {
+                        setVal(prefix + 'PrvtOthrId', '');
+                        setVal(prefix + 'PrvtOthrSchmeNmCd', '');
+                        setVal(prefix + 'PrvtOthrSchmeNmPrtry', '');
+                        setVal(prefix + 'PrvtOthrIssr', '');
                     }
+                }
+                
+                if (org && !prvt) {
+                    setVal(prefix + 'PrvtDtAndPlcOfBirthDt', '');
+                    setVal(prefix + 'PrvtDtAndPlcOfBirthCity', '');
+                    setVal(prefix + 'PrvtDtAndPlcOfBirthCtry', '');
+                    setVal(prefix + 'PrvtOthrId', '');
+                    setVal(prefix + 'PrvtOthrSchmeNmCd', '');
+                    setVal(prefix + 'PrvtOthrSchmeNmPrtry', '');
+                    setVal(prefix + 'PrvtOthrIssr', '');
+                }
+                if (prvt && !org) {
+                    setVal(prefix + 'OrgAnyBIC', '');
+                    setVal(prefix + 'OrgLEI', '');
+                    setVal(prefix + 'OrgClrSysMmbId', '');
+                    setVal(prefix + 'OrgClrSysCd', '');
+                    setVal(prefix + 'OrgOthrId', '');
+                    setVal(prefix + 'OrgOthrSchmeNmCd', '');
+                    setVal(prefix + 'OrgOthrSchmeNmPrtry', '');
+                    setVal(prefix + 'OrgOthrIssr', '');
                 }
             } else {
                 setVal(prefix + 'IdType', 'none');
+                setVal(prefix + 'OrgAnyBIC', '');
+                setVal(prefix + 'OrgLEI', '');
+                setVal(prefix + 'OrgClrSysMmbId', '');
+                setVal(prefix + 'OrgClrSysCd', '');
+                setVal(prefix + 'OrgOthrId', '');
+                setVal(prefix + 'OrgOthrSchmeNmCd', '');
+                setVal(prefix + 'OrgOthrSchmeNmPrtry', '');
+                setVal(prefix + 'OrgOthrIssr', '');
+                setVal(prefix + 'PrvtDtAndPlcOfBirthDt', '');
+                setVal(prefix + 'PrvtDtAndPlcOfBirthCity', '');
+                setVal(prefix + 'PrvtDtAndPlcOfBirthCtry', '');
+                setVal(prefix + 'PrvtOthrId', '');
+                setVal(prefix + 'PrvtOthrSchmeNmCd', '');
+                setVal(prefix + 'PrvtOthrSchmeNmPrtry', '');
+                setVal(prefix + 'PrvtOthrIssr', '');
             }
         };
 
         const mapAcct = (p: Element, prefix: string) => {
-            const acct = getT(prefix + 'Acct', p);
+            const tag = prefix === 'initgPty' ? 'InitgPty' : (prefix.charAt(0).toUpperCase() + prefix.slice(1) + 'Acct');
+            let acctParent = getT(tag, p);
+            if (!acctParent && prefix === 'initgPty') {
+                acctParent = p;
+            }
+            const acct = acctParent ? (prefix === 'initgPty' ? getT('Acct', acctParent) : acctParent) : getT('Acct', p);
             if (acct) {
                 const id = getT('Id', acct);
                 if (id) {
-                    setVal(prefix + 'Acct', tval('IBAN', id) || tval('Id', id));
+                    const ibanVal = tval('IBAN', id);
+                    const othrVal = tval('Id', id);
+                    const val = ibanVal || othrVal;
+                    if (val) {
+                        setVal(prefix + 'Acct', val);
+                        if (['dbtr', 'cdtr', 'dbtrAgt', 'cdtrAgt', 'initgPty', 'intrmyAgt1', 'intrmyAgt2', 'intrmyAgt3'].includes(prefix)) {
+                            setVal(prefix + 'AcctType', ibanVal ? 'iban' : 'other');
+                        }
+                    }
                 }
             }
         };
@@ -2026,15 +2220,26 @@ ${tx}\t\t\t</CdtTrfTxInf>
             else mapParty(p.charAt(0).toUpperCase() + p.slice(1), p, tx);
         });
 
-        // Extra Accounts check
-        ['instgAgt', 'instdAgt', 'dbtrAgt', 'cdtrAgt', 'dbtr', 'cdtr', 'ultmtDbtr', 'ultmtCdtr'].forEach(p => {
+        // Extra Accounts check — also detect IBAN vs Other for dbtr/cdtr/dbtrAgt/cdtrAgt/initgPty/intrmyAgt1/intrmyAgt2/intrmyAgt3 AcctType dropdown
+        ['instgAgt', 'instdAgt', 'dbtrAgt', 'cdtrAgt', 'dbtr', 'cdtr', 'ultmtDbtr', 'ultmtCdtr', 'initgPty', 'intrmyAgt1', 'intrmyAgt2', 'intrmyAgt3'].forEach(p => {
             const tag = p === 'initgPty' ? 'InitgPty' : (p.charAt(0).toUpperCase() + p.slice(1) + 'Acct');
-            const acctEl = getT(tag, tx) || (p === 'initgPty' ? getT('InitgPty', getT('GrpHdr')) : null);
-            if (acctEl) {
-                const id = getT('Id', acctEl);
-                if (id) {
-                    const val = tval('IBAN', id) || tval('Id', id);
-                    if (val) setVal(p + 'Acct', val);
+            const acctParent = p === 'initgPty' ? getT('InitgPty', getT('GrpHdr')) : getT(tag, tx);
+            if (acctParent) {
+                const acctEl = p === 'initgPty' ? getT('Acct', acctParent) : acctParent;
+                if (acctEl) {
+                    const id = getT('Id', acctEl);
+                    if (id) {
+                        const ibanVal = tval('IBAN', id);
+                        const othrVal = tval('Id', id);
+                        const val = ibanVal || othrVal;
+                        if (val) {
+                            setVal(p + 'Acct', val);
+                            // Set AcctType dropdown for dbtr/cdtr/dbtrAgt/cdtrAgt/initgPty/intrmyAgt1/intrmyAgt2/intrmyAgt3
+                            if (['dbtr', 'cdtr', 'dbtrAgt', 'cdtrAgt', 'initgPty', 'intrmyAgt1', 'intrmyAgt2', 'intrmyAgt3'].includes(p)) {
+                                setVal(p + 'AcctType', ibanVal ? 'iban' : 'other');
+                            }
+                        }
+                    }
                 }
             }
         });

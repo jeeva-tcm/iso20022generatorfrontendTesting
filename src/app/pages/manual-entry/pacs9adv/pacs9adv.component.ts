@@ -351,6 +351,9 @@ export class Pacs9AdvComponent implements OnInit, OnDestroy {
             if (!c[p + 'ClrSysCd']) c[p + 'ClrSysCd'] = ['', Validators.maxLength(5)];
             if (!c[p + 'ClrSysMmbId']) c[p + 'ClrSysMmbId'] = ['', Validators.maxLength(35)];
             if (!c[p + 'Acct']) c[p + 'Acct'] = ['', [Validators.pattern(/^[A-Z0-9]{5,34}$/)]];
+            if (['intrmyAgt1', 'intrmyAgt2', 'intrmyAgt3'].includes(p)) {
+                if (!c[p + 'AcctType']) c[p + 'AcctType'] = ['iban'];
+            }
         });
         // Set default names and address data for mandatory parties to comply with CBPR+ coexistence rules
         const mandatoryParties = ['dbtrFi', 'cdtrFi', 'dbtrAgt', 'cdtrAgt'];
@@ -1237,6 +1240,10 @@ ${tx}\t\t\t</CdtTrfTxInf>
                     const acct = getT(tag + 'Acct', parent);
                     if (acct) {
                         patch[p + 'Acct'] = tval('IBAN', getT('Id', acct) || acct) || tval('Id', getT('Othr', getT('Id', acct) || acct) || acct);
+                        if (['intrmyAgt1', 'intrmyAgt2', 'intrmyAgt3'].includes(p)) {
+                            const isIban = acct.querySelector('IBAN') || getT('IBAN', acct);
+                            patch[p + 'AcctType'] = isIban ? 'iban' : 'other';
+                        }
                     }
                 };
 

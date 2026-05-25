@@ -283,7 +283,9 @@
                           <span class="issue-message-text">{{issue.message}}</span>
                           <div class="issue-meta-info">
                             <span class="meta-item"><mat-icon>link</mat-icon> {{issue.path || 'Global Message Context'}}</span>
-                            <span class="meta-item" *ngIf="issue.line"><mat-icon>link</mat-icon> Line: {{issue.line}}</span>
+                            <span class="meta-item clickable-line" *ngIf="issue.line" (click)="jumpToLine(f, issue.line, $event)" matTooltip="Jump to line in editor">
+                              <mat-icon>launch</mat-icon> Line: {{issue.line}}
+                            </span>
                           </div>
                         </div>
 
@@ -297,6 +299,12 @@
                           <div class="detail-item">
                             <div class="di-label">OCCURRENCE PATH</div>
                             <div class="di-val mono">{{issue.path || '?'}}</div>
+                          </div>
+                          <div class="detail-item" *ngIf="issue.line">
+                            <div class="di-label">LINE NUMBER</div>
+                            <div class="di-val mono clickable-line" (click)="jumpToLine(f, issue.line, $event)" matTooltip="Jump to line in editor">
+                              {{issue.line}} <mat-icon style="font-size: 14px; width: 14px; height: 14px; vertical-align: middle; margin-left: 2px;">launch</mat-icon>
+                            </div>
                           </div>
                           <div class="detail-item" *ngIf="issue.code">
                             <div class="di-label">INTERNAL CODE</div>

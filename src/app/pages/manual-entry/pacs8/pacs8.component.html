@@ -421,7 +421,30 @@
                                         <div class="party-group">
                                                 <div class="party-group-title">Initiating Party</div>
                                                 <ng-container
-                                                        *ngTemplateOutlet="partyForm; context:{prefix:'initgPty',isAgent:false, title:'Initiating Party', group: form}"></ng-container>
+                                                        *ngTemplateOutlet="partyForm; context:{prefix:'initgPty',isAgent:false, hideAccount:true, title:'Initiating Party', group: form}"></ng-container>
+                                        </div>
+
+                                        <!-- Initiating Party Account -->
+                                        <div class="party-group">
+                                                <div class="party-group-title">Initiating Party Account</div>
+                                                <div [formGroup]="form" class="party-grid">
+                                                        <!-- Account Type dropdown -->
+                                                        <div class="form-group">
+                                                                <label>Account Type</label>
+                                                                <select formControlName="initgPtyAcctType" id="initg-pty-acct-type-select">
+                                                                        <option value="iban">IBAN</option>
+                                                                        <option value="other">Other (Othr/Id)</option>
+                                                                </select>
+                                                        </div>
+                                                        <!-- Account Number input -->
+                                                        <div class="form-group">
+                                                                <label>Account Number</label>
+                                                                <input formControlName="initgPtyAcct" maxlength="34"
+                                                                        [placeholder]="form.get('initgPtyAcctType')?.value === 'iban' ? 'e.g. BE68539007547034' : 'e.g. 471932901234'">
+                                                                <div class="validation-msg"
+                                                                        *ngIf="err('initgPtyAcct') as e">{{e}}</div>
+                                                        </div>
+                                                </div>
                                         </div>
 
                                         <div class="party-group">
@@ -441,10 +464,19 @@
                                         <div class="party-group">
                                                 <div class="party-group-title">Debtor Account</div>
                                                 <div [formGroup]="form" class="party-grid">
+                                                        <!-- Account Type dropdown -->
                                                         <div class="form-group">
-                                                                <label>Debtor Account ID (IBAN / Other)</label>
+                                                                <label>Account Type</label>
+                                                                <select formControlName="dbtrAcctType" id="dbtr-acct-type-select">
+                                                                        <option value="iban">IBAN</option>
+                                                                        <option value="other">Other (Othr/Id)</option>
+                                                                </select>
+                                                        </div>
+                                                        <!-- Account Number input -->
+                                                        <div class="form-group">
+                                                                <label>Account Number</label>
                                                                 <input formControlName="dbtrAcct" maxlength="34"
-                                                                        placeholder="e.g. GB29NWBK60161331926819">
+                                                                        [placeholder]="form.get('dbtrAcctType')?.value === 'iban' ? 'e.g. BE68539007547034' : 'e.g. 471932901234'">
                                                                 <div class="validation-msg"
                                                                         *ngIf="err('dbtrAcct') as e">{{e}}</div>
                                                         </div>
@@ -462,10 +494,19 @@
                                         <div class="party-group">
                                                 <div class="party-group-title">Debtor Agent Account</div>
                                                 <div [formGroup]="form" class="party-grid">
+                                                        <!-- Account Type dropdown -->
                                                         <div class="form-group">
-                                                                <label>Debtor Agent Account ID</label>
+                                                                <label>Account Type</label>
+                                                                <select formControlName="dbtrAgtAcctType" id="dbtr-agt-acct-type-select">
+                                                                        <option value="iban">IBAN</option>
+                                                                        <option value="other">Other (Othr/Id)</option>
+                                                                </select>
+                                                        </div>
+                                                        <!-- Account Number input -->
+                                                        <div class="form-group">
+                                                                <label>Account Number</label>
                                                                 <input formControlName="dbtrAgtAcct" maxlength="34"
-                                                                        placeholder="Account / IBAN">
+                                                                        [placeholder]="form.get('dbtrAgtAcctType')?.value === 'iban' ? 'e.g. BE68539007547034' : 'e.g. 471932901234'">
                                                                 <div class="validation-msg"
                                                                         *ngIf="err('dbtrAgtAcct') as e">{{e}}</div>
                                                         </div>
@@ -483,10 +524,19 @@
                                         <div class="party-group">
                                                 <div class="party-group-title">Creditor Agent Account</div>
                                                 <div [formGroup]="form" class="party-grid">
+                                                        <!-- Account Type dropdown -->
                                                         <div class="form-group">
-                                                                <label>Creditor Agent Account ID</label>
+                                                                <label>Account Type</label>
+                                                                <select formControlName="cdtrAgtAcctType" id="cdtr-agt-acct-type-select">
+                                                                        <option value="iban">IBAN</option>
+                                                                        <option value="other">Other (Othr/Id)</option>
+                                                                </select>
+                                                        </div>
+                                                        <!-- Account Number input -->
+                                                        <div class="form-group">
+                                                                <label>Account Number</label>
                                                                 <input formControlName="cdtrAgtAcct" maxlength="34"
-                                                                        placeholder="Account / IBAN">
+                                                                        [placeholder]="form.get('cdtrAgtAcctType')?.value === 'iban' ? 'e.g. LU280019400644750000' : 'e.g. 471932901234'">
                                                                 <div class="validation-msg"
                                                                         *ngIf="err('cdtrAgtAcct') as e">{{e}}</div>
                                                         </div>
@@ -504,10 +554,19 @@
                                         <div class="party-group">
                                                 <div class="party-group-title">Creditor Account</div>
                                                 <div [formGroup]="form" class="party-grid">
+                                                        <!-- Account Type dropdown -->
                                                         <div class="form-group">
-                                                                <label>Creditor Account ID (IBAN / Other)</label>
+                                                                <label>Account Type</label>
+                                                                <select formControlName="cdtrAcctType" id="cdtr-acct-type-select">
+                                                                        <option value="iban">IBAN</option>
+                                                                        <option value="other">Other (Othr/Id)</option>
+                                                                </select>
+                                                        </div>
+                                                        <!-- Account Number input -->
+                                                        <div class="form-group">
+                                                                <label>Account Number</label>
                                                                 <input formControlName="cdtrAcct" maxlength="34"
-                                                                        placeholder="e.g. GB29NWBK60161331926819">
+                                                                        [placeholder]="form.get('cdtrAcctType')?.value === 'iban' ? 'e.g. LU280019400644750000' : 'e.g. 471932901234'">
                                                                 <div class="validation-msg"
                                                                         *ngIf="err('cdtrAcct') as e">{{e}}</div>
                                                         </div>
@@ -534,261 +593,298 @@
                                                 <ng-container
                                                         *ngTemplateOutlet="partyForm; context:{prefix:'intrmyAgt2',isAgent:true, title:'Intermediary Agent 2', group: form}"></ng-container>
                                         </div>
-                                        <div class="party-group">
+                                                <div class="party-group">
                                                 <div class="party-group-title">Intermediary Agent 3</div>
                                                 <ng-container
                                                         *ngTemplateOutlet="partyForm; context:{prefix:'intrmyAgt3',isAgent:true, title:'Intermediary Agent 3', group: form}"></ng-container>
                                         </div>
+                                         <!-- Instructions for Creditor Agent (0..2) -->
+                                         <div class="section-title-container">
+                                                 <div class="section-title">Instructions for Creditor Agent <span class="opt">Optional &bull; max 2</span></div>
+                                                 <button type="button" class="add-inst-btn" *ngIf="visibleCdtrAgtInstrCount < 2" (click)="addCdtrAgtInstr()" matTooltip="Add Creditor Agent Instruction">
+                                                         <mat-icon>add_circle_outline</mat-icon>
+                                                 </button>
+                                         </div>
+                                         <div class="party-group" *ngIf="visibleCdtrAgtInstrCount >= 1">
+                                                 <div class="party-group-title">Instr for Creditor Agent 1</div>
+                                                 <div [formGroup]="form" class="party-grid">
+                                                         <div class="form-group">
+                                                                 <label>Instruction Code</label>
+                                                                 <select formControlName="instrForCdtrAgt1Cd">
+                                                                         <option value="">None</option>
+                                                                         <option value="CHQB">CHQB  Please pay by cheque
+                                                                         </option>
+                                                                         <option value="HOLD">HOLD  Hold until advised
+                                                                         </option>
+                                                                         <option value="PHOB">PHOB  Phone beneficiary
+                                                                                 before payment</option>
+                                                                         <option value="TELB">TELB  Telecom / Other
+                                                                                 beneficiary contact</option>
+                                                                 </select>
+                                                                 <div class="validation-msg"
+                                                                         *ngIf="err('instrForCdtrAgt1Cd') as e">{{e}}
+                                                                 </div>
+                                                         </div>
+                                                         <div class="form-group">
+                                                                 <label>Instruction Information</label>
+                                                                 <input formControlName="instrForCdtrAgt1InfTxt"
+                                                                         maxlength="140"
+                                                                         placeholder="Free text (max 140)">
+                                                                 <div class="validation-msg"
+                                                                         *ngIf="err('instrForCdtrAgt1InfTxt') as e">{{e}}
+                                                                 </div>
+                                                                 <div class="field-hint at-limit"
+                                                                         *ngIf="hint('instrForCdtrAgt1InfTxt', 140) as h">
+                                                                         {{h}}</div>
+                                                         </div>
+                                                 </div>
+                                         </div>
+                                         <div class="party-group" *ngIf="visibleCdtrAgtInstrCount >= 2">
+                                                 <div class="party-group-title header-with-btn">
+                                                         <span>Instr for Creditor Agent 2</span>
+                                                         <button type="button" class="remove-inst-btn" (click)="removeCdtrAgtInstr(2)" matTooltip="Remove instruction">
+                                                                 <mat-icon>remove_circle_outline</mat-icon>
+                                                         </button>
+                                                 </div>
+                                                 <div [formGroup]="form" class="party-grid">
+                                                         <div class="form-group">
+                                                                 <label>Instruction Code</label>
+                                                                 <select formControlName="instrForCdtrAgt2Cd">
+                                                                         <option value="">None</option>
+                                                                         <option value="CHQB">CHQB  Please pay by cheque
+                                                                         </option>
+                                                                         <option value="HOLD">HOLD  Hold until advised
+                                                                         </option>
+                                                                         <option value="PHOB">PHOB  Phone beneficiary
+                                                                                 before payment</option>
+                                                                         <option value="TELB">TELB  Telecom / Other
+                                                                                 beneficiary contact</option>
+                                                                 </select>
+                                                                 <div class="validation-msg"
+                                                                         *ngIf="err('instrForCdtrAgt2Cd') as e">{{e}}
+                                                                 </div>
+                                                         </div>
+                                                         <div class="form-group">
+                                                                 <label>Instruction Information</label>
+                                                                 <input formControlName="instrForCdtrAgt2InfTxt"
+                                                                         maxlength="140"
+                                                                         placeholder="Free text (max 140)">
+                                                                 <div class="validation-msg"
+                                                                         *ngIf="err('instrForCdtrAgt2InfTxt') as e">{{e}}
+                                                                 </div>
+                                                                 <div class="field-hint at-limit"
+                                                                         *ngIf="hint('instrForCdtrAgt2InfTxt', 140) as h">
+                                                                         {{h}}</div>
+                                                         </div>
+                                                 </div>
+                                         </div>
 
-                                        <!-- Instructions for Creditor Agent (0..2) -->
-                                        <div class="section-title">Instructions for Creditor Agent <span
-                                                        class="opt">Optional � max 2</span></div>
-                                        <div class="party-group">
-                                                <div class="party-group-title">Instr for Creditor Agent 1</div>
-                                                <div [formGroup]="form" class="party-grid">
-                                                        <div class="form-group">
-                                                                <label>Instruction Code</label>
-                                                                <select formControlName="instrForCdtrAgt1Cd">
-                                                                        <option value="">None</option>
-                                                                        <option value="CHQB">CHQB � Please pay by cheque
-                                                                        </option>
-                                                                        <option value="HOLD">HOLD � Hold until advised
-                                                                        </option>
-                                                                        <option value="PHOB">PHOB � Phone beneficiary
-                                                                                before payment</option>
-                                                                        <option value="TELB">TELB � Telecom / Other
-                                                                                beneficiary contact</option>
-                                                                </select>
-                                                                <div class="validation-msg"
-                                                                        *ngIf="err('instrForCdtrAgt1Cd') as e">{{e}}
-                                                                </div>
-                                                        </div>
-                                                        <div class="form-group">
-                                                                <label>Instruction Information</label>
-                                                                <input formControlName="instrForCdtrAgt1InfTxt"
-                                                                        maxlength="140"
-                                                                        placeholder="Free text (max 140)">
-                                                                <div class="validation-msg"
-                                                                        *ngIf="err('instrForCdtrAgt1InfTxt') as e">{{e}}
-                                                                </div>
-                                                                <div class="field-hint at-limit"
-                                                                        *ngIf="hint('instrForCdtrAgt1InfTxt', 140) as h">
-                                                                        {{h}}</div>
-                                                        </div>
-                                                </div>
-                                        </div>
-                                        <div class="party-group">
-                                                <div class="party-group-title">Instr for Creditor Agent 2</div>
-                                                <div [formGroup]="form" class="party-grid">
-                                                        <div class="form-group">
-                                                                <label>Instruction Code</label>
-                                                                <select formControlName="instrForCdtrAgt2Cd">
-                                                                        <option value="">None</option>
-                                                                        <option value="CHQB">CHQB � Please pay by cheque
-                                                                        </option>
-                                                                        <option value="HOLD">HOLD � Hold until advised
-                                                                        </option>
-                                                                        <option value="PHOB">PHOB � Phone beneficiary
-                                                                                before payment</option>
-                                                                        <option value="TELB">TELB � Telecom / Other
-                                                                                beneficiary contact</option>
-                                                                </select>
-                                                                <div class="validation-msg"
-                                                                        *ngIf="err('instrForCdtrAgt2Cd') as e">{{e}}
-                                                                </div>
-                                                        </div>
-                                                        <div class="form-group">
-                                                                <label>Instruction Information</label>
-                                                                <input formControlName="instrForCdtrAgt2InfTxt"
-                                                                        maxlength="140"
-                                                                        placeholder="Free text (max 140)">
-                                                                <div class="validation-msg"
-                                                                        *ngIf="err('instrForCdtrAgt2InfTxt') as e">{{e}}
-                                                                </div>
-                                                                <div class="field-hint at-limit"
-                                                                        *ngIf="hint('instrForCdtrAgt2InfTxt', 140) as h">
-                                                                        {{h}}</div>
-                                                        </div>
-                                                </div>
-                                        </div>
-
-                                        <!-- Instructions for Next Agent (0..6) -->
-                                        <div class="section-title">Instructions for Next Agent <span
-                                                        class="opt">Optional � max 6</span></div>
-                                        <div class="party-group">
-                                                <div class="party-group-title">Instr for Next Agent 1</div>
-                                                <div [formGroup]="form" class="party-grid">
-                                                        <div class="form-group">
-                                                                <label>Instruction Code</label>
-                                                                <select formControlName="instrForNxtAgt1Cd">
-                                                                        <option value="">None</option>
-                                                                        <option value="PHOA">PHOA � Phone account owner
-                                                                        </option>
-                                                                        <option value="TELA">TELA � Telecom account
-                                                                                owner</option>
-                                                                </select>
-                                                                <div class="validation-msg"
-                                                                        *ngIf="err('instrForNxtAgt1Cd') as e">{{e}}
-                                                                </div>
-                                                        </div>
-                                                        <div class="form-group">
-                                                                <label>Instruction Information</label>
-                                                                <input formControlName="instrForNxtAgt1InfTxt"
-                                                                        maxlength="35" placeholder="Free text (max 35)">
-                                                                <div class="validation-msg"
-                                                                        *ngIf="err('instrForNxtAgt1InfTxt') as e">{{e}}
-                                                                </div>
-                                                                <div class="field-hint at-limit"
-                                                                        *ngIf="hint('instrForNxtAgt1InfTxt', 35) as h">
-                                                                        {{h}}</div>
-                                                        </div>
-                                                </div>
-                                        </div>
-                                        <div class="party-group">
-                                                <div class="party-group-title">Instr for Next Agent 2</div>
-                                                <div [formGroup]="form" class="party-grid">
-                                                        <div class="form-group">
-                                                                <label>Instruction Code</label>
-                                                                <select formControlName="instrForNxtAgt2Cd">
-                                                                        <option value="">None</option>
-                                                                        <option value="PHOA">PHOA � Phone account owner
-                                                                        </option>
-                                                                        <option value="TELA">TELA � Telecom account
-                                                                                owner</option>
-                                                                </select>
-                                                                <div class="validation-msg"
-                                                                        *ngIf="err('instrForNxtAgt2Cd') as e">{{e}}
-                                                                </div>
-                                                        </div>
-                                                        <div class="form-group">
-                                                                <label>Instruction Information</label>
-                                                                <input formControlName="instrForNxtAgt2InfTxt"
-                                                                        maxlength="35" placeholder="Free text (max 35)">
-                                                                <div class="validation-msg"
-                                                                        *ngIf="err('instrForNxtAgt2InfTxt') as e">{{e}}
-                                                                </div>
-                                                                <div class="field-hint at-limit"
-                                                                        *ngIf="hint('instrForNxtAgt2InfTxt', 35) as h">
-                                                                        {{h}}</div>
-                                                        </div>
-                                                </div>
-                                        </div>
-                                        <div class="party-group">
-                                                <div class="party-group-title">Instr for Next Agent 3</div>
-                                                <div [formGroup]="form" class="party-grid">
-                                                        <div class="form-group">
-                                                                <label>Instruction Code</label>
-                                                                <select formControlName="instrForNxtAgt3Cd">
-                                                                        <option value="">None</option>
-                                                                        <option value="PHOA">PHOA � Phone account owner
-                                                                        </option>
-                                                                        <option value="TELA">TELA � Telecom account
-                                                                                owner</option>
-                                                                </select>
-                                                                <div class="validation-msg"
-                                                                        *ngIf="err('instrForNxtAgt3Cd') as e">{{e}}
-                                                                </div>
-                                                        </div>
-                                                        <div class="form-group">
-                                                                <label>Instruction Information</label>
-                                                                <input formControlName="instrForNxtAgt3InfTxt"
-                                                                        maxlength="35" placeholder="Free text (max 35)">
-                                                                <div class="validation-msg"
-                                                                        *ngIf="err('instrForNxtAgt3InfTxt') as e">{{e}}
-                                                                </div>
-                                                                <div class="field-hint at-limit"
-                                                                        *ngIf="hint('instrForNxtAgt3InfTxt', 35) as h">
-                                                                        {{h}}</div>
-                                                        </div>
-                                                </div>
-                                        </div>
-                                        <div class="party-group">
-                                                <div class="party-group-title">Instr for Next Agent 4</div>
-                                                <div [formGroup]="form" class="party-grid">
-                                                        <div class="form-group">
-                                                                <label>Instruction Code</label>
-                                                                <select formControlName="instrForNxtAgt4Cd">
-                                                                        <option value="">None</option>
-                                                                        <option value="PHOA">PHOA � Phone account owner
-                                                                        </option>
-                                                                        <option value="TELA">TELA � Telecom account
-                                                                                owner</option>
-                                                                </select>
-                                                                <div class="validation-msg"
-                                                                        *ngIf="err('instrForNxtAgt4Cd') as e">{{e}}
-                                                                </div>
-                                                        </div>
-                                                        <div class="form-group">
-                                                                <label>Instruction Information</label>
-                                                                <input formControlName="instrForNxtAgt4InfTxt"
-                                                                        maxlength="35" placeholder="Free text (max 35)">
-                                                                <div class="validation-msg"
-                                                                        *ngIf="err('instrForNxtAgt4InfTxt') as e">{{e}}
-                                                                </div>
-                                                                <div class="field-hint at-limit"
-                                                                        *ngIf="hint('instrForNxtAgt4InfTxt', 35) as h">
-                                                                        {{h}}</div>
-                                                        </div>
-                                                </div>
-                                        </div>
-                                        <div class="party-group">
-                                                <div class="party-group-title">Instr for Next Agent 5</div>
-                                                <div [formGroup]="form" class="party-grid">
-                                                        <div class="form-group">
-                                                                <label>Instruction Code</label>
-                                                                <select formControlName="instrForNxtAgt5Cd">
-                                                                        <option value="">None</option>
-                                                                        <option value="PHOA">PHOA � Phone account owner
-                                                                        </option>
-                                                                        <option value="TELA">TELA � Telecom account
-                                                                                owner</option>
-                                                                </select>
-                                                                <div class="validation-msg"
-                                                                        *ngIf="err('instrForNxtAgt5Cd') as e">{{e}}
-                                                                </div>
-                                                        </div>
-                                                        <div class="form-group">
-                                                                <label>Instruction Information</label>
-                                                                <input formControlName="instrForNxtAgt5InfTxt"
-                                                                        maxlength="35" placeholder="Free text (max 35)">
-                                                                <div class="validation-msg"
-                                                                        *ngIf="err('instrForNxtAgt5InfTxt') as e">{{e}}
-                                                                </div>
-                                                                <div class="field-hint at-limit"
-                                                                        *ngIf="hint('instrForNxtAgt5InfTxt', 35) as h">
-                                                                        {{h}}</div>
-                                                        </div>
-                                                </div>
-                                        </div>
-                                        <div class="party-group">
-                                                <div class="party-group-title">Instr for Next Agent 6</div>
-                                                <div [formGroup]="form" class="party-grid">
-                                                        <div class="form-group">
-                                                                <label>Instruction Code</label>
-                                                                <select formControlName="instrForNxtAgt6Cd">
-                                                                        <option value="">None</option>
-                                                                        <option value="PHOA">PHOA � Phone account owner
-                                                                        </option>
-                                                                        <option value="TELA">TELA � Telecom account
-                                                                                owner</option>
-                                                                </select>
-                                                                <div class="validation-msg"
-                                                                        *ngIf="err('instrForNxtAgt6Cd') as e">{{e}}
-                                                                </div>
-                                                        </div>
-                                                        <div class="form-group">
-                                                                <label>Instruction Information</label>
-                                                                <input formControlName="instrForNxtAgt6InfTxt"
-                                                                        maxlength="35" placeholder="Free text (max 35)">
-                                                                <div class="validation-msg"
-                                                                        *ngIf="err('instrForNxtAgt6InfTxt') as e">{{e}}
-                                                                </div>
-                                                                <div class="field-hint at-limit"
-                                                                        *ngIf="hint('instrForNxtAgt6InfTxt', 35) as h">
-                                                                        {{h}}</div>
-                                                        </div>
-                                                </div>
-                                        </div>
+                                         <!-- Instructions for Next Agent (0..6) -->
+                                         <div class="section-title-container">
+                                                 <div class="section-title">Instructions for Next Agent <span class="opt">Optional &bull; max 6</span></div>
+                                                 <button type="button" class="add-inst-btn" *ngIf="visibleNxtAgtInstrCount < 6" (click)="addNxtAgtInstr()" matTooltip="Add Next Agent Instruction">
+                                                         <mat-icon>add_circle_outline</mat-icon>
+                                                 </button>
+                                         </div>
+                                         <div class="party-group" *ngIf="visibleNxtAgtInstrCount >= 1">
+                                                 <div class="party-group-title">Instr for Next Agent 1</div>
+                                                 <div [formGroup]="form" class="party-grid">
+                                                         <div class="form-group">
+                                                                 <label>Instruction Code</label>
+                                                                 <select formControlName="instrForNxtAgt1Cd">
+                                                                         <option value="">None</option>
+                                                                         <option value="PHOA">PHOA  Phone account owner
+                                                                         </option>
+                                                                         <option value="TELA">TELA  Telecom account
+                                                                                 owner</option>
+                                                                 </select>
+                                                                 <div class="validation-msg"
+                                                                         *ngIf="err('instrForNxtAgt1Cd') as e">{{e}}
+                                                                 </div>
+                                                         </div>
+                                                         <div class="form-group">
+                                                                 <label>Instruction Information</label>
+                                                                 <input formControlName="instrForNxtAgt1InfTxt"
+                                                                         maxlength="35" placeholder="Free text (max 35)">
+                                                                 <div class="validation-msg"
+                                                                         *ngIf="err('instrForNxtAgt1InfTxt') as e">{{e}}
+                                                                 </div>
+                                                                 <div class="field-hint at-limit"
+                                                                         *ngIf="hint('instrForNxtAgt1InfTxt', 35) as h">
+                                                                         {{h}}</div>
+                                                         </div>
+                                                 </div>
+                                         </div>
+                                         <div class="party-group" *ngIf="visibleNxtAgtInstrCount >= 2">
+                                                 <div class="party-group-title header-with-btn">
+                                                         <span>Instr for Next Agent 2</span>
+                                                         <button type="button" class="remove-inst-btn" (click)="removeNxtAgtInstr(2)" matTooltip="Remove instruction">
+                                                                 <mat-icon>remove_circle_outline</mat-icon>
+                                                         </button>
+                                                 </div>
+                                                 <div [formGroup]="form" class="party-grid">
+                                                         <div class="form-group">
+                                                                 <label>Instruction Code</label>
+                                                                 <select formControlName="instrForNxtAgt2Cd">
+                                                                         <option value="">None</option>
+                                                                         <option value="PHOA">PHOA  Phone account owner
+                                                                         </option>
+                                                                         <option value="TELA">TELA  Telecom account
+                                                                                 owner</option>
+                                                                 </select>
+                                                                 <div class="validation-msg"
+                                                                         *ngIf="err('instrForNxtAgt2Cd') as e">{{e}}
+                                                                 </div>
+                                                         </div>
+                                                         <div class="form-group">
+                                                                 <label>Instruction Information</label>
+                                                                 <input formControlName="instrForNxtAgt2InfTxt"
+                                                                         maxlength="35" placeholder="Free text (max 35)">
+                                                                 <div class="validation-msg"
+                                                                         *ngIf="err('instrForNxtAgt2InfTxt') as e">{{e}}
+                                                                 </div>
+                                                                 <div class="field-hint at-limit"
+                                                                         *ngIf="hint('instrForNxtAgt2InfTxt', 35) as h">
+                                                                         {{h}}</div>
+                                                         </div>
+                                                 </div>
+                                         </div>
+                                         <div class="party-group" *ngIf="visibleNxtAgtInstrCount >= 3">
+                                                 <div class="party-group-title header-with-btn">
+                                                         <span>Instr for Next Agent 3</span>
+                                                         <button type="button" class="remove-inst-btn" (click)="removeNxtAgtInstr(3)" matTooltip="Remove instruction">
+                                                                 <mat-icon>remove_circle_outline</mat-icon>
+                                                         </button>
+                                                 </div>
+                                                 <div [formGroup]="form" class="party-grid">
+                                                         <div class="form-group">
+                                                                 <label>Instruction Code</label>
+                                                                 <select formControlName="instrForNxtAgt3Cd">
+                                                                         <option value="">None</option>
+                                                                         <option value="PHOA">PHOA  Phone account owner
+                                                                         </option>
+                                                                         <option value="TELA">TELA  Telecom account
+                                                                                 owner</option>
+                                                                 </select>
+                                                                 <div class="validation-msg"
+                                                                         *ngIf="err('instrForNxtAgt3Cd') as e">{{e}}
+                                                                 </div>
+                                                         </div>
+                                                         <div class="form-group">
+                                                                 <label>Instruction Information</label>
+                                                                 <input formControlName="instrForNxtAgt3InfTxt"
+                                                                         maxlength="35" placeholder="Free text (max 35)">
+                                                                 <div class="validation-msg"
+                                                                         *ngIf="err('instrForNxtAgt3InfTxt') as e">{{e}}
+                                                                 </div>
+                                                                 <div class="field-hint at-limit"
+                                                                         *ngIf="hint('instrForNxtAgt3InfTxt', 35) as h">
+                                                                         {{h}}</div>
+                                                         </div>
+                                                 </div>
+                                         </div>
+                                         <div class="party-group" *ngIf="visibleNxtAgtInstrCount >= 4">
+                                                 <div class="party-group-title header-with-btn">
+                                                         <span>Instr for Next Agent 4</span>
+                                                         <button type="button" class="remove-inst-btn" (click)="removeNxtAgtInstr(4)" matTooltip="Remove instruction">
+                                                                 <mat-icon>remove_circle_outline</mat-icon>
+                                                         </button>
+                                                 </div>
+                                                 <div [formGroup]="form" class="party-grid">
+                                                         <div class="form-group">
+                                                                 <label>Instruction Code</label>
+                                                                 <select formControlName="instrForNxtAgt4Cd">
+                                                                         <option value="">None</option>
+                                                                         <option value="PHOA">PHOA  Phone account owner
+                                                                         </option>
+                                                                         <option value="TELA">TELA  Telecom account
+                                                                                 owner</option>
+                                                                 </select>
+                                                                 <div class="validation-msg"
+                                                                         *ngIf="err('instrForNxtAgt4Cd') as e">{{e}}
+                                                                 </div>
+                                                         </div>
+                                                         <div class="form-group">
+                                                                 <label>Instruction Information</label>
+                                                                 <input formControlName="instrForNxtAgt4InfTxt"
+                                                                         maxlength="35" placeholder="Free text (max 35)">
+                                                                 <div class="validation-msg"
+                                                                         *ngIf="err('instrForNxtAgt4InfTxt') as e">{{e}}
+                                                                 </div>
+                                                                 <div class="field-hint at-limit"
+                                                                         *ngIf="hint('instrForNxtAgt4InfTxt', 35) as h">
+                                                                         {{h}}</div>
+                                                         </div>
+                                                 </div>
+                                         </div>
+                                         <div class="party-group" *ngIf="visibleNxtAgtInstrCount >= 5">
+                                                 <div class="party-group-title header-with-btn">
+                                                         <span>Instr for Next Agent 5</span>
+                                                         <button type="button" class="remove-inst-btn" (click)="removeNxtAgtInstr(5)" matTooltip="Remove instruction">
+                                                                 <mat-icon>remove_circle_outline</mat-icon>
+                                                         </button>
+                                                 </div>
+                                                 <div [formGroup]="form" class="party-grid">
+                                                         <div class="form-group">
+                                                                 <label>Instruction Code</label>
+                                                                 <select formControlName="instrForNxtAgt5Cd">
+                                                                         <option value="">None</option>
+                                                                         <option value="PHOA">PHOA  Phone account owner
+                                                                         </option>
+                                                                         <option value="TELA">TELA  Telecom account
+                                                                                 owner</option>
+                                                                 </select>
+                                                                 <div class="validation-msg"
+                                                                         *ngIf="err('instrForNxtAgt5Cd') as e">{{e}}
+                                                                 </div>
+                                                         </div>
+                                                         <div class="form-group">
+                                                                 <label>Instruction Information</label>
+                                                                 <input formControlName="instrForNxtAgt5InfTxt"
+                                                                         maxlength="35" placeholder="Free text (max 35)">
+                                                                 <div class="validation-msg"
+                                                                         *ngIf="err('instrForNxtAgt5InfTxt') as e">{{e}}
+                                                                 </div>
+                                                                 <div class="field-hint at-limit"
+                                                                         *ngIf="hint('instrForNxtAgt5InfTxt', 35) as h">
+                                                                         {{h}}</div>
+                                                         </div>
+                                                 </div>
+                                         </div>
+                                         <div class="party-group" *ngIf="visibleNxtAgtInstrCount >= 6">
+                                                 <div class="party-group-title header-with-btn">
+                                                         <span>Instr for Next Agent 6</span>
+                                                         <button type="button" class="remove-inst-btn" (click)="removeNxtAgtInstr(6)" matTooltip="Remove instruction">
+                                                                 <mat-icon>remove_circle_outline</mat-icon>
+                                                         </button>
+                                                 </div>
+                                                 <div [formGroup]="form" class="party-grid">
+                                                         <div class="form-group">
+                                                                 <label>Instruction Code</label>
+                                                                 <select formControlName="instrForNxtAgt6Cd">
+                                                                         <option value="">None</option>
+                                                                         <option value="PHOA">PHOA  Phone account owner
+                                                                         </option>
+                                                                         <option value="TELA">TELA  Telecom account
+                                                                                 owner</option>
+                                                                 </select>
+                                                                 <div class="validation-msg"
+                                                                         *ngIf="err('instrForNxtAgt6Cd') as e">{{e}}
+                                                                 </div>
+                                                         </div>
+                                                         <div class="form-group">
+                                                                 <label>Instruction Information</label>
+                                                                 <input formControlName="instrForNxtAgt6InfTxt"
+                                                                         maxlength="35" placeholder="Free text (max 35)">
+                                                                 <div class="validation-msg"
+                                                                         *ngIf="err('instrForNxtAgt6InfTxt') as e">{{e}}
+                                                                 </div>
+                                                                 <div class="field-hint at-limit"
+                                                                         *ngIf="hint('instrForNxtAgt6InfTxt', 35) as h">
+                                                                         {{h}}</div>
+                                                         </div>
+                                                 </div>
+                                         </div>
 
                                         <div class="section-title">Remittance <span class="opt">Optional</span></div>
                                         <div class="form-group intermediary-field"><label>Purpose Code</label>
@@ -1088,7 +1184,7 @@
                 </div>
 
                 <!-- Address Type -->
-                <div class="form-group">
+                <div class="form-group" *ngIf="prefix !== 'instgAgt' && prefix !== 'instdAgt'">
                         <label>{{title}} Address Type</label>
                         <select [formControlName]="prefix+'AddrType'">
                                 <option value="none">None (BIC/ID Only)</option>
@@ -1181,7 +1277,7 @@
                 </ng-container>
 
                 <!-- Name -->
-                <div class="form-group">
+                <div class="form-group" *ngIf="prefix !== 'instgAgt' && prefix !== 'instdAgt'">
                         <label>{{title}} Name <span class="req" *ngIf="required">*</span></label>
                         <input [formControlName]="prefix+'Name'" maxlength="140">
                         <div class="validation-msg" *ngIf="err(prefix+'Name') as e">{{e}}</div>
@@ -1222,13 +1318,25 @@
                                 *ngIf="hint(isAgent ? prefix+'Lei' : prefix+'OrgLEI', 20) as h">{{h}}</div>
                 </div>
 
-                <!-- Account Number -->
-                <div class="form-group">
-                        <label>{{title}} Account Number</label>
-                        <input [formControlName]="prefix+'Acct'" maxlength="34">
-                        <div class="validation-msg" *ngIf="err(prefix+'Acct') as e">{{e}}</div>
-                        <div class="field-hint at-limit" *ngIf="hint(prefix+'Acct', 34) as h">{{h}}</div>
-                </div>
+                <!-- Account Number & Type — displayed only for intermediary agents -->
+                <ng-container *ngIf="['intrmyAgt1', 'intrmyAgt2', 'intrmyAgt3'].includes(prefix)">
+                        <!-- Account Type dropdown -->
+                        <div class="form-group">
+                                <label>{{title}} Account Type</label>
+                                <select [formControlName]="prefix+'AcctType'">
+                                        <option value="iban">IBAN</option>
+                                        <option value="other">Other (Othr/Id)</option>
+                                </select>
+                        </div>
+                        <!-- Account Number input -->
+                        <div class="form-group">
+                                <label>{{title}} Account Number</label>
+                                <input [formControlName]="prefix+'Acct'" maxlength="34"
+                                        [placeholder]="form.get(prefix+'AcctType')?.value === 'iban' ? 'e.g. BE68539007547034' : 'e.g. 471932901234'">
+                                <div class="validation-msg" *ngIf="err(prefix+'Acct') as e">{{e}}</div>
+                                <div class="field-hint at-limit" *ngIf="hint(prefix+'Acct', 34) as h">{{h}}</div>
+                        </div>
+                </ng-container>
 
         </div>
 </ng-template>
