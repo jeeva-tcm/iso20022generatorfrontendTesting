@@ -19,6 +19,22 @@
                                         </div>
 
                                         <div class="section-title">Message Header</div>
+                                        <div class="form-group intermediary-field"><label>Sender Member ID</label><input formControlName="fromMmbId" maxlength="35">
+                                                <div class="validation-msg" *ngIf="err('fromMmbId') as e">{{e}}</div>
+                                        </div>
+                                        <div class="form-group intermediary-field"><label>Sender Clearing System Code</label><input formControlName="fromClrSysId" maxlength="5">
+                                                <div class="validation-msg" *ngIf="err('fromClrSysId') as e">{{e}}</div>
+                                        </div>
+                                        <div class="form-group intermediary-field"><label>Sender LEI</label><input formControlName="fromLei" maxlength="20">
+                                                <div class="validation-msg" *ngIf="err('fromLei') as e">{{e}}</div>
+                                        </div>
+                                        <div class="form-group intermediary-field"><label>AppHdr Priority</label>
+                                                <select formControlName="appHdrPriority">
+                                                        <option value="NORM">NORM</option>
+                                                        <option value="HIGH">HIGH</option>
+                                                </select>
+                                                <div class="validation-msg" *ngIf="err('appHdrPriority') as e">{{e}}</div>
+                                        </div>
                                         <div class="form-group"><label>From BIC <span
                                                                 class="req">*</span></label>
                                                 <div class="uetr-control-row">
@@ -47,6 +63,18 @@
                                                 <div class="field-hint at-limit" *ngIf="hint('toBic', 11) as h">{{h}}
                                                 </div>
                                         </div>
+                                        <div class="form-group intermediary-field"><label>Receiver Member ID</label><input formControlName="toMmbId" maxlength="35">
+                                                <div class="validation-msg" *ngIf="err('toMmbId') as e">{{e}}</div>
+                                        </div>
+                                        <div class="form-group intermediary-field"><label>Receiver Clearing System Code</label><input formControlName="toClrSysId" maxlength="5">
+                                                <div class="validation-msg" *ngIf="err('toClrSysId') as e">{{e}}</div>
+                                        </div>
+                                        <div class="form-group intermediary-field"><label>Receiver LEI</label><input formControlName="toLei" maxlength="20">
+                                                <div class="validation-msg" *ngIf="err('toLei') as e">{{e}}</div>
+                                        </div>
+                                        <div class="form-group intermediary-field"><label>Related Business Message ID</label><input formControlName="rltd" maxlength="35">
+                                                <div class="validation-msg" *ngIf="err('rltd') as e">{{e}}</div>
+                                        </div>
                                         <div class="bic-same-warning" *ngIf="bicSameWarning">
                                           <mat-icon>warning_amber</mat-icon>
                                           <span>{{ bicSameWarning }}</span>
@@ -67,7 +95,7 @@
                                         </div>
                                         <div class="form-group"><label>Creation DateTime <span
                                                                 class="req">*</span></label><input
-                                                        formControlName="creDtTm" required placeholder="YYYY-MM-DDThh:mm:ss±hh:mm">
+                                                        formControlName="creDtTm" required placeholder="YYYY-MM-DDThh:mm:ssùhh:mm">
                                                 <div class="validation-msg" *ngIf="err('creDtTm') as e">{{e}}</div>
                                         </div>
                                         <div class="form-group"><label>Number of Txns <span
@@ -156,6 +184,39 @@
                                                         formControlName="sttlmDt" required type="date"
                                                         min="0001-01-01" max="9999-12-31">
                                                 <div class="validation-msg" *ngIf="err('sttlmDt') as e">{{e}}</div>
+                                        </div>
+                                        <div class="form-group intermediary-field"><label>Instructed Amount</label><input formControlName="instdAmt" pattern="^\d{1,18}(\.\d{1,5})?$">
+                                                <div class="validation-msg" *ngIf="err('instdAmt') as e">{{e}}</div>
+                                        </div>
+                                        <div class="form-group intermediary-field"><label>Instructed Currency</label>
+                                                <select formControlName="instdAmtCcy">
+                                                        <option value="">None</option>
+                                                        <option *ngFor="let c of currencies" [value]="c">{{c}}</option>
+                                                </select>
+                                                <div class="validation-msg" *ngIf="err('instdAmtCcy') as e">{{e}}</div>
+                                        </div>
+                                        <div class="form-group intermediary-field"><label>Exchange Rate</label><input formControlName="xchgRate" pattern="^\d{1,11}(\.\d{1,10})?$">
+                                                <div class="validation-msg" *ngIf="err('xchgRate') as e">{{e}}</div>
+                                        </div>
+                                        <div class="form-group intermediary-field"><label>Debit DateTime</label><input type="datetime-local" formControlName="dbtDtTm">
+                                                <div class="validation-msg" *ngIf="err('dbtDtTm') as e">{{e}}</div>
+                                        </div>
+                                        <div class="form-group intermediary-field"><label>Credit DateTime</label><input type="datetime-local" formControlName="cdtDtTm">
+                                                <div class="validation-msg" *ngIf="err('cdtDtTm') as e">{{e}}</div>
+                                        </div>
+                                        <div class="form-group intermediary-field"><label>Charges Amount</label><input formControlName="chrgsInfAmt" pattern="^\d{1,18}(\.\d{1,5})?$">
+                                                <div class="validation-msg" *ngIf="err('chrgsInfAmt') as e">{{e}}</div>
+                                        </div>
+                                        <div class="form-group intermediary-field"><label>Charges Currency</label>
+                                                <select formControlName="chrgsInfCcy">
+                                                        <option value="">None</option>
+                                                        <option *ngFor="let c of currencies" [value]="c">{{c}}</option>
+                                                </select>
+                                                <div class="validation-msg" *ngIf="err('chrgsInfCcy') as e">{{e}}</div>
+                                        </div>
+                                        <div class="form-group intermediary-field"><label>Charges Agent BIC</label>
+                                                <input formControlName="chrgsInfAgtBic" maxlength="11" class="auto-uppercase">
+                                                <div class="validation-msg" *ngIf="err('chrgsInfAgtBic') as e">{{e}}</div>
                                         </div>
                                         <div class="form-group intermediary-field"><label>Settlement Priority <span
                                                                 class="opt">Optional</span></label>
@@ -380,7 +441,7 @@
 
                                         <!-- Instructions for Creditor Agent (0..2) -->
                                         <div class="section-title">Instructions for Creditor Agent <span
-                                                        class="opt">Optional ∑ max 2</span></div>
+                                                        class="opt">Optional ù max 2</span></div>
                                         <div class="party-group">
                                                 <div class="party-group-title">Instr for Creditor Agent 1</div>
                                                 <div [formGroup]="form" class="party-grid">
@@ -388,13 +449,13 @@
                                                                 <label>Instruction Code</label>
                                                                 <select formControlName="instrForCdtrAgt1Cd">
                                                                         <option value="">None</option>
-                                                                        <option value="CHQB">CHQB ñ Please pay by cheque
+                                                                        <option value="CHQB">CHQB ù Please pay by cheque
                                                                         </option>
-                                                                        <option value="HOLD">HOLD ñ Hold until advised
+                                                                        <option value="HOLD">HOLD ù Hold until advised
                                                                         </option>
-                                                                        <option value="PHOB">PHOB ñ Phone beneficiary
+                                                                        <option value="PHOB">PHOB ù Phone beneficiary
                                                                                 before payment</option>
-                                                                        <option value="TELB">TELB ñ Telecom / Other
+                                                                        <option value="TELB">TELB ù Telecom / Other
                                                                                 beneficiary contact</option>
                                                                 </select>
                                                                 <div class="validation-msg" *ngIf="err('instrForCdtrAgt1Cd') as e">{{e}}</div>
@@ -416,13 +477,13 @@
                                                                 <label>Instruction Code</label>
                                                                 <select formControlName="instrForCdtrAgt2Cd">
                                                                         <option value="">None</option>
-                                                                        <option value="CHQB">CHQB ñ Please pay by cheque
+                                                                        <option value="CHQB">CHQB ù Please pay by cheque
                                                                         </option>
-                                                                        <option value="HOLD">HOLD ñ Hold until advised
+                                                                        <option value="HOLD">HOLD ù Hold until advised
                                                                         </option>
-                                                                        <option value="PHOB">PHOB ñ Phone beneficiary
+                                                                        <option value="PHOB">PHOB ù Phone beneficiary
                                                                                 before payment</option>
-                                                                        <option value="TELB">TELB ñ Telecom / Other
+                                                                        <option value="TELB">TELB ù Telecom / Other
                                                                                 beneficiary contact</option>
                                                                 </select>
                                                                 <div class="validation-msg" *ngIf="err('instrForCdtrAgt2Cd') as e">{{e}}</div>
@@ -440,7 +501,7 @@
 
                                         <!-- Instructions for Next Agent (0..6) -->
                                         <div class="section-title">Instructions for Next Agent <span
-                                                        class="opt">Optional ∑ max 6</span></div>
+                                                        class="opt">Optional ù max 6</span></div>
                                         <div class="party-group">
                                                 <div class="party-group-title">Instr for Next Agent 1</div>
                                                 <div [formGroup]="form" class="party-grid">
@@ -448,9 +509,9 @@
                                                                 <label>Instruction Code</label>
                                                                 <select formControlName="instrForNxtAgt1Cd">
                                                                         <option value="">None</option>
-                                                                        <option value="PHOA">PHOA ñ Phone account owner
+                                                                        <option value="PHOA">PHOA ù Phone account owner
                                                                         </option>
-                                                                        <option value="TELA">TELA ñ Telecom account
+                                                                        <option value="TELA">TELA ù Telecom account
                                                                                 owner</option>
                                                                 </select>
                                                                 <div class="validation-msg" *ngIf="err('instrForNxtAgt1Cd') as e">{{e}}</div>
@@ -470,9 +531,9 @@
                                                                 <label>Instruction Code</label>
                                                                 <select formControlName="instrForNxtAgt2Cd">
                                                                         <option value="">None</option>
-                                                                        <option value="PHOA">PHOA ñ Phone account owner
+                                                                        <option value="PHOA">PHOA ù Phone account owner
                                                                         </option>
-                                                                        <option value="TELA">TELA ñ Telecom account
+                                                                        <option value="TELA">TELA ù Telecom account
                                                                                 owner</option>
                                                                 </select>
                                                                 <div class="validation-msg" *ngIf="err('instrForNxtAgt2Cd') as e">{{e}}</div>
@@ -492,9 +553,9 @@
                                                                 <label>Instruction Code</label>
                                                                 <select formControlName="instrForNxtAgt3Cd">
                                                                         <option value="">None</option>
-                                                                        <option value="PHOA">PHOA ñ Phone account owner
+                                                                        <option value="PHOA">PHOA ù Phone account owner
                                                                         </option>
-                                                                        <option value="TELA">TELA ñ Telecom account
+                                                                        <option value="TELA">TELA ù Telecom account
                                                                                 owner</option>
                                                                 </select>
                                                                 <div class="validation-msg" *ngIf="err('instrForNxtAgt3Cd') as e">{{e}}</div>
@@ -514,9 +575,9 @@
                                                                 <label>Instruction Code</label>
                                                                 <select formControlName="instrForNxtAgt4Cd">
                                                                         <option value="">None</option>
-                                                                        <option value="PHOA">PHOA ñ Phone account owner
+                                                                        <option value="PHOA">PHOA ù Phone account owner
                                                                         </option>
-                                                                        <option value="TELA">TELA ñ Telecom account
+                                                                        <option value="TELA">TELA ù Telecom account
                                                                                 owner</option>
                                                                 </select>
                                                                 <div class="validation-msg" *ngIf="err('instrForNxtAgt4Cd') as e">{{e}}</div>
@@ -536,9 +597,9 @@
                                                                 <label>Instruction Code</label>
                                                                 <select formControlName="instrForNxtAgt5Cd">
                                                                         <option value="">None</option>
-                                                                        <option value="PHOA">PHOA ñ Phone account owner
+                                                                        <option value="PHOA">PHOA ù Phone account owner
                                                                         </option>
-                                                                        <option value="TELA">TELA ñ Telecom account
+                                                                        <option value="TELA">TELA ù Telecom account
                                                                                 owner</option>
                                                                 </select>
                                                                 <div class="validation-msg" *ngIf="err('instrForNxtAgt5Cd') as e">{{e}}</div>
@@ -558,9 +619,9 @@
                                                                 <label>Instruction Code</label>
                                                                 <select formControlName="instrForNxtAgt6Cd">
                                                                         <option value="">None</option>
-                                                                        <option value="PHOA">PHOA ñ Phone account owner
+                                                                        <option value="PHOA">PHOA ù Phone account owner
                                                                         </option>
-                                                                        <option value="TELA">TELA ñ Telecom account
+                                                                        <option value="TELA">TELA ù Telecom account
                                                                                 owner</option>
                                                                 </select>
                                                                 <div class="validation-msg" *ngIf="err('instrForNxtAgt6Cd') as e">{{e}}</div>
@@ -575,6 +636,40 @@
                                         </div>
 
                                         <div class="section-title">Remittance <span class="opt">Optional</span></div>
+                                        <div class="form-group intermediary-field"><label>Purpose Code</label>
+                                                <select formControlName="purpCd">
+                                                        <option value="">None</option>
+                                                        <option *ngFor="let p of purposes" [value]="p">{{p}}</option>
+                                                </select>
+                                                <div class="validation-msg" *ngIf="err('purpCd') as e">{{e}}</div>
+                                        </div>
+                                        <div class="form-group intermediary-field"><label>Regulatory Reporting Code 1</label><input formControlName="rgltryRptg1Code" maxlength="10">
+                                                <div class="validation-msg" *ngIf="err('rgltryRptg1Code') as e">{{e}}</div>
+                                        </div>
+                                        <div class="form-group intermediary-field"><label>Regulatory Reporting Inf 1</label><input formControlName="rgltryRptg1Inf" maxlength="35">
+                                                <div class="validation-msg" *ngIf="err('rgltryRptg1Inf') as e">{{e}}</div>
+                                        </div>
+                                        <div class="form-group intermediary-field"><label>Regulatory Reporting Code 2</label><input formControlName="rgltryRptg2Code" maxlength="10">
+                                                <div class="validation-msg" *ngIf="err('rgltryRptg2Code') as e">{{e}}</div>
+                                        </div>
+                                        <div class="form-group intermediary-field"><label>Regulatory Reporting Inf 2</label><input formControlName="rgltryRptg2Inf" maxlength="35">
+                                                <div class="validation-msg" *ngIf="err('rgltryRptg2Inf') as e">{{e}}</div>
+                                        </div>
+                                        <div class="form-group intermediary-field"><label>Regulatory Reporting Code 3</label><input formControlName="rgltryRptg3Code" maxlength="10">
+                                                <div class="validation-msg" *ngIf="err('rgltryRptg3Code') as e">{{e}}</div>
+                                        </div>
+                                        <div class="form-group intermediary-field"><label>Regulatory Reporting Inf 3</label><input formControlName="rgltryRptg3Inf" maxlength="35">
+                                                <div class="validation-msg" *ngIf="err('rgltryRptg3Inf') as e">{{e}}</div>
+                                        </div>
+                                        <div class="form-group intermediary-field"><label>Related Remittance Ref 1</label><input formControlName="rltdRmtInf1Ref" maxlength="35">
+                                                <div class="validation-msg" *ngIf="err('rltdRmtInf1Ref') as e">{{e}}</div>
+                                        </div>
+                                        <div class="form-group intermediary-field"><label>Related Remittance Ref 2</label><input formControlName="rltdRmtInf2Ref" maxlength="35">
+                                                <div class="validation-msg" *ngIf="err('rltdRmtInf2Ref') as e">{{e}}</div>
+                                        </div>
+                                        <div class="form-group intermediary-field"><label>Related Remittance Ref 3</label><input formControlName="rltdRmtInf3Ref" maxlength="35">
+                                                <div class="validation-msg" *ngIf="err('rltdRmtInf3Ref') as e">{{e}}</div>
+                                        </div>
 
 
                                 </div>

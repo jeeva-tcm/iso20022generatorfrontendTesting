@@ -1111,6 +1111,29 @@ ${this.rmtInf(v)}
                             patch[pfx + 'ClrSysCd'] = clr.getElementsByTagName('ClrSysId')[0]
                                 ?.getElementsByTagName('Cd')[0]?.textContent?.trim() || '';
                         }
+                        const pstl = fi.getElementsByTagName('PstlAdr')[0];
+                        if (pstl) {
+                            patch[pfx + 'AddrType'] = 'structured';
+                            patch[pfx + 'StrtNm'] = tval(pstl, 'StrtNm');
+                            patch[pfx + 'BldgNb'] = tval(pstl, 'BldgNb');
+                            patch[pfx + 'BldgNm'] = tval(pstl, 'BldgNm');
+                            patch[pfx + 'PstCd'] = tval(pstl, 'PstCd');
+                            patch[pfx + 'TwnNm'] = tval(pstl, 'TwnNm');
+                            patch[pfx + 'Ctry'] = tval(pstl, 'Ctry');
+                            const adrLines = pstl.getElementsByTagName('AdrLine');
+                            if (adrLines.length > 0) {
+                                patch[pfx + 'AddrType'] = 'hybrid';
+                                for (let i = 0; i < Math.min(adrLines.length, 2); i++) {
+                                    patch[pfx + 'AdrLine' + (i + 1)] = adrLines[i].textContent?.trim() || '';
+                                }
+                            }
+                        }
+                    }
+                    const acctNode = cdtInstr.getElementsByTagName(tag + 'Acct')[0];
+                    if (acctNode) {
+                        patch[pfx + 'AcctIBAN'] = tval(acctNode, 'IBAN');
+                        patch[pfx + 'AcctCcy'] = tval(acctNode, 'Ccy');
+                        patch[pfx + 'AcctNm'] = tval(acctNode, 'Nm');
                     }
                 };
                 parseAgt('InstgAgt', 'instgAgt');
@@ -1184,11 +1207,11 @@ ${this.rmtInf(v)}
     }
 
     validateMessage() {
-                if (this.bicSameWarning) return;
-                // Do NOT regenerate XML here: generatedXml is already kept in sync with the
-                // editor via ngModel, and parseXmlToForm is not wired up for this message,
-                // so calling generateXml() would silently restore any tag the user just deleted
-                // (causing validation to falsely pass).
+        if (this.bicSameWarning) return;
+        if (this.generatedXml?.trim()) {
+            this.parseXmlToForm(this.generatedXml);
+            this.generateXml();
+        }
         this.validateFullMessageErrors();
         if (this.form.invalid) {
             this.form.markAllAsTouched();

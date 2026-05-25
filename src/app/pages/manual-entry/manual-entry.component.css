@@ -71,7 +71,11 @@
 }
 
 .view-toggle {
-    display: none;
+    display: flex;
+    gap: 4px;
+    background: var(--bg-card-hover, #f1f5f9);
+    padding: 4px;
+    border-radius: 8px;
 }
 
 .view-toggle button {
@@ -542,6 +546,12 @@
 .right-panel {
     flex: 1;
     min-width: 0;
+}
+
+.split-view.view-form-only .left-panel,
+.split-view.view-xml-only .right-panel {
+    flex: 1 1 100%;
+    max-width: 100%;
 }
 
 .xml-scroll-pane {

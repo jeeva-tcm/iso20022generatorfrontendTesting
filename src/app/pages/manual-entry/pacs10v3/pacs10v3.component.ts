@@ -986,11 +986,11 @@ ${this.rmtInf(v)}
     copyFix(txt: string, e: MouseEvent) { e.stopPropagation(); if (txt) { navigator.clipboard.writeText(txt).then(() => this.snackBar.open('Fix suggestion copied!', '', { duration: 1500 })); } }
 
     validateMessage() {
-                if (this.bicSameWarning) return;
-                // Do NOT regenerate XML here: generatedXml is already kept in sync with the
-                // editor via ngModel, and parseXmlToForm is not wired up for this message,
-                // so calling generateXml() would silently restore any tag the user just deleted
-                // (causing validation to falsely pass).
+        if (this.bicSameWarning) return;
+        if (this.generatedXml?.trim()) {
+            this.parseXmlToForm(this.generatedXml);
+            this.generateXml();
+        }
         this.validateFullMessageErrors();
         if (this.form.invalid) this.form.markAllAsTouched();
         if (!this.generatedXml?.trim()) return;

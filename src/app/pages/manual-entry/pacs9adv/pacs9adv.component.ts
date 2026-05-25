@@ -305,14 +305,19 @@ export class Pacs9AdvComponent implements OnInit, OnDestroy {
             instrForNxtAgt2InfTxt: ['', [Validators.minLength(1), Validators.maxLength(35), ADDR_PATTERN]],
             instrForNxtAgt3InfTxt: ['', [Validators.minLength(1), Validators.maxLength(35), ADDR_PATTERN]],
             instrForNxtAgt4InfTxt: ['', [Validators.minLength(1), Validators.maxLength(35), ADDR_PATTERN]],
+            instrForNxtAgt5Cd: [''],
             instrForNxtAgt5InfTxt: ['', [Validators.minLength(1), Validators.maxLength(35), ADDR_PATTERN]],
+            instrForNxtAgt6Cd: [''],
             instrForNxtAgt6InfTxt: ['', [Validators.minLength(1), Validators.maxLength(35), ADDR_PATTERN]],
             // Remittance (Optional)
             rmtInfType: ['none'],
             rmtInfUstrd: ['', [Validators.maxLength(140), ADDR_PATTERN]],
             rmtInfStrdCdtrRefType: [''],
             rmtInfStrdCdtrRef: ['', Validators.maxLength(35)],
-            rmtInfStrdAddtlRmtInf: ['', [Validators.maxLength(140), ADDR_PATTERN]]
+            rmtInfStrdAddtlRmtInf: ['', [Validators.maxLength(140), ADDR_PATTERN]],
+            rmtInfStrdRfrdDocNb: ['', Validators.maxLength(35)],
+            rmtInfStrdRfrdDocCd: [''],
+            rmtInfStrdRfrdDocAmt: ['', [Validators.pattern(/^\d{1,18}(\.\d{1,5})?$/)]]
         };
         // Address prefixes for agents
         // Only the mandatory parties that ship with full address data default to 'hybrid'.
@@ -671,9 +676,13 @@ export class Pacs9AdvComponent implements OnInit, OnDestroy {
         }
         // Instructions for Next Agent (0..6)
         for (let i = 1; i <= 6; i++) {
+            const cd = v[`instrForNxtAgt${i}Cd`]?.trim();
             const txt = v[`instrForNxtAgt${i}InfTxt`]?.trim();
-            if (txt) {
-                tx += this.tag('InstrForNxtAgt', this.el('InstrInf', txt, 4), 3);
+            if (cd || txt) {
+                let inner = '';
+                if (cd) inner += this.el('Cd', cd, 4);
+                if (txt) inner += this.el('InstrInf', txt, 4);
+                tx += this.tag('InstrForNxtAgt', inner, 3);
             }
         }
 

@@ -45,6 +45,7 @@ export class Pacs2Component implements OnInit, OnDestroy {
   isClearingDraft = false;
 
   countries: string[] = [];
+  agentPrefixes = ['instgAgt', 'instdAgt'];
   statusCodes = ['ACTC', 'ACCP', 'RJCT', 'PDNG'];
   reasonCodes: { [key: string]: string[] } = {
     'RJCT': [
@@ -109,8 +110,9 @@ export class Pacs2Component implements OnInit, OnDestroy {
     const BIC = [Validators.required, Validators.maxLength(11), Validators.pattern(/^[A-Z]{4}[A-Z]{2}[A-Z0-9]{2}([A-Z0-9]{3})?$/)];
     const BIC_OPT = [Validators.maxLength(11), Validators.pattern(/^[A-Z]{4}[A-Z]{2}[A-Z0-9]{2}([A-Z0-9]{3})?$/)];
     const UETR_PATTERN = [Validators.required, Validators.maxLength(36), Validators.pattern(/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/)];
+    const ADDR_PATTERN = Validators.pattern(/^[a-zA-Z0-9\/\-\?:\(\)\.,\+' ]+$/);
 
-    this.form = this.fb.group({
+    const c: Record<string, any> = {
       // AppHdr
       fromBic: ['BBBBUS33XXX', BIC],
       toBic: ['CCCCGB2LXXX', BIC],
@@ -190,18 +192,27 @@ export class Pacs2Component implements OnInit, OnDestroy {
       // ClrSysRef
       clrSysRef: ['', Validators.maxLength(35)],
 
-      // InstgAgt
-      instgAgtBic: ['BBBBUS33XXX', BIC_OPT],
-      instgAgtClrSysCd: ['', Validators.maxLength(5)],
-      instgAgtMmbId: ['', Validators.maxLength(35)],
-      instgAgtLei: ['', Validators.pattern(/^[A-Z0-9]{18}[0-9]{2}$/)],
+    };
 
-      // InstdAgt
-      instdAgtBic: ['CCCCGB2LXXX', BIC_OPT],
-      instdAgtClrSysCd: ['', Validators.maxLength(5)],
-      instdAgtMmbId: ['', Validators.maxLength(35)],
-      instdAgtLei: ['', Validators.pattern(/^[A-Z0-9]{18}[0-9]{2}$/)]
+    this.agentPrefixes.forEach(p => {
+      if (!c[p + 'AddrType']) c[p + 'AddrType'] = ['none'];
+      if (!c[p + 'AdrLine1']) c[p + 'AdrLine1'] = ['', [Validators.maxLength(70), ADDR_PATTERN]];
+      if (!c[p + 'AdrLine2']) c[p + 'AdrLine2'] = ['', [Validators.maxLength(70), ADDR_PATTERN]];
+      if (!c[p + 'StrtNm']) c[p + 'StrtNm'] = ['', [Validators.maxLength(70), ADDR_PATTERN]];
+      if (!c[p + 'BldgNb']) c[p + 'BldgNb'] = ['', [Validators.maxLength(16), ADDR_PATTERN]];
+      if (!c[p + 'BldgNm']) c[p + 'BldgNm'] = ['', [Validators.maxLength(35), ADDR_PATTERN]];
+      if (!c[p + 'PstCd']) c[p + 'PstCd'] = ['', [Validators.maxLength(16), ADDR_PATTERN]];
+      if (!c[p + 'TwnNm']) c[p + 'TwnNm'] = ['', [Validators.maxLength(35), ADDR_PATTERN]];
+      if (!c[p + 'Ctry']) c[p + 'Ctry'] = ['', Validators.pattern(/^[A-Z]{2,2}$/)];
+      if (!c[p + 'Name']) c[p + 'Name'] = ['', Validators.maxLength(140)];
+      if (!c[p + 'Acct']) c[p + 'Acct'] = ['', Validators.maxLength(34)];
+      if (!c[p + 'Bic']) c[p + 'Bic'] = [p === 'instgAgt' ? 'BBBBUS33XXX' : 'CCCCGB2LXXX', BIC_OPT];
+      if (!c[p + 'Lei']) c[p + 'Lei'] = ['', Validators.pattern(/^[A-Z0-9]{18}[0-9]{2}$/)];
+      if (!c[p + 'ClrSysCd']) c[p + 'ClrSysCd'] = ['', Validators.maxLength(5)];
+      if (!c[p + 'ClrSysMmbId']) c[p + 'ClrSysMmbId'] = ['', Validators.maxLength(35)];
     });
+
+    this.form = this.fb.group(c);
 
     this.form.get('txSts')?.valueChanges.subscribe(() => {
       this.form.patchValue({ stsRsnCd: '' }, { emitEvent: false });
@@ -405,15 +416,23 @@ ${txInf.trimEnd()}
   buildAgt(tag: string, v: any, prefix: string): string {
     let inner = '';
     if (v[prefix + 'Bic']?.trim()) inner += this.leaf('BICFI', v[prefix + 'Bic'], 6);
-    if (v[prefix + 'MmbId']?.trim()) {
+    const clrMmb = v[prefix + 'ClrSysMmbId']?.trim();
+    if (clrMmb || v[prefix + 'ClrSysCd']?.trim()) {
       let clr = '';
       if (v[prefix + 'ClrSysCd']?.trim()) clr += this.branch('ClrSysId', this.leaf('Cd', v[prefix + 'ClrSysCd'], 8), 7);
-      clr += this.leaf('MmbId', v[prefix + 'MmbId'], 7);
+      if (clrMmb) clr += this.leaf('MmbId', clrMmb, 7);
       inner += this.branch('ClrSysMmbId', clr, 6);
     }
     if (v[prefix + 'Lei']?.trim()) inner += this.leaf('LEI', v[prefix + 'Lei'], 6);
-    
-    return inner ? this.branch(tag, this.branch('FinInstnId', inner, 5), 4) : '';
+    if (v[prefix + 'Name']?.trim()) inner += this.leaf('Nm', v[prefix + 'Name'], 6);
+    inner += this.addrXml(v, prefix, 6);
+
+    if (!inner.trim() && !v[prefix + 'Acct']?.trim()) return '';
+    let body = inner.trim() ? this.branch('FinInstnId', inner, 5) : '';
+    if (v[prefix + 'Acct']?.trim()) {
+      body += this.branch('Acct', this.branch('Id', this.leaf('IBAN', v[prefix + 'Acct'], 6), 5), 4);
+    }
+    return body ? this.branch(tag, body, 4) : '';
   }
 
   addrXml(v: any, p: string, indent = 4): string {
@@ -693,7 +712,7 @@ ${txInf.trimEnd()}
             patch[p + 'Lei'] = tval('LEI', fi);
             const mmb = getT('ClrSysMmbId', fi);
             if (mmb) {
-              patch[p + 'MmbId'] = tval('MmbId', mmb);
+              patch[p + 'ClrSysMmbId'] = tval('MmbId', mmb);
               patch[p + 'ClrSysCd'] = tval('Cd', getT('ClrSysId', mmb) || mmb);
             }
           }

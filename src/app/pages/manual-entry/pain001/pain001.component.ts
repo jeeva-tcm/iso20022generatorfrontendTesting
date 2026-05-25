@@ -421,7 +421,8 @@ export class Pain001Component implements OnInit, OnDestroy {
       this.el('NbOfTxs', v.nbOfTxs, 4) +
       (v.ctrlSum && v.ctrlSum !== '0.00' ? this.el('CtrlSum', v.ctrlSum, 4) : '') +
       this.partyXml('InitgPty', 'initgPty', v, 4) +
-      this.agtXml('FwdgAgt', 'fwdgAgt', v, 4),
+      this.agtXml('FwdgAgt', 'fwdgAgt', v, 4) +
+      (v.initnSrc ? this.tag('InitnSrc', this.el('Nm', v.initnSrc, 6), 5) : ''),
       3
     );
 
@@ -882,6 +883,8 @@ ${grpHdr}${pmtInf}\t\t</CstmrCdtTrfInitn>
           setV('ctrlSum', tval('CtrlSum', grpHdr));
           this.mapAddrToForm(getT('InitgPty', grpHdr), 'initgPty', patch);
           this.mapAddrToForm(getT('FwdgAgt', grpHdr), 'fwdgAgt', patch);
+          const initnSrc = getT('InitnSrc', grpHdr);
+          if (initnSrc) setV('initnSrc', tval('Nm', initnSrc));
         }
 
         const pmtInf = getT('PmtInf', root);

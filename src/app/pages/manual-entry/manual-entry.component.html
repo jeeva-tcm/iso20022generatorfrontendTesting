@@ -112,9 +112,9 @@
         </div>
 
         <!-- Split View for Form and XML -->
-        <div *ngIf="selectedType && !loading && schema" class="split-view">
+        <div *ngIf="selectedType && !loading && schema" class="split-view" [class.view-form-only]="viewMode === 'form'" [class.view-xml-only]="viewMode === 'xml'">
             <!-- Left Side: Form Mode -->
-            <div class="form-scroll-pane left-panel">
+            <div class="form-scroll-pane left-panel" *ngIf="viewMode === 'form'">
                 <div class="form-container">
                     <!-- Recursive Template Entry -->
                     <ng-container
@@ -123,7 +123,7 @@
             </div>
 
             <!-- Right Side: XML Mode -->
-            <div class="xml-scroll-pane right-panel">
+            <div class="xml-scroll-pane right-panel" *ngIf="viewMode === 'xml'">
                 <div class="xml-preview-container">
                     <div class="xml-header">
                         <h3>Live XML Preview</h3>

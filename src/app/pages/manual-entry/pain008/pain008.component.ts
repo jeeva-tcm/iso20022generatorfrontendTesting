@@ -576,8 +576,9 @@ export class Pain008Component implements OnInit, OnDestroy {
       this.el('IBAN', v.chrgsAcctIban, 6) + (v.chrgsAcctOthrId ? this.tag('Othr', this.el('Id', v.chrgsAcctOthrId, 7), 6) : ''), 5)
       + this.el('Ccy', v.chrgsAcctCcy, 5), 4) : '';
 
-    const chrgsAcctAgt = v.chrgsAcctAgtBic ? this.tag('ChrgsAcctAgt', this.tag('FinInstnId',
+    const chrgsAcctAgt = (v.chrgsAcctAgtBic || v.chrgsAcctAgtMmbId) ? this.tag('ChrgsAcctAgt', this.tag('FinInstnId',
       this.el('BICFI', v.chrgsAcctAgtBic, 6)
+      + (v.chrgsAcctAgtMmbId ? this.tag('ClrSysMmbId', this.el('MmbId', v.chrgsAcctAgtMmbId, 7), 6) : '')
       + this.el('LEI', v.chrgsAcctAgtLei, 6), 5), 4) : '';
 
     // ── Transactions (DrctDbtTxInf) ──
@@ -681,10 +682,11 @@ export class Pain008Component implements OnInit, OnDestroy {
             + this.el('Inf', tx.rgltryRptgDtlsInf, 7), 6) : ''), 5) : '';
 
       // Tax
-      const tax = tx.taxCdtrTaxId || tx.taxDbtrTaxId || tx.taxRefNb || tx.taxTtlTaxAmt || tx.taxAuthsnTitl ?
+      const tax = tx.taxCdtrTaxId || tx.taxDbtrTaxId || tx.taxRefNb || tx.taxTtlTaxAmt || tx.taxAuthsnTitl || v.taxAuthsnNm || v.taxAuthsnTitl ?
         this.tag('Tax',
           (tx.taxCdtrTaxId || tx.taxCdtrRegnId || tx.taxCdtrTaxTp ? this.tag('Cdtr', this.el('TaxId', tx.taxCdtrTaxId, 7) + this.el('RegnId', tx.taxCdtrRegnId, 7) + this.el('TaxTp', tx.taxCdtrTaxTp, 7), 6) : '')
           + (tx.taxDbtrTaxId || tx.taxDbtrRegnId || tx.taxDbtrTaxTp ? this.tag('Dbtr', this.el('TaxId', tx.taxDbtrTaxId, 7) + this.el('RegnId', tx.taxDbtrRegnId, 7) + this.el('TaxTp', tx.taxDbtrTaxTp, 7), 6) : '')
+          + ((v.taxAuthsnTitl || v.taxAuthsnNm) ? this.tag('UltmtDbtr', this.el('Titl', v.taxAuthsnTitl, 7) + this.el('Nm', v.taxAuthsnNm, 7), 6) : '')
           + this.el('AdmstnZone', tx.taxAdmstnZone, 6)
           + this.el('RefNb', tx.taxRefNb, 6) + this.el('Mtd', tx.taxMtd, 6)
           + (tx.taxTtlTaxblBaseAmt ? `${this.tabs(6)}<TtlTaxblBaseAmt Ccy="${this.e(tx.taxTtlTaxblBaseAmtCcy || 'EUR')}">${this.e(tx.taxTtlTaxblBaseAmt)}</TtlTaxblBaseAmt>\n` : '')
@@ -870,67 +872,176 @@ ${grpHdr}${pmtInf}\t\t</CstmrDrctDbtInitn>
     this.refreshLineCount();
   }
 
+  private mapAddrToForm(p: Element | null, prefix: string, patch: Record<string, string>) {
+    if (!p) return;
+    const nm = p.getElementsByTagName('Nm')[0]?.textContent?.trim();
+    if (nm) patch[prefix + 'Name'] = nm;
+    const pstl = p.getElementsByTagName('PstlAdr')[0];
+    if (!pstl) return;
+    const getV = (t: string) => pstl.getElementsByTagName(t)[0]?.textContent?.trim() || '';
+    const setV = (f: string, t: string) => { const v = getV(t); if (v) patch[prefix + f] = v; };
+    setV('Ctry', 'Ctry');
+    setV('TwnNm', 'TwnNm');
+    setV('StrtNm', 'StrtNm');
+    setV('BldgNb', 'BldgNb');
+    setV('BldgNm', 'BldgNm');
+    setV('PstCd', 'PstCd');
+    setV('Dept', 'Dept');
+    setV('SubDept', 'SubDept');
+    const adrLines = Array.from(pstl.getElementsByTagName('AdrLine'));
+    if (adrLines[0]) patch[prefix + 'AdrLine1'] = adrLines[0].textContent?.trim() || '';
+    if (adrLines[1]) patch[prefix + 'AdrLine2'] = adrLines[1].textContent?.trim() || '';
+    const hasStructured = !!(getV('StrtNm') || getV('TwnNm') || getV('Ctry') || getV('PstCd') || getV('BldgNb'));
+    if (hasStructured && adrLines.length) patch[prefix + 'AddrType'] = 'hybrid';
+    else if (hasStructured) patch[prefix + 'AddrType'] = 'structured';
+    else if (adrLines.length) patch[prefix + 'AddrType'] = 'unstructured';
+  }
+
   private parseXmlToForm(xml: string) {
     if (!xml || xml.length < 50) return;
     try {
       this.isParsingXml = true;
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(xml, 'text/xml');
-      const findTag = (tagName: string, parent: any = doc): Element | null => {
-        if (!parent) return null;
-        const target = tagName.toLowerCase();
-        if (parent.localName?.toLowerCase() === target) return parent;
-        const els = parent.getElementsByTagName('*');
-        for (let i = 0; i < els.length; i++) {
-          if (els[i].localName?.toLowerCase() === target) return els[i];
+      const doc = new DOMParser().parseFromString(xml.replace(/<(\/?)(?:[\w]+:)/g, '<$1'), 'text/xml');
+      if (doc.querySelector('parsererror')) return;
+
+      const getT = (t: string, p: Element | Document = doc): Element | null => {
+        const els = p.getElementsByTagName(t);
+        if (els.length) return els[0];
+        for (const el of Array.from(p.getElementsByTagName('*'))) {
+          if (el.localName === t) return el;
         }
         return null;
       };
-      const tval = (tag: string, parent: any = doc) => {
-        const el = findTag(tag, parent);
-        return el ? el.textContent?.trim() || '' : '';
-      };
-      const patch: any = {};
-      // NOTE: previously every form control was reset to '' here, on the theory
-      // that "elements the user removed from the XML should clear from the form".
-      // In practice the parser only repopulates ~11 of the ~150 pain.008 fields,
-      // so every XML edit silently wiped dbtr address / charges / mandate /
-      // remittance / tax / etc. values from the form, and the next generateXml
-      // pass would re-emit XML with most of the user's data missing.
-      // Now we only patch the fields the parser actually reads; everything else
-      // keeps the user's previous value.
-      const appHdr = findTag('AppHdr');
+      const tval = (t: string, p: Element | Document = doc) => getT(t, p)?.textContent?.trim() || '';
+      const patch: Record<string, string> = {};
+      const setV = (f: string, v: string) => { if (v) patch[f] = v; };
+
+      const appHdr = getT('AppHdr');
       if (appHdr) {
-        const fr = findTag('Fr', appHdr);
-        if (fr) patch.fromBic = tval('BICFI', fr);
-        const to = findTag('To', appHdr);
-        if (to) patch.toBic = tval('BICFI', to);
-        patch.bizMsgId = tval('BizMsgIdr', appHdr);
+        setV('fromBic', tval('BICFI', getT('Fr', appHdr) || appHdr));
+        setV('toBic', tval('BICFI', getT('To', appHdr) || appHdr));
+        setV('bizMsgId', tval('BizMsgIdr', appHdr));
+        setV('msgDefIdr', tval('MsgDefIdr', appHdr));
+        setV('bizSvc', tval('BizSvc', appHdr));
+        setV('creDt', tval('CreDt', appHdr));
+        setV('prty', tval('Prty', appHdr));
       }
-      const root = findTag('CstmrDrctDbtInitn');
-      if (root) {
-        const gh = findTag('GrpHdr', root);
-        if (gh) {
-          patch.msgId = tval('MsgId', gh);
-          patch.creDtTm = tval('CreDtTm', gh);
-          patch.nbOfTxs = tval('NbOfTxs', gh);
-          const ip = findTag('InitgPty', gh);
-          if (ip) patch.initgPtyName = tval('Nm', ip);
+
+      const root = getT('CstmrDrctDbtInitn');
+      if (!root) {
+        this.form.patchValue(patch, { emitEvent: false });
+        return;
+      }
+
+      const gh = getT('GrpHdr', root);
+      if (gh) {
+        setV('msgId', tval('MsgId', gh));
+        setV('creDtTm', tval('CreDtTm', gh));
+        setV('nbOfTxs', tval('NbOfTxs', gh));
+        this.mapAddrToForm(getT('InitgPty', gh), 'initgPty', patch);
+        const fwdg = getT('FwdgAgt', gh);
+        if (fwdg) setV('fwdgAgtBic', tval('BICFI', getT('FinInstnId', fwdg) || fwdg));
+      }
+
+      const pi = getT('PmtInf', root);
+      if (pi) {
+        setV('pmtInfId', tval('PmtInfId', pi));
+        setV('pmtMtd', tval('PmtMtd', pi));
+        setV('reqdColltnDt', tval('Dt', getT('ReqdColltnDt', pi) || pi).substring(0, 10));
+        this.mapAddrToForm(getT('Cdtr', pi), 'cdtr', patch);
+        const cdtrAcct = getT('CdtrAcct', pi);
+        if (cdtrAcct) setV('cdtrIban', tval('IBAN', cdtrAcct) || tval('Id', getT('Othr', cdtrAcct) || cdtrAcct));
+        const cdtrAgt = getT('CdtrAgt', pi);
+        if (cdtrAgt) {
+          setV('cdtrAgtBic', tval('BICFI', getT('FinInstnId', cdtrAgt) || cdtrAgt));
+          setV('cdtrAgtNm', tval('Nm', cdtrAgt));
         }
-        const pi = findTag('PmtInf', root);
-        if (pi) {
-          patch.pmtInfId = tval('PmtInfId', pi);
-          const cdtr = findTag('Cdtr', pi);
-          if (cdtr) patch.cdtrName = tval('Nm', cdtr);
-          const cdtrAcct = findTag('CdtrAcct', pi);
-          if (cdtrAcct) patch.cdtrIban = tval('IBAN', cdtrAcct);
-          const cdtrAgt = findTag('CdtrAgt', pi);
-          if (cdtrAgt) patch.cdtrAgtBic = tval('BICFI', cdtrAgt);
+        const chrgsAcct = getT('ChrgsAcct', pi);
+        if (chrgsAcct) setV('chrgsAcctIban', tval('IBAN', chrgsAcct));
+        const chrgsAgt = getT('ChrgsAcctAgt', pi);
+        if (chrgsAgt) setV('chrgsAcctAgtBic', tval('BICFI', getT('FinInstnId', chrgsAgt) || chrgsAgt));
+
+        const txs = Array.from(root.getElementsByTagName('DrctDbtTxInf'));
+        if (txs.length) {
+          this.transactions.clear();
+          txs.forEach(txEl => {
+            const g = this.createTxGroup();
+            const tp: Record<string, string> = {};
+            const sv = (f: string, v: string) => { if (v) tp[f] = v; };
+
+            const pmtId = getT('PmtId', txEl);
+            if (pmtId) {
+              sv('instrId', tval('InstrId', pmtId));
+              sv('endToEndId', tval('EndToEndId', pmtId));
+              sv('uetr', tval('UETR', pmtId));
+            }
+            const instd = getT('InstdAmt', txEl);
+            if (instd) {
+              sv('amount', instd.textContent?.trim() || '');
+              sv('currency', instd.getAttribute('Ccy') || '');
+            }
+            sv('chrgBr', tval('ChrgBr', txEl));
+
+            const drctDbt = getT('DrctDbtTx', txEl);
+            const mndt = drctDbt ? getT('MndtRltdInf', drctDbt) : null;
+            if (mndt) {
+              sv('mndtId', tval('MndtId', mndt));
+              sv('dtOfSgntr', tval('DtOfSgntr', mndt).substring(0, 10));
+              sv('amdmntInd', tval('AmdmntInd', mndt));
+            }
+
+            const dbtrAgt = getT('DbtrAgt', txEl);
+            if (dbtrAgt) sv('dbtrAgtBic', tval('BICFI', getT('FinInstnId', dbtrAgt) || dbtrAgt));
+            this.mapAddrToForm(getT('Dbtr', txEl), 'dbtr', tp);
+            const dbtrAcct = getT('DbtrAcct', txEl);
+            if (dbtrAcct) sv('dbtrIban', tval('IBAN', dbtrAcct));
+
+            sv('purpCd', tval('Cd', getT('Purp', txEl) || txEl));
+            sv('purpPrtry', tval('Prtry', getT('Purp', txEl) || txEl));
+            sv('instrForCdtrAgt', tval('InstrForCdtrAgt', txEl));
+
+            const rgltry = getT('RgltryRptg', txEl);
+            if (rgltry) {
+              sv('rgltryRptgInd', tval('DbtCdtRptgInd', rgltry));
+              const auth = getT('Authrty', rgltry);
+              if (auth) {
+                sv('rgltryRptgAuthrtyNm', tval('Nm', auth));
+                sv('rgltryRptgAuthrtyCtry', tval('Ctry', auth));
+              }
+              const dtls = getT('Dtls', rgltry);
+              if (dtls) {
+                sv('rgltryRptgDtlsTp', tval('Tp', dtls));
+                sv('rgltryRptgDtlsCd', tval('Cd', dtls));
+                sv('rgltryRptgDtlsInf', tval('Inf', dtls));
+              }
+            }
+
+            const tax = getT('Tax', txEl);
+            if (tax) {
+              sv('taxRefNb', tval('RefNb', tax));
+              sv('taxMtd', tval('Mtd', tax));
+              const ttl = getT('TtlTaxAmt', tax);
+              if (ttl) {
+                sv('taxTtlTaxAmt', ttl.textContent?.trim() || '');
+                sv('taxTtlTaxAmtCcy', ttl.getAttribute('Ccy') || '');
+              }
+            }
+
+            const rmt = getT('RmtInf', txEl);
+            if (rmt) sv('rmtInfUstrd', tval('Ustrd', rmt));
+
+            g.patchValue(tp, { emitEvent: false });
+            this.transactions.push(g);
+          });
         }
       }
+
       this.form.patchValue(patch, { emitEvent: false });
-    } catch (e) { console.warn('XML Parse failed', e); }
-    finally { setTimeout(() => this.isParsingXml = false, 50); }
+    } catch (e) {
+      console.warn('XML Parse failed', e);
+    } finally {
+      setTimeout(() => this.isParsingXml = false, 50);
+    }
   }
 
   @HostListener('keydown', ['$event'])
@@ -997,8 +1108,12 @@ ${grpHdr}${pmtInf}\t\t</CstmrDrctDbtInitn>
   downloadXml() { const b = new Blob([this.generatedXml], { type: 'application/xml' }); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = `pain008-${Date.now()}.xml`; a.click(); }
 
   validateMessage() {
-        if (this.bicSameWarning) return;
-        this.showValidationModal = true;
+    if (this.bicSameWarning) return;
+    if (this.generatedXml?.trim()) {
+      this.parseXmlToForm(this.generatedXml);
+      this.generateXml();
+    }
+    this.showValidationModal = true;
     this.validationStatus = 'validating';
     this.validationReport = null;
     this.validationExpandedIssue = null;

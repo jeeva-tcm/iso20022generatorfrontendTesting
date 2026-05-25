@@ -9,6 +9,7 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { ConfigService } from '../../services/config.service';
 import { BicSearchDialogComponent } from './bic-search-dialog/bic-search-dialog.component';
+import { POPULAR_MANUAL_ENTRY_MESSAGES } from '../../config/manual-entry-messages';
 
 interface SchemaNode {
     name: string;
@@ -63,29 +64,12 @@ export class ManualEntryComponent implements OnInit {
 
     previewXml = '';
 
-    popularMessages = [
-        // ── PACS Messages ──
-        { id: 'pacs.008.001.08', name: 'Customer Credit Transfer', type: 'pacs', route: 'pacs8' },
-        { id: 'pacs.003.001.08', name: 'Customer Direct Debit', type: 'pacs', route: 'pacs3' },
-        { id: 'pacs.009.001.08', name: 'FI Credit Transfer', type: 'pacs', route: 'pacs9' },
-        { id: 'pacs.009.001.08_ADV', name: 'FI Credit Transfer (Adv)', type: 'pacs', route: 'pacs9adv' },
-        { id: 'pacs.009.001.08 COV', name: 'FI Credit Transfer (Cov)', type: 'pacs', route: 'pacs9cov' },
-        { id: 'pacs.004.001.09', name: 'Payment Return', type: 'pacs', route: 'pacs4' },
-        { id: 'pacs.002.001.10', name: 'Payment Status Report', type: 'pacs', route: 'pacs2' },
-        { id: 'pacs.010.001.10', name: 'Interbank Direct Debit', type: 'pacs', route: 'pacs10' },
-        { id: 'pacs.010.001.03', name: 'Margin Collection', type: 'pacs', route: 'pacs10v3' },
-        // ── CAMT Messages ──
-        { id: 'camt.057.001.08', name: 'Notification to Receive', type: 'camt', route: 'camt57' },
-        { id: 'camt.052.001.08', name: 'Bank To Customer Report', type: 'camt', route: 'camt052' },
-        { id: 'camt.053.001.08', name: 'Bank To Customer Statement', type: 'camt', route: 'camt053' },
-        { id: 'camt.054.001.08', name: 'Debit Credit Notification', type: 'camt', route: 'camt054' },
-        { id: 'camt.055.001.08', name: 'Customer Payment Cancellation', type: 'camt', route: 'camt055' },
-        { id: 'camt.056.001.11', name: 'FI To FI Payment Cancellation', type: 'camt', route: 'camt056' },
-        // ── PAIN Messages ──
-        { id: 'pain.001.001.09', name: 'Credit Transfer Initiation', type: 'pain', route: 'pain001' },
-        { id: 'pain.002.001.10', name: 'Payment Status Report', type: 'pain', route: 'pain002' },
-        { id: 'pain.008.001.08', name: 'Direct Debit Initiation', type: 'pain', route: 'pain008' },
-    ];
+    popularMessages = POPULAR_MANUAL_ENTRY_MESSAGES.map(m => ({
+        id: m.id,
+        name: m.name,
+        type: m.type,
+        route: m.route!
+    }));
 
     constructor(
         private http: HttpClient,
