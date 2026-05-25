@@ -463,6 +463,9 @@ export class Pacs9CovComponent implements OnInit, OnDestroy {
             // CBPR_RestrictedFINXMax28Text — MmbId capped at 28 + FIN-X charset
             if (!c[p + 'ClrSysMmbId']) c[p + 'ClrSysMmbId'] = ['', [Validators.maxLength(28), ADDR_PATTERN]];
             if (!c[p + 'Acct']) c[p + 'Acct'] = ['', [Validators.maxLength(34), Validators.pattern(/^[A-Z0-9]{5,34}$/)]];
+            if (['intrmyAgt1', 'intrmyAgt2', 'intrmyAgt3'].includes(p)) {
+                if (!c[p + 'AcctType']) c[p + 'AcctType'] = ['iban'];
+            }
         });
         // Address prefixes for COV parties (Debtor / Creditor in UndrlygCstmrCdtTrf)
         // covDbtr and covCdtr are mandatory and ship with full address data â€” they default to 'hybrid'.
@@ -1519,6 +1522,10 @@ ${tx}\t\t\t</CdtTrfTxInf>
                     const acct = getT(tag + 'Acct', parent);
                     if (acct) {
                         patch[p + 'Acct'] = tval('IBAN', getT('Id', acct) || acct) || tval('Id', getT('Othr', getT('Id', acct) || acct) || acct);
+                        if (['intrmyAgt1', 'intrmyAgt2', 'intrmyAgt3'].includes(p)) {
+                            const isIban = acct.querySelector('IBAN') || getT('IBAN', acct);
+                            patch[p + 'AcctType'] = isIban ? 'iban' : 'other';
+                        }
                     }
                 };
 

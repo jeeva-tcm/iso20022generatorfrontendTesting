@@ -395,10 +395,11 @@ export class Pacs9Component implements OnInit, OnDestroy {
             if (!c[p + 'Bic']) c[p + 'Bic'] = ['', [Validators.pattern(/^[A-Z0-9]{4}[A-Z]{2}[A-Z0-9]{2}([A-Z0-9]{3})?$/)]];
             if (!c[p + 'Lei']) c[p + 'Lei'] = ['', [Validators.pattern(/^[A-Z0-9]{18}[0-9]{2}$/)]];
             if (!c[p + 'ClrSysCd']) c[p + 'ClrSysCd'] = ['', Validators.maxLength(5)];
-            // CBPR_RestrictedFINXMax28Text — schema caps MmbId at 28 and constrains the FIN-X character set
-            if (!c[p + 'ClrSysMmbId']) c[p + 'ClrSysMmbId'] = ['', [Validators.maxLength(28), ADDR_PATTERN]];
-            // CBPR_RestrictedFINXMax34Text — Acct must be ≤ 34
-            if (!c[p + 'Acct']) c[p + 'Acct'] = ['', [Validators.maxLength(34), Validators.pattern(/^[A-Z0-9]{5,34}$/)]];
+            if (!c[p + 'ClrSysMmbId']) c[p + 'ClrSysMmbId'] = ['', Validators.maxLength(35)];
+            if (!c[p + 'Acct']) c[p + 'Acct'] = ['', [Validators.pattern(/^[A-Z0-9]{5,34}$/)]];
+            if (['intrmyAgt1', 'intrmyAgt2', 'intrmyAgt3'].includes(p)) {
+                if (!c[p + 'AcctType']) c[p + 'AcctType'] = ['iban'];
+            }
         });
 
         // Add static address data to resolve "Name and Address must always be present together"
@@ -1296,6 +1297,10 @@ ${tx}\t\t\t</CdtTrfTxInf>
                     const acct = getT(tag + 'Acct', tx);
                     if (acct) {
                         patch[p + 'Acct'] = tval('IBAN', getT('Id', acct) || acct) || tval('Id', getT('Othr', getT('Id', acct) || acct) || acct);
+                        if (['intrmyAgt1', 'intrmyAgt2', 'intrmyAgt3'].includes(p)) {
+                            const isIban = acct.querySelector('IBAN') || getT('IBAN', acct);
+                            patch[p + 'AcctType'] = isIban ? 'iban' : 'other';
+                        }
                     }
                 };
 

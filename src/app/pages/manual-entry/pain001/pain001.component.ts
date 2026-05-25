@@ -121,7 +121,7 @@ export class Pain001Component implements OnInit, OnDestroy {
       head_bizMsgIdr: ['BMS-' + Date.now(), [Validators.required, Validators.maxLength(35)]],
       head_msgDefIdr: ['pain.001.001.09', [Validators.required]],
       head_bizSvc: ['swift.cbprplus.03', Validators.required],
-      head_creDt: [this.isoNowDate(), Validators.required],
+      head_creDt: [this.isoNow(), Validators.required],
       head_mktPrctcRegy: ['', [Validators.maxLength(35)]],
       head_mktPrctcId: ['', [Validators.maxLength(35)]],
       head_cpyDplct: [''],
@@ -686,7 +686,15 @@ ${grpHdr}${pmtInf}\t\t</CstmrCdtTrfInitn>
     if (lei) fiId += this.el('LEI', lei, indent + 3);
     if (nm) {
       fiId += this.el('Nm', nm, indent + 3);
-      fiId += this.addrXml(v, pref, indent + 3);
+      // CBPR+ rule: Name and Address must always be present together.
+      // Only emit Nm if there is actual address data to accompany it.
+      const hasAddress = this.hasAddr(v, pref);
+      if (hasAddress) {
+        fiId += this.addrXml(v, pref, indent + 3);
+      } else {
+        // Skip Nm too — emitting name without address violates L3 rule.
+        fiId = fiId.replace(this.el('Nm', nm, indent + 3), '');
+      }
     }
     
     let inner = '';

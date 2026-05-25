@@ -1,4 +1,4 @@
-﻿:host {
+:host {
     display: flex;
     flex-direction: column;
     height: 100vh;
@@ -1383,4 +1383,109 @@ textarea.code-editor::-webkit-scrollbar-thumb:hover {
     font-weight: 600;
     margin-top: 4px;
     display: block;
+}
+
+/* Dynamic Instructions Section Title and Add/Remove Buttons styling */
+.section-title-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    grid-column: 1 / -1;
+    margin-top: 1.5rem;
+    margin-bottom: 1rem;
+    border-bottom: 2px solid var(--border-light);
+    padding-bottom: 0.5rem;
+}
+
+.section-title-container .section-title {
+    margin: 0 !important;
+    border: none !important;
+    padding: 0 !important;
+}
+
+.add-inst-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: 1px solid var(--accent-color, #2563eb);
+    color: var(--accent-color, #2563eb);
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    padding: 0;
+    box-shadow: 0 2px 5px rgba(37, 99, 235, 0.1);
+}
+
+.add-inst-btn mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    transition: transform 0.3s ease;
+}
+
+.add-inst-btn:hover {
+    background: var(--accent-color, #2563eb);
+    color: #ffffff;
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
+}
+
+.add-inst-btn:hover mat-icon {
+    transform: rotate(90deg);
+}
+
+.add-inst-btn:active {
+    transform: scale(0.95);
+    box-shadow: none;
+}
+
+.header-with-btn {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.remove-inst-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: 1px solid rgba(239, 68, 68, 0.4);
+    color: #ef4444;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    padding: 0;
+    margin-right: 0.25rem;
+}
+
+.remove-inst-btn mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    transition: transform 0.3s ease;
+}
+
+.remove-inst-btn:hover {
+    background: #ef4444;
+    color: #ffffff;
+    border-color: #ef4444;
+    transform: scale(1.1);
+    box-shadow: 0 4px 10px rgba(239, 68, 68, 0.35);
+}
+
+.remove-inst-btn:hover mat-icon {
+    transform: rotate(-180deg);
+}
+
+.remove-inst-btn:active {
+    transform: scale(0.95);
+    box-shadow: none;
 }

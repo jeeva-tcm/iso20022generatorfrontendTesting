@@ -569,6 +569,9 @@ export class Pacs3Component implements OnInit, OnDestroy {
       if (!c[p + 'AdrTpPrtry']) c[p + 'AdrTpPrtry'] = ['', Validators.maxLength(35)];
       if (!c[p + 'Name']) c[p + 'Name'] = ['', [Validators.maxLength(140), SAFE_NAME]];
       if (!c[p + 'Acct']) c[p + 'Acct'] = ['', [Validators.pattern(/^[A-Z0-9]{5,34}$/)]];
+      if (['intrmyAgt1', 'intrmyAgt2', 'intrmyAgt3'].includes(p)) {
+        if (!c[p + 'AcctType']) c[p + 'AcctType'] = ['iban'];
+      }
       if (!c[p + 'CtryOfRes']) c[p + 'CtryOfRes'] = ['', Validators.pattern(/^[A-Z]{2,2}$/)];
 
       // Agent-specific fields
@@ -1017,10 +1020,12 @@ export class Pacs3Component implements OnInit, OnDestroy {
 
     tx += this.el('ReqdColltnDt', v.reqdColltnDt, 4);
 
-    const formatAcct = (val: string, tabs: number) => {
+    const formatAcct = (val: string, tabs: number, explicitType?: string) => {
       if (!val) return '';
       const ibanCountries = ['AD', 'AE', 'AL', 'AT', 'AZ', 'BA', 'BE', 'BG', 'BH', 'BR', 'BY', 'CH', 'CR', 'CY', 'CZ', 'DE', 'DK', 'DO', 'EE', 'EG', 'ES', 'FI', 'FO', 'FR', 'GB', 'GE', 'GI', 'GL', 'GR', 'GT', 'HR', 'HU', 'IE', 'IL', 'IQ', 'IS', 'IT', 'JO', 'KW', 'KZ', 'LB', 'LI', 'LT', 'LU', 'LV', 'MC', 'MD', 'ME', 'MK', 'MR', 'MT', 'MU', 'NL', 'NO', 'PK', 'PL', 'PS', 'PT', 'QA', 'RO', 'RS', 'RU', 'SA', 'SC', 'SE', 'SI', 'SK', 'SM', 'ST', 'SV', 'TL', 'TN', 'TR', 'UA', 'VA', 'VG', 'XK'];
-      if (val.length >= 14 && ibanCountries.includes(val.substring(0, 2).toUpperCase()) && /^[A-Z]{2}[0-9]{2}[A-Z0-9]+$/i.test(val)) {
+      const useIban = explicitType === 'iban' ||
+        (!explicitType && val.length >= 14 && ibanCountries.includes(val.substring(0, 2).toUpperCase()) && /^[A-Z]{2}[0-9]{2}[A-Z0-9]+$/i.test(val));
+      if (useIban) {
         return this.el('IBAN', val, tabs + 1);
       } else {
         return `\n${'\t'.repeat(tabs + 1)}<Othr>\n${'\t'.repeat(tabs + 2)}<Id>${this.e(val)}</Id>\n${'\t'.repeat(tabs + 1)}</Othr>\n${'\t'.repeat(tabs)}`;
@@ -1077,7 +1082,7 @@ export class Pacs3Component implements OnInit, OnDestroy {
     ['intrmyAgt1', 'intrmyAgt2', 'intrmyAgt3'].forEach(p => {
       tx += this.agt(p.charAt(0).toUpperCase() + p.slice(1), p, v, 4);
       if (v[p + 'Acct']?.trim()) {
-        tx += this.tag(p.charAt(0).toUpperCase() + p.slice(1) + 'Acct', this.tag('Id', formatAcct(v[p + 'Acct'], 5), 5), 4);
+        tx += this.tag(p.charAt(0).toUpperCase() + p.slice(1) + 'Acct', this.tag('Id', formatAcct(v[p + 'Acct'], 5, v[p + 'AcctType']), 5), 4);
       }
     });
 
@@ -1849,6 +1854,10 @@ ${tx}\t\t\t</DrctDbtTxInf>
           const acct = getT(tag + 'Acct', parent);
           if (acct) {
             patch[p + 'Acct'] = tval('IBAN', getT('Id', acct) || acct) || tval('Id', getT('Othr', getT('Id', acct) || acct) || acct);
+            if (['intrmyAgt1', 'intrmyAgt2', 'intrmyAgt3'].includes(p)) {
+              const isIban = acct.querySelector('IBAN') || getT('IBAN', acct);
+              patch[p + 'AcctType'] = isIban ? 'iban' : 'other';
+            }
           }
         };
 

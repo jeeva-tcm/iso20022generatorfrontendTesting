@@ -29,6 +29,16 @@ export class DashboardComponent implements OnInit {
     ) {}
 
     ngOnInit() {
+        // Try to load cached values from localStorage for instant display on page load/redirect
+        const cachedStats = localStorage.getItem('dashboard_stats');
+        const cachedActivity = localStorage.getItem('dashboard_activity');
+        if (cachedStats) {
+            try { this.stats = JSON.parse(cachedStats); } catch (e) {}
+        }
+        if (cachedActivity) {
+            try { this.recentActivity = JSON.parse(cachedActivity); } catch (e) {}
+        }
+
         this.loadStats();
         this.loadRecentActivity();
     }
@@ -61,6 +71,7 @@ export class DashboardComponent implements OnInit {
                 this.stats.passed = data.passed_messages;
                 this.stats.failed = data.failed_messages;
                 this.stats.efficiency = data.validation_quality + '%';
+                localStorage.setItem('dashboard_stats', JSON.stringify(this.stats));
             },
             error: (err) => console.error('Dashboard stats error:', err)
         });
@@ -68,7 +79,10 @@ export class DashboardComponent implements OnInit {
 
     loadRecentActivity() {
         this.http.get<any[]>(this.config.getApiUrl('/history?limit=5')).subscribe({
-            next: (data) => { this.recentActivity = data; },
+            next: (data) => {
+                this.recentActivity = data;
+                localStorage.setItem('dashboard_activity', JSON.stringify(data));
+            },
             error: (err) => console.error('Dashboard activity error:', err)
         });
     }
@@ -96,6 +110,7 @@ export class DashboardComponent implements OnInit {
                 this.stats.passed = data.passed_messages;
                 this.stats.failed = data.failed_messages;
                 this.stats.efficiency = data.validation_quality + '%';
+                localStorage.setItem('dashboard_stats', JSON.stringify(this.stats));
                 checkDone();
             },
             error: (err) => {
@@ -107,6 +122,7 @@ export class DashboardComponent implements OnInit {
         this.http.get<any[]>(this.config.getApiUrl('/history?limit=5')).subscribe({
             next: (data) => {
                 this.recentActivity = data;
+                localStorage.setItem('dashboard_activity', JSON.stringify(data));
                 checkDone();
             },
             error: (err) => {

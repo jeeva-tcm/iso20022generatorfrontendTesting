@@ -1398,4 +1398,40 @@ export class ValidateComponent implements OnInit {
     if (t.startsWith('head')) return 'head';
     return 'other';
   }
+
+  jumpToLine(f: FileEntry, lineNum: number, event: MouseEvent) {
+    if (event) {
+      event.stopPropagation();
+      event.preventDefault();
+    }
+    this.editingEntry = f;
+    this.originalContent = f.content;
+    this.updateEditorLines(f.content);
+    
+    // Initialize history
+    this.xmlHistory = [f.content];
+    this.xmlHistoryIdx = 0;
+
+    this.scrollToLine(lineNum);
+  }
+
+  scrollToLine(lineNum: number) {
+    setTimeout(() => {
+      const textarea = document.querySelector('.editor-textarea') as HTMLTextAreaElement;
+      if (!textarea) return;
+      
+      const lines = textarea.value.split('\n');
+      let charPos = 0;
+      for (let i = 0; i < Math.min(lineNum - 1, lines.length); i++) {
+        charPos += lines[i].length + 1; // +1 for the newline character
+      }
+      
+      textarea.focus();
+      textarea.setSelectionRange(charPos, charPos + (lines[lineNum - 1] || '').length);
+      
+      // Calculate scroll position (each line is approx 20px in height)
+      const lineHeight = 20;
+      textarea.scrollTop = Math.max(0, (lineNum - 5) * lineHeight);
+    }, 100);
+  }
 }

@@ -2847,3 +2847,21 @@ body.dark-theme .issue-card {
   font-weight: 500;
   color: var(--text-main);
 }
+
+.clickable-line {
+  cursor: pointer;
+  text-decoration: underline;
+  color: #6366f1;
+  transition: color 0.2s ease;
+}
+
+.clickable-line:hover {
+  color: #818cf8;
+}
+
+.di-val.clickable-line mat-icon {
+  font-size: 14px;
+  width: 14px;
+  height: 14px;
+  vertical-align: middle;
+}

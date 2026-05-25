@@ -1167,13 +1167,33 @@
                                 *ngIf="hint(isAgent ? prefix+'Lei' : prefix+'OrgLEI', 20) as h">{{h}}</div>
                 </div>
 
-                <!-- Account Number -->
-                <div class="form-group">
-                        <label>{{title}} Account Number</label>
-                        <input [formControlName]="prefix+'Acct'" maxlength="34">
-                        <div class="validation-msg" *ngIf="err(prefix+'Acct') as e">{{e}}</div>
-                        <div class="field-hint at-limit" *ngIf="hint(prefix+'Acct', 34) as h">{{h}}</div>
-                </div>
+                <!-- Account Number — conditionally rendered or dropdown-enabled for intermediary agents -->
+                <ng-container *ngIf="['intrmyAgt1', 'intrmyAgt2', 'intrmyAgt3'].includes(prefix); else defaultAcctBlock">
+                        <!-- Account Type dropdown -->
+                        <div class="form-group">
+                                <label>{{title}} Account Type</label>
+                                <select [formControlName]="prefix+'AcctType'">
+                                        <option value="iban">IBAN</option>
+                                        <option value="other">Other (Othr/Id)</option>
+                                </select>
+                        </div>
+                        <!-- Account Number input -->
+                        <div class="form-group">
+                                <label>{{title}} Account Number</label>
+                                <input [formControlName]="prefix+'Acct'" maxlength="34"
+                                        [placeholder]="form.get(prefix+'AcctType')?.value === 'iban' ? 'e.g. BE68539007547034' : 'e.g. 471932901234'">
+                                <div class="validation-msg" *ngIf="err(prefix+'Acct') as e">{{e}}</div>
+                                <div class="field-hint at-limit" *ngIf="hint(prefix+'Acct', 34) as h">{{h}}</div>
+                        </div>
+                </ng-container>
+                <ng-template #defaultAcctBlock>
+                        <div class="form-group">
+                                <label>{{title}} Account Number</label>
+                                <input [formControlName]="prefix+'Acct'" maxlength="34">
+                                <div class="validation-msg" *ngIf="err(prefix+'Acct') as e">{{e}}</div>
+                                <div class="field-hint at-limit" *ngIf="hint(prefix+'Acct', 34) as h">{{h}}</div>
+                        </div>
+                </ng-template>
 
         </div>
 </ng-template>
