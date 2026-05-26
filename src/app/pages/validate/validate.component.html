@@ -437,7 +437,7 @@
     </div>
     <div class="editor-body">
       <div class="editor-line-numbers" #lineNumbers>
-        <div *ngFor="let idx of editorLineCount" [class.active-line]="(i + 1) === targetLine">{{idx}}</div>
+        <div *ngFor="let idx of editorLineCount" [class.active-line]="idx === targetLine">{{idx}}</div>
       </div>
       <textarea class="editor-textarea" [(ngModel)]="editingEntry.content" (ngModelChange)="onEditorChange($event)"
         (scroll)="syncScroll(xmlEditor, lineNumbers)" (keydown)="handleKeyDown($event)" #xmlEditor wrap="off"
