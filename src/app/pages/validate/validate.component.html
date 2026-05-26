@@ -254,16 +254,22 @@
                     <span class="layer-label">L{{l.layer}} - {{l.name}}</span>
 
                     <div class="layer-stats-pills" style="margin-left: auto; display: flex; gap: 12px;">
+                      <span class="layer-stat-pill all-pill" 
+                        (click)="setIssueFilter(f, l.name, 'ALL', $event)"
+                        [class.active]="isIssueFilterActive(f, l.name, 'ALL')"
+                        [style.opacity]="getLayerPillOpacity(f, l.name, 'ALL')">
+                        <mat-icon>format_list_bulleted</mat-icon> All
+                      </span>
                       <span *ngIf="l.errors > 0" class="layer-stat-pill error-pill" 
                         (click)="setIssueFilter(f, l.name, 'ERROR', $event)"
                         [class.active]="isIssueFilterActive(f, l.name, 'ERROR')"
-                        [style.opacity]="(issueFilters[f.id + '_' + l.name] === 'WARNING') ? '0.4' : '1'">
+                        [style.opacity]="getLayerPillOpacity(f, l.name, 'ERROR')">
                         <mat-icon>cancel</mat-icon> {{l.errors}} Error{{l.errors > 1 ? 's' : ''}}
                       </span>
                       <span *ngIf="l.warnings > 0" class="layer-stat-pill warning-pill" 
                         (click)="setIssueFilter(f, l.name, 'WARNING', $event)"
                         [class.active]="isIssueFilterActive(f, l.name, 'WARNING')"
-                         [style.opacity]="(issueFilters[f.id + '_' + l.name] === 'ERROR') ? '0.4' : '1'">
+                        [style.opacity]="getLayerPillOpacity(f, l.name, 'WARNING')">
                         <mat-icon>warning</mat-icon> {{l.warnings}} Warning{{l.warnings > 1 ? 's' : ''}}
                       </span>
                     </div>
@@ -281,10 +287,9 @@
                         
                         <div class="issue-center">
                           <span class="issue-message-text">{{issue.message}}</span>
-                          <div class="issue-meta-info">
-                            <span class="meta-item"><mat-icon>link</mat-icon> {{issue.path || 'Global Message Context'}}</span>
-                            <span class="meta-item clickable-line" *ngIf="issue.line" (click)="jumpToLine(f, issue.line, $event)" matTooltip="Jump to line in editor">
-                              <mat-icon>launch</mat-icon> Line: {{issue.line}}
+                          <div class="issue-meta-info" *ngIf="getIssueLine(issue)">
+                            <span class="meta-item">
+                              Line: {{getIssueLine(issue)}}
                             </span>
                           </div>
                         </div>
@@ -296,20 +301,14 @@
 
                       <div class="issue-details-panel" *ngIf="expandedIssue === issue.id" (click)="$event.stopPropagation()">
                         <div class="detail-grid">
-                          <div class="detail-item">
-                            <div class="di-label">OCCURRENCE PATH</div>
-                            <div class="di-val mono">{{issue.path || '?'}}</div>
-                          </div>
-                          <div class="detail-item" *ngIf="issue.line">
+
+                          <div class="detail-item" *ngIf="getIssueLine(issue)">
                             <div class="di-label">LINE NUMBER</div>
-                            <div class="di-val mono clickable-line" (click)="jumpToLine(f, issue.line, $event)" matTooltip="Jump to line in editor">
-                              {{issue.line}} <mat-icon style="font-size: 14px; width: 14px; height: 14px; vertical-align: middle; margin-left: 2px;">launch</mat-icon>
+                            <div class="di-val mono">
+                              {{getIssueLine(issue)}}
                             </div>
                           </div>
-                          <div class="detail-item" *ngIf="issue.code">
-                            <div class="di-label">INTERNAL CODE</div>
-                            <div class="di-val mono">{{issue.code}}</div>
-                          </div>
+
                         </div>
 
                         <div class="detail-fix-box" *ngIf="issue.fix_suggestion">
@@ -435,7 +434,7 @@
     </div>
     <div class="editor-body">
       <div class="editor-line-numbers" #lineNumbers>
-        <div *ngFor="let idx of editorLineCount; let i = index">{{i + 1}}</div>
+        <div *ngFor="let idx of editorLineCount; let i = index" [class.active-line]="(i + 1) === targetLine">{{i + 1}}</div>
       </div>
       <textarea class="editor-textarea" [(ngModel)]="editingEntry.content" (ngModelChange)="onEditorChange($event)"
         (scroll)="syncScroll(xmlEditor, lineNumbers)" (keydown)="handleKeyDown($event)" #xmlEditor wrap="off"

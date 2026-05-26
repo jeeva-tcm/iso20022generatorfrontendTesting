@@ -73,7 +73,9 @@ export class ValidateComponent implements OnInit {
   // ── XML Editor state ─────────────────────────────────────────────────────────────
   editingEntry: FileEntry | null = null;
   originalContent: string = '';
-  editorLineCount: number[] = [1];
+  selectedView = 'layer-1'; // Default active view
+  editorLineCount: number[] = [];
+  targetLine: number | null = null;
   private xmlHistory: string[] = [];
   private xmlHistoryIdx: number = -1;
   private maxHistory = 200;
@@ -204,7 +206,7 @@ export class ValidateComponent implements OnInit {
 
   issueFilters: { [key: string]: 'ERROR' | 'WARNING' | 'ALL' } = {};
 
-  setIssueFilter(f: FileEntry, layerName: string, type: 'ERROR' | 'WARNING', e: Event) {
+  setIssueFilter(f: FileEntry, layerName: string, type: 'ERROR' | 'WARNING' | 'ALL', e: Event) {
     e.stopPropagation();
     const key = f.id + '_' + layerName;
     this.expandedIssue = null; // Clear expanded issue as the displayed list is changing
@@ -216,9 +218,17 @@ export class ValidateComponent implements OnInit {
     }
   }
 
-  isIssueFilterActive(f: FileEntry, layerName: string, type: 'ERROR' | 'WARNING'): boolean {
+  isIssueFilterActive(f: FileEntry, layerName: string, type: 'ERROR' | 'WARNING' | 'ALL'): boolean {
     const key = f.id + '_' + layerName;
-    return this.issueFilters[key] === type;
+    const current = this.issueFilters[key] || 'ALL';
+    return current === type;
+  }
+
+  getLayerPillOpacity(f: FileEntry, layerName: string, pillType: 'ERROR' | 'WARNING' | 'ALL'): string {
+    const key = f.id + '_' + layerName;
+    const current = this.issueFilters[key] || 'ALL';
+    if (current === 'ALL') return '1';
+    return current === pillType ? '1' : '0.5';
   }
 
   getFilteredIssues(f: FileEntry, l: any) {
@@ -1368,6 +1378,23 @@ export class ValidateComponent implements OnInit {
   getErrors(report: any): any[] { return this.getIssues(report).filter(i => i.severity === 'ERROR'); }
   getWarnings(report: any): any[] { return this.getIssues(report).filter(i => i.severity === 'WARNING'); }
 
+  getIssueLine(issue: any): number | null {
+    if (issue.line) return Number(issue.line);
+    const p = String(issue.path || '').trim();
+    if (/^\d+$/.test(p)) {
+      return Number(p);
+    }
+    return null;
+  }
+
+  getIssuePath(issue: any): string | null {
+    const p = String(issue.path || '').trim();
+    if (!p) return null;
+    if (/^\d+$/.test(p)) return null;
+    if (p === '/') return 'Root';
+    return p;
+  }
+
   toggleIssue(issue: any) {
     this.expandedIssue = this.expandedIssue === issue.id ? null : issue.id;
   }
@@ -1399,39 +1426,74 @@ export class ValidateComponent implements OnInit {
     return 'other';
   }
 
-  jumpToLine(f: FileEntry, lineNum: number, event: MouseEvent) {
+  jumpToLine(f: FileEntry, lineNum: number | null, event: MouseEvent) {
     if (event) {
       event.stopPropagation();
       event.preventDefault();
     }
-    this.editingEntry = f;
-    this.originalContent = f.content;
-    this.updateEditorLines(f.content);
+    if (!lineNum) return;
     
-    // Initialize history
-    this.xmlHistory = [f.content];
-    this.xmlHistoryIdx = 0;
+    try {
+      this.editingEntry = f;
+      this.originalContent = f.content;
+      this.targetLine = Number(lineNum);
+      this.updateEditorLines(f.content || '');
+      
+      // Initialize history
+      this.xmlHistory = [f.content || ''];
+      this.xmlHistoryIdx = 0;
 
-    this.scrollToLine(lineNum);
+      this.cdr.detectChanges(); 
+      
+      // Give DOM time to paint before attempting scroll
+      setTimeout(() => this.scrollToLine(Number(lineNum)), 50);
+    } catch (err: any) {
+      this.snackBar.open('Error opening editor: ' + err.message, 'Close', { duration: 3000 });
+    }
   }
 
   scrollToLine(lineNum: number) {
-    setTimeout(() => {
-      const textarea = document.querySelector('.editor-textarea') as HTMLTextAreaElement;
-      if (!textarea) return;
-      
-      const lines = textarea.value.split('\n');
-      let charPos = 0;
-      for (let i = 0; i < Math.min(lineNum - 1, lines.length); i++) {
-        charPos += lines[i].length + 1; // +1 for the newline character
+    const tryScroll = (attempts: number) => {
+      try {
+        const textarea = document.querySelector('.editor-textarea') as HTMLTextAreaElement;
+        if (!textarea) {
+          if (attempts < 30) setTimeout(() => tryScroll(attempts + 1), 50);
+          return;
+        }
+        
+        const content = this.editingEntry?.content || '';
+        
+        // Force populate if empty or too small
+        if (!textarea.value || textarea.value.length < content.length * 0.5) {
+          textarea.value = content;
+        }
+
+        const lines = textarea.value.split('\n');
+        let charPos = 0;
+        const targetL = lineNum - 1;
+        const maxLines = Math.min(targetL, lines.length);
+        
+        for (let i = 0; i < maxLines; i++) {
+          charPos += lines[i].length + 1; // +1 for the newline character
+        }
+        
+        textarea.focus();
+        textarea.setSelectionRange(charPos, charPos + (lines[targetL] || '').length);
+        
+        // Calculate scroll position (font-size 13px * line-height 1.5 = 19.5px)
+        const lineHeight = 19.5;
+        textarea.scrollTop = Math.max(0, (lineNum - 5) * lineHeight);
+        
+        const lineNumbers = document.querySelector('.editor-line-numbers') as HTMLDivElement;
+        if (lineNumbers) {
+          this.syncScroll(textarea, lineNumbers);
+        }
+      } catch (err) {
+        console.error('Scroll error:', err);
+        if (attempts < 30) setTimeout(() => tryScroll(attempts + 1), 50);
       }
-      
-      textarea.focus();
-      textarea.setSelectionRange(charPos, charPos + (lines[lineNum - 1] || '').length);
-      
-      // Calculate scroll position (each line is approx 20px in height)
-      const lineHeight = 20;
-      textarea.scrollTop = Math.max(0, (lineNum - 5) * lineHeight);
-    }, 100);
+    };
+    
+    tryScroll(0);
   }
 }
