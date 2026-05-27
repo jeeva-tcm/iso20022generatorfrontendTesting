@@ -1,4 +1,4 @@
-﻿import { CommonModule } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -429,14 +429,14 @@ export class Pacs10v3Component implements OnInit, OnDestroy {
             cdtrAgtBic: ['CHASUS33XXX', BIC_OPT],
             cdtrAgtName: ['JPMORGAN CHASE BANK', [Validators.maxLength(140), SAFE_NAME]],
             cdtrAgtLei: ['7H6LDXLRUQGFU57RNE97', [Validators.pattern(/^[A-Z0-9]{18}[0-9]{2}$/)]],
-            cdtrAgtClrSysCd: ['USFW', Validators.maxLength(5)],
+            cdtrAgtClrSysCd: ['USABA', Validators.maxLength(5)],
             cdtrAgtClrSysMmbId: ['MEM-CAGT-01', Validators.maxLength(35)],
             cdtrAgtAddrType: ['none'],
             
             cdtrBic: ['CITIUS33XXX', BIC],
             cdtrName: ['CITIBANK NA', [Validators.maxLength(140), SAFE_NAME]],
             cdtrLei: ['E57ODZWZ7FF32TWEFS77', [Validators.pattern(/^[A-Z0-9]{18}[0-9]{2}$/)]],
-            cdtrClrSysCd: ['USFW', Validators.maxLength(5)],
+            cdtrClrSysCd: ['USABA', Validators.maxLength(5)],
             cdtrClrSysMmbId: ['MEM-CDTR-01', Validators.maxLength(35)],
             cdtrAddrType: ['none'],
             
@@ -451,10 +451,10 @@ export class Pacs10v3Component implements OnInit, OnDestroy {
             instrPrty: ['HIGH'],
             svcLvlCd: ['G001', [Validators.maxLength(4), Validators.pattern(/^[A-Z0-9]{1,4}$/)]], 
             svcLvlPrtry: ['PRIORITY-SVC', [Validators.maxLength(35), Validators.pattern(/^[a-zA-Z0-9\/\-\?:\(\)\.,\+' ]*$/)]],
-            lclInstrmCd: ['MARG', [Validators.maxLength(4), Validators.pattern(/^[A-Z0-9]{1,4}$/)]], 
+            lclInstrmCd: ['ONCL', [Validators.maxLength(4), Validators.pattern(/^[A-Z0-9]{1,4}$/)]], 
             lclInstrmPrtry: ['INSTANT-SETTLM', [Validators.maxLength(35), Validators.pattern(/^[a-zA-Z0-9\/\-\?:\(\)\.,\+' ]*$/)]],
-            ctgyPurpCd: ['INTC', [Validators.pattern(/^(?!MARG$|COLL$)[A-Z]{4}$/)]], 
-            ctgyPurpPrtry: ['MARG', [Validators.maxLength(35), Validators.pattern(/^[a-zA-Z0-9\/\-\?:\(\)\.,\+' ]*$/)]],
+            ctgyPurpCd: ['INTC', [Validators.pattern(/^(?!ONCL$|COLL$)[A-Z]{4}$/)]], 
+            ctgyPurpPrtry: ['ONCL', [Validators.maxLength(35), Validators.pattern(/^[a-zA-Z0-9\/\-\?:\(\)\.,\+' ]*$/)]],
             
             amount: ['50000.00', [Validators.required, Validators.pattern(/^\d{1,18}(\.\d{1,5})?$/)]],
             currency: ['GBP', [Validators.required, Validators.pattern(/^[A-Z]{3}$/)]],
@@ -473,14 +473,14 @@ export class Pacs10v3Component implements OnInit, OnDestroy {
             dbtrBic: ['BOFAUS3NXXX', BIC],
             dbtrName: ['BANK OF AMERICA NA', [Validators.maxLength(140), SAFE_NAME]],
             dbtrLei: ['5493001KJTIIGC8Y1R12', [Validators.pattern(/^[A-Z0-9]{18}[0-9]{2}$/)]],
-            dbtrClrSysCd: ['USFW', Validators.maxLength(5)],
+            dbtrClrSysCd: ['USABA', Validators.maxLength(5)],
             dbtrClrSysMmbId: ['MEM-DBTR-01', Validators.maxLength(35)],
             dbtrAddrType: ['none'],
             
             dbtrAgtBic: ['WFBIUS6SXXX', BIC_OPT],
             dbtrAgtName: ['WELLS FARGO BANK NA', [Validators.maxLength(140), SAFE_NAME]],
             dbtrAgtLei: ['724500PMK2A2M1SQQ228', [Validators.pattern(/^[A-Z0-9]{18}[0-9]{2}$/)]],
-            dbtrAgtClrSysCd: ['USFW', Validators.maxLength(5)],
+            dbtrAgtClrSysCd: ['USABA', Validators.maxLength(5)],
             dbtrAgtClrSysMmbId: ['MEM-DAGT-01', Validators.maxLength(35)],
             dbtrAgtAddrType: ['none'],
             
@@ -536,7 +536,7 @@ export class Pacs10v3Component implements OnInit, OnDestroy {
             }
 
             if (!c[p + 'Lei']) c[p + 'Lei'] = ['54930084UKLVMY22DS16', [Validators.pattern(/^[A-Z0-9]{18}[0-9]{2}$/)]];
-            if (!c[p + 'ClrSysCd']) c[p + 'ClrSysCd'] = ['USAB', Validators.maxLength(5)];
+            if (!c[p + 'ClrSysCd']) c[p + 'ClrSysCd'] = ['USABA', Validators.maxLength(5)];
             if (!c[p + 'ClrSysMmbId']) c[p + 'ClrSysMmbId'] = ['MEM-' + p.toUpperCase().substring(0, 5) + '-01', Validators.maxLength(35)];
             
             const acctMap: any = {
@@ -570,7 +570,7 @@ export class Pacs10v3Component implements OnInit, OnDestroy {
                 if (!c[p + 'IdType']) c[p + 'IdType'] = ['org'];
                 if (!c[p + 'OrgAnyBIC']) c[p + 'OrgAnyBIC'] = [c[p + 'Bic'] ? c[p + 'Bic'][0] : (defaults.Bic || 'BOFAUS3NXXX'), BIC_OPT];
                 if (!c[p + 'OrgLEI']) c[p + 'OrgLEI'] = [c[p + 'Lei'] ? c[p + 'Lei'][0] : '54930084UKLVMY22DS16', [Validators.pattern(/^[A-Z0-9]{18}[0-9]{2}$/)]];
-                if (!c[p + 'OrgClrSysCd']) c[p + 'OrgClrSysCd'] = ['USFW', Validators.maxLength(5)];
+                if (!c[p + 'OrgClrSysCd']) c[p + 'OrgClrSysCd'] = ['USABA', Validators.maxLength(5)];
                 if (!c[p + 'OrgClrSysMmbId']) c[p + 'OrgClrSysMmbId'] = ['ORG-' + p.toUpperCase().substring(0, 5), Validators.maxLength(35)];
                 if (!c[p + 'OrgOthrId']) c[p + 'OrgOthrId'] = ['OTH-' + p.toUpperCase().substring(0, 5), [Validators.maxLength(35), ADDR_PATTERN]];
                 if (!c[p + 'OrgOthrSchmeNmCd']) c[p + 'OrgOthrSchmeNmCd'] = ['BANK', [Validators.maxLength(4), Validators.pattern(/^[A-Z0-9]{1,4}$/)]];
@@ -594,7 +594,7 @@ export class Pacs10v3Component implements OnInit, OnDestroy {
         const creDtTm = this.formatCbprDateTime(v.creDtTm);
         let appHdr = `\t\t<Fr><FIId><FinInstnId><BICFI>${this.e(v.fromBic)}</BICFI></FinInstnId></FIId></Fr>\n`;
         appHdr += `\t\t<To><FIId><FinInstnId><BICFI>${this.e(v.toBic)}</BICFI></FinInstnId></FIId></To>\n`;
-        appHdr += `\t\t<BizMsgIdr>${this.e(v.bizMsgId)}</BizMsgIdr>\n\t\t<MsgDefIdr>pacs.010.001.03</MsgDefIdr>\n\t\t<BizSvc>swift.cbprplus.col.02</BizSvc>\n`;
+        appHdr += `\t\t<BizMsgIdr>${this.e(v.bizMsgId)}</BizMsgIdr>\n\t\t<MsgDefIdr>pacs.010.001.03</MsgDefIdr>\n\t\t<BizSvc>swift.cbprplus.02</BizSvc>\n`;
         appHdr += `\t\t<CreDt>${creDtTm}</CreDt>\n`;
         if (v.copyDplct) appHdr += this.el('CpyDplct', v.copyDplct, 2);
         if (v.pssblDplct === 'true' || v.pssblDplct === 'false') appHdr += this.el('PssblDplct', v.pssblDplct, 2);
@@ -753,10 +753,12 @@ ${this.rmtInf(v)}
             finInstnId += this.tag('ClrSysMmbId', clr, indent + 2);
         }
         if (lei) finInstnId += this.el('LEI', lei, indent + 2);
-        if (!onlyBic) {
+        if (!onlyBic && !bic) {
             const addr = this.addrXml(v, prefix, indent + 2);
-            if (name) finInstnId += this.el('Nm', name, indent + 2);
-            if (addr) finInstnId += addr;
+            if (name && addr) {
+                finInstnId += this.el('Nm', name, indent + 2);
+                finInstnId += addr;
+            }
         }
         return this.tag(tag, this.tag('FinInstnId', finInstnId, indent + 1), indent);
     }
