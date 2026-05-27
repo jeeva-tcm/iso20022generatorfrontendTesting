@@ -5,7 +5,7 @@ import { initializeApp } from "firebase/app";
 
 export const environment = {
     production: true,
-     apiBaseUrl: 'https://iso20022generatorbackend-y6hp.onrender.com',
+     apiBaseUrl: 'https://iso20022generatorbackend.onrender.com',
     firebaseConfig: {
        apiKey: "AIzaSyAPTEMlCYttDUBpUm9-cz0rOQGZMJgZEuQ",
   authDomain: "isovalidatior-19may.firebaseapp.com",

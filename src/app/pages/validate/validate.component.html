@@ -30,15 +30,9 @@
 
       <!-- Drop Zone -->
       <div class="drop-zone" [class.dragging]="isDragging" [class.drop-disabled]="editingEntry"
-        (click)="triggerFilePicker()"
-        (dragover)="onDropZoneDragOver($event)"
-        (dragenter)="onDropZoneDragEnter($event)"
-        (dragleave)="onDropZoneDragLeave($event)"
-        (drop)="onDropZoneDrop($event)"
-        (keydown.enter)="triggerFilePicker()"
-        (keydown.space)="triggerFilePicker(); $event.preventDefault()"
-        role="button"
-        tabindex="0"
+        (click)="triggerFilePicker()" (dragover)="onDropZoneDragOver($event)" (dragenter)="onDropZoneDragEnter($event)"
+        (dragleave)="onDropZoneDragLeave($event)" (drop)="onDropZoneDrop($event)" (keydown.enter)="triggerFilePicker()"
+        (keydown.space)="triggerFilePicker(); $event.preventDefault()" role="button" tabindex="0"
         aria-label="Upload validation files by browsing or dragging and dropping files">
         <!-- Drag overlay shown when dragging over -->
         <div class="drag-overlay" *ngIf="isDragging">
@@ -49,21 +43,26 @@
           <mat-icon>add_circle_outline</mat-icon>
         </div>
         <p class="drop-title" [class.hidden-while-dragging]="isDragging">Drop Files Here (.xml, .zip)</p>
-        <p class="drop-sub" [class.hidden-while-dragging]="isDragging">or click to browse · Supports .xml, .zip, .xsd, .txt files</p>
+        <p class="drop-sub" [class.hidden-while-dragging]="isDragging">or click to browse · Supports .xml, .zip, .xsd,
+          .txt files</p>
         <p class="drop-limit" [class.hidden-while-dragging]="isDragging">MAX 100KB PER FILE · NO FILE LIMIT</p>
         <input #fileInput type="file" multiple accept=".xml,.xsd,.txt,.zip" (change)="onFileSelected($event)"
           style="position: absolute; width: 0; height: 0; opacity: 0; z-index: -1;">
       </div>
 
       <!-- Action Row Container (Paste XML, Run, Clear) -->
-      <div class="action-row-container" style="display: flex; gap: 8px; margin-top: 10px; align-items: center; width: 100%;">
-        <button class="btn-paste-xml" (click)="showPasteModal = true" [style.flex]="files.length > 0 ? '1.5' : '1'" style="margin-top: 0; justify-content: center; height: 38px; padding: 0 12px;">
+      <div class="action-row-container"
+        style="display: flex; gap: 8px; margin-top: 10px; align-items: center; width: 100%;">
+        <button class="btn-paste-xml" (click)="showPasteModal = true" [style.flex]="files.length > 0 ? '1.5' : '1'"
+          style="margin-top: 0; justify-content: center; height: 38px; padding: 0 12px;">
           <mat-icon style="margin: 0; font-size: 16px; width: 16px; height: 16px;">content_paste</mat-icon> Paste XML
         </button>
-        <button class="btn-run-all" (click)="validateAll()" *ngIf="files.length > 0" style="margin-top: 0; flex: 1.5; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 0 12px; height: 38px;">
+        <button class="btn-run-all" (click)="validateAll()" *ngIf="files.length > 0"
+          style="margin-top: 0; flex: 1.5; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 0 12px; height: 38px;">
           <mat-icon style="margin: 0; font-size: 16px; width: 16px; height: 16px;">play_circle</mat-icon> Run All
         </button>
-        <button class="btn-clear-all" (click)="clearAll()" matTooltip="Empty Workspace" *ngIf="files.length > 0" style="margin-top: 0; height: 38px; width: 38px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; padding: 0;">
+        <button class="btn-clear-all" (click)="clearAll()" matTooltip="Empty Workspace" *ngIf="files.length > 0"
+          style="margin-top: 0; height: 38px; width: 38px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; padding: 0;">
           <mat-icon style="margin: 0; font-size: 18px; width: 18px; height: 18px;">delete_sweep</mat-icon>
         </button>
       </div>
@@ -105,7 +104,7 @@
 
     <!-- ══ RIGHT PANEL ══ -->
     <main class="vp-right">
-      
+
 
       <!-- Top Dashboard: Metrics Row -->
       <div class="vp-dashboard-metrics" *ngIf="files.length > 0">
@@ -230,15 +229,18 @@
                 <div class="layer-summaries-row">
                   <div class="layer-summary-pill" *ngFor="let k of getReportLayers(f.report)">
                     <div class="pill-left">
-                      <mat-icon [class.success]="isLayerPass(f.report, k)" [class.error]="isLayerFail(f.report, k)" [style.color]="getLayerStatus(f.report, k).includes('SKIPPED') ? '#94a3b8' : ''">{{
-                        isLayerFail(f.report, k) ? 'cancel' : (getLayerStatus(f.report, k).includes('SKIPPED') ? 'block' : 'check_circle') }}</mat-icon>
+                      <mat-icon [class.success]="isLayerPass(f.report, k)" [class.error]="isLayerFail(f.report, k)"
+                        [style.color]="getLayerStatus(f.report, k).includes('SKIPPED') ? '#94a3b8' : ''">{{
+                        isLayerFail(f.report, k) ? 'cancel' : (getLayerStatus(f.report, k).includes('SKIPPED') ? 'block'
+                        : 'check_circle') }}</mat-icon>
                       <span>L{{k}} {{getLayerName(k)}}</span>
                     </div>
                     <div class="pill-right fail-text" *ngIf="isLayerFail(f.report, k)">
                       <mat-icon>close</mat-icon>
                       <span>Failed</span>
                     </div>
-                    <div class="pill-right skipped-text" *ngIf="getLayerStatus(f.report, k).includes('SKIPPED')" style="color: #94a3b8; display: flex; align-items: center; gap: 4px; margin-left: auto;">
+                    <div class="pill-right skipped-text" *ngIf="getLayerStatus(f.report, k).includes('SKIPPED')"
+                      style="color: #94a3b8; display: flex; align-items: center; gap: 4px; margin-left: auto;">
                       <mat-icon style="font-size: 16px; width: 16px; height: 16px;">skip_next</mat-icon>
                       <span>Skipped</span>
                     </div>
@@ -254,16 +256,21 @@
                     <span class="layer-label">L{{l.layer}} - {{l.name}}</span>
 
                     <div class="layer-stats-pills" style="margin-left: auto; display: flex; gap: 12px;">
-                      <span *ngIf="l.errors > 0" class="layer-stat-pill error-pill" 
+                      <span class="layer-stat-pill all-pill" (click)="setIssueFilter(f, l.name, 'ALL', $event)"
+                        [class.active]="isIssueFilterActive(f, l.name, 'ALL')"
+                        [style.opacity]="getLayerPillOpacity(f, l.name, 'ALL')">
+                        <mat-icon>format_list_bulleted</mat-icon> All
+                      </span>
+                      <span *ngIf="l.errors > 0" class="layer-stat-pill error-pill"
                         (click)="setIssueFilter(f, l.name, 'ERROR', $event)"
                         [class.active]="isIssueFilterActive(f, l.name, 'ERROR')"
-                        [style.opacity]="(issueFilters[f.id + '_' + l.name] === 'WARNING') ? '0.4' : '1'">
+                        [style.opacity]="getLayerPillOpacity(f, l.name, 'ERROR')">
                         <mat-icon>cancel</mat-icon> {{l.errors}} Error{{l.errors > 1 ? 's' : ''}}
                       </span>
-                      <span *ngIf="l.warnings > 0" class="layer-stat-pill warning-pill" 
+                      <span *ngIf="l.warnings > 0" class="layer-stat-pill warning-pill"
                         (click)="setIssueFilter(f, l.name, 'WARNING', $event)"
                         [class.active]="isIssueFilterActive(f, l.name, 'WARNING')"
-                         [style.opacity]="(issueFilters[f.id + '_' + l.name] === 'ERROR') ? '0.4' : '1'">
+                        [style.opacity]="getLayerPillOpacity(f, l.name, 'WARNING')">
                         <mat-icon>warning</mat-icon> {{l.warnings}} Warning{{l.warnings > 1 ? 's' : ''}}
                       </span>
                     </div>
@@ -271,45 +278,39 @@
 
                   <div class="layer-issues" *ngIf="isLayerExpanded(f, l.name)">
                     <div class="issue-card" *ngFor="let issue of getFilteredIssues(f, l)"
-                      [class.expanded]="expandedIssue === issue.id"
-                      [class.issue-error]="issue.severity === 'ERROR'"
-                      [class.issue-warn]="issue.severity === 'WARNING'"
-                      (click)="toggleIssue(issue)">
-                      
+                      [class.expanded]="expandedIssue === issue.id" [class.issue-error]="issue.severity === 'ERROR'"
+                      [class.issue-warn]="issue.severity === 'WARNING'" (click)="toggleIssue(issue)">
+
                       <div class="issue-row">
-                        <mat-icon class="issue-sev-icon">{{issue.severity === 'ERROR' ? 'cancel' : 'warning'}}</mat-icon>
-                        
+                        <mat-icon class="issue-sev-icon">{{issue.severity === 'ERROR' ? 'cancel' :
+                          'warning'}}</mat-icon>
+
                         <div class="issue-center">
                           <span class="issue-message-text">{{issue.message}}</span>
-                          <div class="issue-meta-info">
-                            <span class="meta-item"><mat-icon>link</mat-icon> {{issue.path || 'Global Message Context'}}</span>
-                            <span class="meta-item clickable-line" *ngIf="issue.line" (click)="jumpToLine(f, issue.line, $event)" matTooltip="Jump to line in editor">
-                              <mat-icon>launch</mat-icon> Line: {{issue.line}}
+                          <div class="issue-meta-info" *ngIf="getIssueLine(issue)">
+                            <span class="meta-item">
+                              Line: {{getIssueLine(issue)}}
                             </span>
                           </div>
                         </div>
 
                         <div class="issue-right">
-                          <mat-icon class="issue-chevron" [class.rotated]="expandedIssue === issue.id">expand_more</mat-icon>
+                          <mat-icon class="issue-chevron"
+                            [class.rotated]="expandedIssue === issue.id">expand_more</mat-icon>
                         </div>
                       </div>
 
-                      <div class="issue-details-panel" *ngIf="expandedIssue === issue.id" (click)="$event.stopPropagation()">
+                      <div class="issue-details-panel" *ngIf="expandedIssue === issue.id"
+                        (click)="$event.stopPropagation()">
                         <div class="detail-grid">
-                          <div class="detail-item">
-                            <div class="di-label">OCCURRENCE PATH</div>
-                            <div class="di-val mono">{{issue.path || '?'}}</div>
-                          </div>
-                          <div class="detail-item" *ngIf="issue.line">
+
+                          <div class="detail-item" *ngIf="getIssueLine(issue)">
                             <div class="di-label">LINE NUMBER</div>
-                            <div class="di-val mono clickable-line" (click)="jumpToLine(f, issue.line, $event)" matTooltip="Jump to line in editor">
-                              {{issue.line}} <mat-icon style="font-size: 14px; width: 14px; height: 14px; vertical-align: middle; margin-left: 2px;">launch</mat-icon>
+                            <div class="di-val mono">
+                              {{getIssueLine(issue)}}
                             </div>
                           </div>
-                          <div class="detail-item" *ngIf="issue.code">
-                            <div class="di-label">INTERNAL CODE</div>
-                            <div class="di-val mono">{{issue.code}}</div>
-                          </div>
+
                         </div>
 
                         <div class="detail-fix-box" *ngIf="issue.fix_suggestion">
@@ -319,7 +320,8 @@
                           </div>
                           <div class="df-body">
                             <div class="df-text">{{issue.fix_suggestion}}</div>
-                            <button class="df-copy-btn" (click)="copyFix(issue.fix_suggestion, $event)" title="Copy fix">
+                            <button class="df-copy-btn" (click)="copyFix(issue.fix_suggestion, $event)"
+                              title="Copy fix">
                               <mat-icon>content_copy</mat-icon>
                             </button>
                           </div>
@@ -435,7 +437,7 @@
     </div>
     <div class="editor-body">
       <div class="editor-line-numbers" #lineNumbers>
-        <div *ngFor="let idx of editorLineCount">{{idx}}</div>
+        <div *ngFor="let idx of editorLineCount" [class.active-line]="idx === targetLine">{{idx}}</div>
       </div>
       <textarea class="editor-textarea" [(ngModel)]="editingEntry.content" (ngModelChange)="onEditorChange($event)"
         (scroll)="syncScroll(xmlEditor, lineNumbers)" (keydown)="handleKeyDown($event)" #xmlEditor wrap="off"
