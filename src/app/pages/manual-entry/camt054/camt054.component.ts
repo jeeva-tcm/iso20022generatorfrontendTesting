@@ -1,4 +1,4 @@
-﻿import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { FormBuilder, FormGroup, FormArray, AbstractControl, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
@@ -424,7 +424,7 @@ export class Camt054Component implements OnInit, OnDestroy {
     if (v.electronicSequenceNumber) xml += t(4) + `<ElctrncSeqNb>${this.e(v.electronicSequenceNumber)}</ElctrncSeqNb>\n`;
     if (v.reportingSequence) xml += t(4) + `<RptgSeq>${this.e(v.reportingSequence)}</RptgSeq>\n`;
     if (v.legalSeqNb) xml += t(4) + `<LglSeqNb>${this.e(v.legalSeqNb)}</LglSeqNb>\n`;
-    xml += t(4) + `<CreDtTm>${this.e(v.creationDateTimeNtf).replace('Z', '+00:00')}</CreDtTm>\n`;
+    
     
     if (v.fromDateTm || v.toDateTm) {
       xml += t(4) + `<FrToDt>\n`;
