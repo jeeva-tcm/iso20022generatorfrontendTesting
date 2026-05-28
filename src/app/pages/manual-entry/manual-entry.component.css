@@ -967,39 +967,49 @@ textarea.code-editor::-webkit-scrollbar-thumb:hover {
 
 .search-icon-new {
     position: absolute;
-    left: 16px;
+    left: 18px;
     top: 50%;
     transform: translateY(-50%);
     color: #64748b;
-    font-size: 22px;
-    width: 22px;
-    height: 22px;
+    font-size: 20px !important;
+    width: 20px !important;
+    height: 20px !important;
+    line-height: 20px !important;
     pointer-events: none;
 }
 
-.search-input-new {
-    width: 100%;
-    box-sizing: border-box;
-    background: rgba(15, 23, 42, 0.6);
-    border: 1.5px solid rgba(255, 255, 255, 0.12);
-    border-radius: 12px;
-    padding: 14px 20px 14px 48px;
-    color: #ffffff;
-    font-size: 15px;
-    font-family: inherit;
-    outline: none;
-    transition: all 0.25s ease;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+input.search-input-new,
+.banner-search-container input.search-input-new {
+    width: 100% !important;
+    box-sizing: border-box !important;
+    background: #ffffff !important;
+    border: 1.5px solid rgba(255, 255, 255, 0.6) !important;
+    border-radius: 12px !important;
+    padding: 14px 20px 14px 52px !important;
+    color: #0f172a !important;
+    font-size: 15px !important;
+    font-family: inherit !important;
+    outline: none !important;
+    transition: all 0.25s ease !important;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12) !important;
+    height: auto !important;
 }
 
-.search-input-new:focus {
-    border-color: #6366f1;
-    background: rgba(15, 23, 42, 0.8);
-    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.25);
+input.search-input-new:focus,
+.banner-search-container input.search-input-new:focus {
+    border-color: #ffffff !important;
+    box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.35), 0 4px 14px rgba(0, 0, 0, 0.15) !important;
 }
 
-.search-input-new::placeholder {
-    color: #475569;
+input.search-input-new::placeholder,
+.banner-search-container input.search-input-new::placeholder {
+    color: #64748b !important;
+    opacity: 1 !important;
+}
+
+.search-icon-new {
+    color: #475569 !important;
+    z-index: 2;
 }
 
 /* --- Premium Tab Switcher --- */

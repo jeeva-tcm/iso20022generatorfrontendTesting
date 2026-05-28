@@ -1,21 +1,11 @@
 <div class="me-root">
-    <!-- Header -->
-    <header class="me-header">
-        <div class="me-header-left">
-            <h1>Manual Entry <mat-icon class="title-icon">auto_fix_high</mat-icon></h1>
-            <p>Building ISO 20022 message blueprints</p>
-        </div>
-
-        
-    </header>
-
-    <!-- Toggle / Breadcrumb Bar -->
-    <div class="me-toolbar">
+    <!-- Toggle / Breadcrumb Bar (visible only when a message type is selected) -->
+    <div class="me-toolbar" *ngIf="selectedType">
         <div class="view-toggle">
             <button [class.active]="viewMode === 'form'" (click)="viewMode = 'form'">Form Editor</button>
             <button [class.active]="viewMode === 'xml'" (click)="viewMode = 'xml'">XML Preview</button>
         </div>
-        <div class="active-selection" *ngIf="selectedType">
+        <div class="active-selection">
             <mat-icon>description</mat-icon>
             <span>{{selectedType}}</span>
             <small>/ {{schema?.label}}</small>

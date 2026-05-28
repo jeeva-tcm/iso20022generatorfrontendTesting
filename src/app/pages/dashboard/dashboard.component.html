@@ -128,18 +128,26 @@
                     [queryParams]="{reportId: item.validation_id, autoRun: 'true'}">
                     <div class="feed-dot" [class.dot-pass]="item.status === 'PASS'"
                         [class.dot-fail]="item.status !== 'PASS'"></div>
-                    <div class="feed-content">
-                        <div class="feed-top">
-                            <span class="msg-badge" [ngClass]="getMsgClass(item.message_type)">
-                                {{item.message_type}}
+                    <div class="feed-content single">
+                        <span class="msg-badge" [ngClass]="getMsgClass(item.message_type)">
+                            {{item.message_type}}
+                        </span>
+                        <span class="feed-stats">
+                            <span class="stat-err" [class.zero]="(item.total_errors || 0) === 0">
+                                {{item.total_errors || 0}} {{(item.total_errors || 0) === 1 ? 'error' : 'errors'}}
                             </span>
-                            <span class="feed-status"
-                                [class.s-pass]="item.status === 'PASS'"
-                                [class.s-fail]="item.status !== 'PASS'">
-                                {{item.status === 'PASS' ? 'PASSED' : 'FAILED'}}
+                            <span class="stat-sep">·</span>
+                            <span class="stat-pass" [class.p-pass]="item.status === 'PASS'" [class.p-fail]="item.status !== 'PASS'">
+                                {{item.status === 'PASS' ? '100%' : '0%'}} pass
                             </span>
-                        </div>
-                        <span class="feed-time">{{item.timestamp | date:'d MMM yyyy · HH:mm:ss'}}</span>
+                        </span>
+                        <span class="feed-spacer"></span>
+                        <span class="feed-status"
+                            [class.s-pass]="item.status === 'PASS'"
+                            [class.s-fail]="item.status !== 'PASS'">
+                            {{item.status === 'PASS' ? 'PASSED' : 'FAILED'}}
+                        </span>
+                        <span class="feed-time">{{item.timestamp | date:'d MMM · HH:mm'}}</span>
                     </div>
                     <mat-icon class="feed-arrow">arrow_forward_ios</mat-icon>
                 </div>
@@ -168,17 +176,17 @@
                         <div class="qa-icon qa-validate"><mat-icon>upload_file</mat-icon></div>
                         <span>MT → MX</span>
                     </a>
-                    <a class="qa-item" routerLink="/history">
-                        <div class="qa-icon qa-history"><mat-icon>history</mat-icon></div>
-                        <span>History</span>
-                    </a>
-                    <a class="qa-item" routerLink="/generate">
-                        <div class="qa-icon qa-generate"><mat-icon>auto_awesome</mat-icon></div>
-                        <span>Generate</span>
-                    </a>
                     <a class="qa-item" (click)="openBicDirectory()" style="cursor:pointer">
                         <div class="qa-icon qa-tools"><mat-icon>account_balance</mat-icon></div>
                         <span>BIC Directory</span>
+                    </a>
+                    <a class="qa-item" routerLink="/generate">
+                        <div class="qa-icon qa-generate"><mat-icon>edit_note</mat-icon></div>
+                        <span>Manual Entry</span>
+                    </a>
+                    <a class="qa-item" routerLink="/history">
+                        <div class="qa-icon qa-history"><mat-icon>history</mat-icon></div>
+                        <span>History</span>
                     </a>
                     <a class="qa-item" routerLink="/help">
                         <div class="qa-icon qa-help"><mat-icon>help_outline</mat-icon></div>
