@@ -1788,12 +1788,13 @@ body.light-theme .btn-download {
   margin-bottom: 12px;
 }
 
-.vp-search input {
+.vp-search input[type="text"] {
   width: 100%;
+  box-sizing: border-box;
   background: var(--bg-card-hover);
   border: 1px solid var(--border-light);
   color: var(--text-main);
-  padding: 10px 10px 10px 38px;
+  padding: 10px 16px 10px 48px !important;
   border-radius: 8px;
   font-size: 14px;
   outline: none;
