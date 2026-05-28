@@ -198,6 +198,7 @@ export class ValidateComponent implements OnInit {
     } else {
       this.expandedLayers.add(key);
     }
+    this.cdr.detectChanges();
   }
 
   isLayerExpanded(f: FileEntry, layerName: string): boolean {
@@ -329,10 +330,21 @@ export class ValidateComponent implements OnInit {
     document.body.removeChild(link);
   }
 
+  // Cache grouped issues to prevent new object references on every change
+  // detection cycle, which would cause Angular to destroy/recreate DOM nodes
+  // and swallow in-flight click events (the root cause of the intermittent
+  // expand/collapse bug).
+  private _groupedIssuesCache: Map<string, { report: any; result: any[] }> = new Map();
+
   getGroupedIssues(report: any) {
     if (!report?.details) return [];
+    const cacheKey = report.validation_id || report.batch_id || 'default';
+    const cached = this._groupedIssuesCache.get(cacheKey);
+    if (cached && cached.report === report) {
+      return cached.result;
+    }
     const layers = [...new Set(report.details.map((x: any) => x.layer))].sort();
-    return layers.map(l => {
+    const result = layers.map(l => {
       const issues = report.details.filter((x: any) => x.layer === l);
       return {
         layer: l,
@@ -342,6 +354,8 @@ export class ValidateComponent implements OnInit {
         warnings: issues.filter((x: any) => x.severity === 'WARNING').length
       };
     });
+    this._groupedIssuesCache.set(cacheKey, { report, result });
+    return result;
   }
 
   get filesToDisplay(): FileEntry[] {
@@ -1359,6 +1373,14 @@ export class ValidateComponent implements OnInit {
     return names[k] ?? `Layer ${k}`;
   }
 
+  trackByLayerName(_index: number, item: any): string {
+    return item.name;
+  }
+
+  trackByIssueId(_index: number, item: any): string {
+    return item.id;
+  }
+
   getLayerStatus(report: any, k: string): string {
     return report?.layer_status?.[k]?.status ?? '';
   }
@@ -1397,6 +1419,7 @@ export class ValidateComponent implements OnInit {
 
   toggleIssue(issue: any) {
     this.expandedIssue = this.expandedIssue === issue.id ? null : issue.id;
+    this.cdr.detectChanges();
   }
 
   copyFix(text: string, e: MouseEvent) {

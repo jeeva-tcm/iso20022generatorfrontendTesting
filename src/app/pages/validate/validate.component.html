@@ -253,14 +253,14 @@
                 </div>
 
                 <!-- Issues details grouping below -->
-                <div class="layer-detail-item" *ngFor="let l of getGroupedIssues(f.report)">
+                <div class="layer-detail-item" *ngFor="let l of getGroupedIssues(f.report); trackBy: trackByLayerName">
                   <div class="layer-title" (click)="toggleLayer(f, l.name, $event)"
                     [class.layer-expanded]="isLayerExpanded(f, l.name)">
                     <mat-icon class="layer-chevron"
                       [style.transform]="isLayerExpanded(f, l.name) ? 'rotate(90deg)' : 'rotate(0deg)'">chevron_right</mat-icon>
                     <span class="layer-label">L{{l.layer}} - {{l.name}}</span>
 
-                    <div class="layer-stats-pills" style="margin-left: auto; display: flex; gap: 12px;">
+                    <div class="layer-stats-pills" style="margin-left: auto; display: flex; gap: 12px;" (click)="$event.stopPropagation()">
                       <span class="layer-stat-pill all-pill" (click)="setIssueFilter(f, l.name, 'ALL', $event)"
                         [class.active]="isIssueFilterActive(f, l.name, 'ALL')"
                         [style.opacity]="getLayerPillOpacity(f, l.name, 'ALL')">
@@ -282,7 +282,7 @@
                   </div>
 
                   <div class="layer-issues" *ngIf="isLayerExpanded(f, l.name)">
-                    <div class="issue-card" *ngFor="let issue of getFilteredIssues(f, l)"
+                    <div class="issue-card" *ngFor="let issue of getFilteredIssues(f, l); trackBy: trackByIssueId"
                       [class.expanded]="expandedIssue === issue.id" [class.issue-error]="issue.severity === 'ERROR'"
                       [class.issue-warn]="issue.severity === 'WARNING'" (click)="toggleIssue(issue)">
 
