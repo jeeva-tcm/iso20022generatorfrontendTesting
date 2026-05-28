@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener, ChangeDetectorRef } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { MatIconModule } from '@angular/material/icon';
@@ -72,7 +72,8 @@ export class Pacs4Component implements OnInit, OnDestroy {
         private router: Router,
         private uetrService: UetrService,
         private formatting: FormattingService,
-        private dialog: MatDialog
+        private dialog: MatDialog,
+        private cdr: ChangeDetectorRef
     ) { }
 
     ngOnInit() {
@@ -252,10 +253,16 @@ export class Pacs4Component implements OnInit, OnDestroy {
                     this.currencyPrecision = res.currencies || {};
                     this.updateAmountValidator('amount', 'currency');
                     this.updateAmountValidator('orgnlAmount', 'orgnlCurrency');
+                    this.cdr.detectChanges();
                 }
+            },
+            error: (err) => {
+                console.error('Failed to load currencies', err);
+                this.currencies = ['USD', 'EUR', 'GBP', 'JPY', 'CAD', 'AUD', 'CHF', 'CNY', 'HKD', 'SGD'];
+                this.cdr.detectChanges();
             }
         });
-        this.http.get<any>(this.config.getApiUrl('/codelists/country')).subscribe({ next: (res) => { if (res?.codes) this.countries = res.codes; } });
+        this.http.get<any>(this.config.getApiUrl('/codelists/country')).subscribe({ next: (res) => { if (res?.codes) { this.countries = res.codes; this.cdr.detectChanges(); } } });
     }
 
     private buildForm() {
